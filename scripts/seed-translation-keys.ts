@@ -1457,7 +1457,7 @@ async function seedTranslationKeys() {
       return
     }
 
-    console.log(`Found ${languages.length} active languages:`, languages.map(l => l.code).join(', '))
+    console.log(`Found ${languages.length} active languages:`, languages.map((l: { code: string }) => l.code).join(', '))
 
     let created = 0
     let updated = 0
@@ -1469,17 +1469,20 @@ async function seedTranslationKeys() {
 
         if (existingKey) {
           // Update existing key
-          await TranslationService.updateTranslationKey(existingKey.id, {
+          // TranslationKeyWithTranslations extends TranslationKey, so it has an id property
+          // Using type assertion since TypeScript doesn't always infer extended types correctly
+          const keyId = (existingKey as unknown as { id: string }).id
+          await TranslationService.updateTranslationKey(keyId, {
             category: data.category,
             description: data.description
           })
 
           // Add/update translations
           for (const [langCode, value] of Object.entries(data.translations)) {
-            const language = languages.find(l => l.code === langCode)
+            const language = languages.find((l: { code: string }) => l.code === langCode)
             if (language) {
               await TranslationService.upsertTranslation({
-                keyId: existingKey.id,
+                keyId: keyId,
                 languageId: language.id,
                 value
               })
@@ -1492,7 +1495,7 @@ async function seedTranslationKeys() {
           // Create new key with translations
           const translations = Object.entries(data.translations)
             .map(([langCode, value]) => {
-              const language = languages.find(l => l.code === langCode)
+              const language = languages.find((l: { code: string }) => l.code === langCode)
               return language ? { languageId: language.id, value } : null
             })
             .filter(Boolean) as Array<{ languageId: string; value: string }>

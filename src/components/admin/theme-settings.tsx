@@ -80,8 +80,7 @@ export function ThemeSettings() {
     } else if (settings.mode === 'dark') {
       setTheme('dark')
     } else if (settings.mode === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      setTheme(systemTheme)
+      setTheme('system') // Set to system mode, which will follow system preference
     }
     // For 'user-choice', don't change the current theme
   }

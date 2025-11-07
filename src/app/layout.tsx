@@ -37,8 +37,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const theme = localStorage.getItem('theme') || 
-                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                const saved = localStorage.getItem('theme');
+                let theme;
+                if (saved === 'system' || !saved) {
+                  theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                } else {
+                  theme = saved;
+                }
                 document.documentElement.classList.toggle('dark', theme === 'dark');
               } catch (e) {}
             `,
