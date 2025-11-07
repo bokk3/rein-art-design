@@ -1,0 +1,327 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  projects Project[]
+  userRole UserRole?
+
+  @@map("users")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @unique
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
+}
+
+model Language {
+  id        String   @id @default(cuid())
+  code      String   @unique // 'nl', 'fr', 'en', 'de'
+  name      String // 'Nederlands', 'Français', 'English', 'Deutsch'
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectTranslations     ProjectTranslation[]
+  contentPageTranslations ContentPageTranslation[]
+  translations            Translation[]
+  componentTranslations   ComponentTranslation[]
+
+  @@map("languages")
+}
+
+model ContentType {
+  id          String   @id @default(cuid())
+  name        String   @unique // 'projects', 'services', 'products'
+  displayName String // 'Projects', 'Services', 'Products'
+  fields      Json // Dynamic field definitions
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projects Project[]
+
+  @@map("content_types")
+}
+
+model Project {
+  id            String               @id @default(cuid())
+  contentTypeId String
+  contentType   ContentType          @relation(fields: [contentTypeId], references: [id])
+  featured      Boolean              @default(false)
+  published     Boolean              @default(true)
+  images        ProjectImage[]
+  translations  ProjectTranslation[]
+  createdBy     String
+  creator       User                 @relation(fields: [createdBy], references: [id])
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@map("projects")
+}
+
+model ProjectTranslation {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  languageId  String
+  language    Language @relation(fields: [languageId], references: [id])
+  title       String
+  description Json // TipTap JSON content
+  materials   String[]
+
+  @@unique([projectId, languageId])
+  @@map("project_translations")
+}
+
+model ProjectImage {
+  id           String   @id @default(cuid())
+  projectId    String?
+  project      Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  originalUrl  String
+  thumbnailUrl String
+  alt          String
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@map("project_images")
+}
+
+model ContentPage {
+  id           String                   @id @default(cuid())
+  slug         String                   @unique
+  published    Boolean                  @default(true)
+  translations ContentPageTranslation[]
+  updatedAt    DateTime                 @updatedAt
+
+  @@map("content_pages")
+}
+
+model ContentPageTranslation {
+  id         String      @id @default(cuid())
+  pageId     String
+  page       ContentPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  languageId String
+  language   Language    @relation(fields: [languageId], references: [id])
+  title      String
+  content    Json // TipTap JSON content
+
+  @@unique([pageId, languageId])
+  @@map("content_page_translations")
+}
+
+model ContactMessage {
+  id               String   @id @default(cuid())
+  name             String
+  email            String
+  projectType      String
+  message          String
+  privacyAccepted  Boolean  @default(true)
+  marketingConsent Boolean  @default(false)
+  read             Boolean  @default(false)
+  replied          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+model InstagramPost {
+  id          String   @id @default(cuid())
+  instagramId String   @unique
+  imageUrl    String
+  caption     String
+  postedAt    DateTime
+  syncedAt    DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  @@map("instagram_posts")
+}
+
+model CookieConsent {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  essential Boolean  @default(true)
+  analytics Boolean  @default(false)
+  marketing Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cookie_consents")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  sessionId String // Not unique - one session can have multiple events
+  pagePath  String
+  pageTitle String?
+  referrer  String?
+  userAgent String?
+  language  String?
+  country   String?
+  ipAddress String? // IP address (stored for security/analytics, can be anonymized)
+  eventType String   @default("pageview") // 'pageview', 'click', 'download', etc.
+  metadata  Json? // Additional event data
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([pagePath])
+  @@index([createdAt])
+  @@index([eventType])
+  @@map("analytics_events")
+}
+
+model UserPreferences {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  language  String   @default("nl") // Dynamic based on available languages
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+model UserRole {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String // 'admin', 'editor', 'viewer'
+  permissions Json // Granular permissions object
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_roles")
+}
+
+model SiteSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  category    String // 'languages', 'theme', 'content_types', 'social'
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model SocialIntegration {
+  id          String   @id @default(cuid())
+  platform    String   @unique // 'instagram', 'facebook', 'twitter'
+  displayName String // 'Instagram', 'Facebook', 'Twitter'
+  config      Json // Platform-specific configuration
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("social_integrations")
+}
+
+// Translation system for UI strings and reusable text
+model TranslationKey {
+  id          String   @id @default(cuid())
+  key         String   @unique // 'button.submit', 'nav.home', 'error.404'
+  category    String // 'ui', 'messages', 'errors', 'admin', 'forms'
+  description String? // Help text for translators
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  translations Translation[]
+
+  @@index([category])
+  @@map("translation_keys")
+}
+
+model Translation {
+  id         String         @id @default(cuid())
+  keyId      String
+  key        TranslationKey @relation(fields: [keyId], references: [id], onDelete: Cascade)
+  languageId String
+  language   Language       @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  value      String // The translated text
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([keyId, languageId])
+  @@index([languageId])
+  @@index([keyId])
+  @@map("translations")
+}
+
+// Component translations for page builder content
+model ComponentTranslation {
+  id            String   @id @default(cuid())
+  componentId   String // References component.id in page builder JSON
+  pageBuilderId String // References the page builder page/slug (e.g., 'homepage')
+  languageId    String
+  language      Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  fieldPath     String // 'data.title', 'data.features[0].title', 'data.description'
+  value         String // The translated text (can be plain text or JSON for rich content)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([componentId, pageBuilderId, languageId, fieldPath])
+  @@index([pageBuilderId, languageId])
+  @@index([componentId])
+  @@map("component_translations")
+}
