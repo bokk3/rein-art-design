@@ -13,6 +13,7 @@
     "create-admin": "tsx scripts/create-admin.ts",
     "reset-admin": "tsx scripts/reset-admin.ts",
     "clear-and-seed": "tsx scripts/clear-and-seed.ts",
+    "scrape-projects": "tsx scripts/scrape-projects.ts",
     "fix:prisma": "bash scripts/fix-prisma-client.sh"
   },
   "prisma": {
@@ -49,10 +50,12 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cheerio": "^0.22.35",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.0",
+    "cheerio": "^1.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "jsdom": "^27.1.0",
