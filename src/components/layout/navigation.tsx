@@ -9,6 +9,7 @@ import { Menu, X, Globe, ChevronDown } from 'lucide-react'
 import { useLanguage } from '@/contexts/language-context'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useT } from '@/hooks/use-t'
+import { usePathname } from 'next/navigation'
 
 export function Navigation() {
   const { t } = useT()
@@ -20,6 +21,10 @@ export function Navigation() {
   const languageButtonRef = useRef<HTMLButtonElement>(null)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
   const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
+
+  // Check if we're on the homepage
+  const isHomepage = pathname === '/'
 
   // Check if component is mounted (for portal)
   useEffect(() => {
@@ -88,16 +93,34 @@ export function Navigation() {
     { href: '/contact', label: t('nav.contact') },
   ]
 
+  // Determine nav background based on scroll state and homepage
+  const getNavBackground = () => {
+    // If scrolled, always show background
+    if (isScrolled) {
+      return 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md'
+    }
+    
+    // If on homepage and not scrolled, make it transparent to blend with hero
+    if (isHomepage && !isScrolled) {
+      return 'bg-transparent backdrop-blur-none'
+    }
+    
+    // Default background for other pages
+    return 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md'
+  }
+
   return (
-    <nav className={`main-nav bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-[60] transition-all duration-300 ${
+    <nav className={`main-nav sticky top-0 z-[60] transition-all duration-300 ${getNavBackground()} ${
       isScrolled 
         ? 'border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm' 
         : 'border-b-0 shadow-none'
     }`}>
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
-        <div className="flex justify-between items-center h-20 lg:h-24">
+        <div className={`flex justify-between items-center transition-all duration-300 ${
+          isScrolled ? 'h-16 lg:h-18' : 'h-20 lg:h-24'
+        }`}>
           {/* Logo */}
-          <Link href={getLocalizedHref('/')} className="flex items-center group flex-shrink-0 min-w-0">
+          <Link href={getLocalizedHref('/')} className="flex items-center justify-center group flex-shrink-0 min-w-0 h-full py-2">
             <Image
               src="/logo.png"
               alt="Rein Art Design"
@@ -106,7 +129,7 @@ export function Navigation() {
               className={`w-auto object-contain dark:brightness-0 dark:invert transition-all duration-300 group-hover:opacity-80 ${
                 isScrolled
                   ? 'h-8 sm:h-9 md:h-10 max-w-[80px] sm:max-w-[90px] md:max-w-[100px]'
-                  : 'h-8 sm:h-10 md:h-12 lg:h-14 max-w-[100px] sm:max-w-[120px] md:max-w-[140px]'
+                  : 'h-10 sm:h-12 md:h-14 lg:h-16 max-w-[100px] sm:max-w-[120px] md:max-w-[140px]'
               }`}
               priority
               unoptimized

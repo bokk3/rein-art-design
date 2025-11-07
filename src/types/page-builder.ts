@@ -23,6 +23,12 @@ export interface ComponentData {
   backgroundImage?: string
   backgroundType?: 'solid' | 'gradient' | 'image'
   gradient?: string
+  gradientFrom?: string // Hex color for gradient start
+  gradientVia?: string // Hex color for gradient middle (optional)
+  gradientTo?: string // Hex color for gradient end
+  gradientDirection?: 'to-t' | 'to-tr' | 'to-r' | 'to-br' | 'to-b' | 'to-bl' | 'to-l' | 'to-tl'
+  backgroundOverlayOpacity?: number // 0-100, controls overlay opacity on background image
+  backgroundOverlayColor?: string // Hex color for the overlay (default: black)
   height?: 'auto' | 'screen' | number
   
   // Text component - multilingual
@@ -42,6 +48,7 @@ export interface ComponentData {
     caption?: string
   }>
   showFeatured?: boolean
+  useCarousel?: boolean // Explicitly enable/disable carousel mode
   maxItems?: number
   layout?: 'grid' | 'masonry'
   columns?: number

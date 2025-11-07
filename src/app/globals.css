@@ -27,6 +27,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Line clamp utilities */
 .line-clamp-1 {
   overflow: hidden;
@@ -67,6 +77,194 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
 .dark [data-cta-gradient] {
   background: #030712 !important;
 }
+
+/* Hero fade-in animations - simple CSS approach */
+.hero-fade-in {
+  animation: heroFadeIn 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hero-bg-fade-in {
+  animation: heroBgFadeIn 1s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes heroBgFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero-text-fade-in {
+  animation: heroTextFadeIn 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-text-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes heroTextFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-text-delay-1 {
+  animation-delay: 0.2s;
+}
+
+.hero-text-delay-2 {
+  animation-delay: 0.35s;
+}
+
+.hero-text-delay-3 {
+  animation-delay: 0.5s;
+}
+
+.hero-text-delay-4 {
+  animation-delay: 0.65s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-text-delay-1,
+  .hero-text-delay-2,
+  .hero-text-delay-3,
+  .hero-text-delay-4 {
+    animation-delay: 0s;
+  }
+}
+
+/* Range slider styling */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  background: transparent;
+}
+
+.dark input[type="range"].slider {
+  background: transparent;
+}
+
+input[type="range"].slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  background: #e5e7eb;
+  border: none;
+}
+
+.dark input[type="range"].slider::-webkit-slider-runnable-track {
+  background: #374151;
+}
+
+input[type="range"].slider::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  background: #e5e7eb;
+  border: none;
+}
+
+.dark input[type="range"].slider::-moz-range-track {
+  background: #374151;
+}
+
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-top: -6px;
+  position: relative;
+  z-index: 1;
+}
+
+input[type="range"].slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  -moz-appearance: none;
+  appearance: none;
+  cursor: grab;
+}
+
+input[type="range"].slider::-moz-range-thumb:active {
+  cursor: grabbing;
+}
+
+input[type="range"].slider:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+input[type="range"].slider:active::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+.dark input[type="range"].slider::-webkit-slider-thumb {
+  background: #60a5fa;
+  border-color: #1f2937;
+}
+
+.dark input[type="range"].slider::-moz-range-thumb {
+  background: #60a5fa;
+  border-color: #1f2937;
+}
+
+.dark input[type="range"].slider {
+  background: #374151;
+}
+
+.dark input[type="range"].slider::-webkit-slider-runnable-track {
+  background: #374151;
+}
+
+.dark input[type="range"].slider::-moz-range-track {
+  background: #374151;
+}
+
 
 /* Beautiful animations */
 @keyframes fadeIn {

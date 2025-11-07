@@ -1,26 +1,53 @@
 'use client'
 
+import React, { useState, useEffect, useRef } from 'react'
 import { PageComponent } from '@/types/page-builder'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+// Removed framer-motion - using CSS animations instead
 import { 
   Award, 
   Users, 
   Clock, 
   Star, 
   ArrowRight, 
+  ArrowLeft,
   CheckCircle, 
   Heart,
   Shield,
   Zap,
   Target,
   Lightbulb,
-  Palette
+  Palette,
+  Hammer,
+  Wrench,
+  Settings,
+  Cog,
+  HardHat,
+  ToolCase,
+  Box,
+  Package,
+  Factory,
+  Truck,
+  Ruler,
+  Square,
+  Scissors,
+  Paintbrush,
+  Pen,
+  Layers,
+  FileText,
+  Briefcase,
+  Building,
+  Home,
+  Sofa,
+  Table,
+  Archive,
+  Sparkles,
+  Hand,
+  Handshake
 } from 'lucide-react'
 import { ProjectCard } from '@/components/gallery/project-card'
-import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 
 interface ComponentRendererProps {
@@ -97,7 +124,7 @@ export function ComponentRenderer({
     value: string
     field: keyof typeof data | string
     className?: string
-    as?: keyof JSX.IntrinsicElements
+    as?: keyof React.JSX.IntrinsicElements
     multiline?: boolean
     onUpdate?: (value: string) => void
   }) => {
@@ -118,17 +145,18 @@ export function ComponentRenderer({
     }, [value])
 
     if (!isLocalEditing) {
+      const ComponentElement = Component as React.ElementType
       return (
-        <Component
+        <ComponentElement
           data-editable
           className={`${className} ${componentIsEditing ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-400 hover:outline-dashed rounded px-1' : ''} transition-all inline-block`}
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             if (componentIsEditing) {
               e.stopPropagation()
               setIsLocalEditing(true)
             }
           }}
-          onDoubleClick={(e) => {
+          onDoubleClick={(e: React.MouseEvent) => {
             if (componentIsEditing) {
               e.stopPropagation()
               setIsLocalEditing(true)
@@ -136,7 +164,7 @@ export function ComponentRenderer({
           }}
         >
           {value || (componentIsEditing ? <span className="text-gray-400 italic">Click to edit</span> : '')}
-        </Component>
+        </ComponentElement>
       )
     }
 
@@ -144,7 +172,7 @@ export function ComponentRenderer({
       if (editValue !== value) {
         if (customUpdate) {
           customUpdate(editValue)
-        } else if (typeof field === 'string' && field.startsWith('feature-') || field.startsWith('testimonial-')) {
+        } else if (typeof field === 'string' && (field.startsWith('feature-') || field.startsWith('testimonial-'))) {
           // Skip - handled by customUpdate
         } else {
           updateMultilingualText(field as keyof typeof data, editValue)
@@ -153,14 +181,16 @@ export function ComponentRenderer({
       setIsLocalEditing(false)
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !multiline) {
         e.preventDefault()
         handleBlur()
-      }
-      if (e.key === 'Escape') {
+      } else if (e.key === 'Escape') {
         setEditValue(value)
         setIsLocalEditing(false)
+      } else if (e.key === 'Enter' && multiline && e.shiftKey) {
+        e.preventDefault()
+        handleBlur()
       }
     }
 
@@ -197,23 +227,47 @@ export function ComponentRenderer({
 
   switch (type) {
     case 'hero':
-      const gradientClass = data.backgroundType === 'gradient' && data.gradient 
-        ? `bg-gradient-to-br ${data.gradient}` 
-        : ''
+      // Build background style based on background type
+      const heroBackgroundStyle: React.CSSProperties = {}
+      let backgroundClass = ''
       
-      // Only use default background if no custom backgroundColor is set
-      const defaultHeroBg = !data.backgroundColor && !data.backgroundType && !gradientClass
-        ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-gray-900' 
-        : ''
-      
-      // Determine if we should use inline style for background (when custom color is set and not gradient)
-      const useInlineBackground = data.backgroundColor && data.backgroundType !== 'gradient' && !gradientClass
-      
-      // Build style object - only include properties that are explicitly set
-      const heroStyle: React.CSSProperties = {}
-      if (useInlineBackground) {
-        heroStyle.backgroundColor = data.backgroundColor || '#ffffff'
+      if (data.backgroundType === 'gradient') {
+        // Build gradient from color pickers
+        const direction = data.gradientDirection || 'to-br'
+        const fromColor = data.gradientFrom || '#ffffff'
+        const viaColor = data.gradientVia
+        const toColor = data.gradientTo || '#000000'
+        
+        const gradientDirectionMap: { [key: string]: string } = {
+          'to-t': 'to top',
+          'to-tr': 'to top right',
+          'to-r': 'to right',
+          'to-br': 'to bottom right',
+          'to-b': 'to bottom',
+          'to-bl': 'to bottom left',
+          'to-l': 'to left',
+          'to-tl': 'to top left'
+        }
+        
+        const dir = gradientDirectionMap[direction] || 'to bottom right'
+        
+        if (viaColor) {
+          heroBackgroundStyle.background = `linear-gradient(${dir}, ${fromColor}, ${viaColor}, ${toColor})`
+        } else {
+          heroBackgroundStyle.background = `linear-gradient(${dir}, ${fromColor}, ${toColor})`
+        }
+      } else if (data.backgroundType === 'solid') {
+        heroBackgroundStyle.backgroundColor = data.backgroundColor || '#ffffff'
+      } else if (!data.backgroundType || data.backgroundType === 'image') {
+        // Default background for image or when not set
+        backgroundClass = !data.backgroundImage ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-gray-900' : ''
       }
+      
+      // Build style object
+      const heroStyle: React.CSSProperties = {
+        ...heroBackgroundStyle
+      }
+      
       if (data.textColor) {
         heroStyle.color = data.textColor
       }
@@ -221,102 +275,6 @@ export function ComponentRenderer({
         heroStyle.padding = `${data.padding.top}px ${data.padding.right}px ${data.padding.bottom}px ${data.padding.left}px`
       }
 
-      // Animation variants for hero content
-      const heroContainerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            duration: 0.6,
-            ease: [0.22, 1, 0.36, 1],
-          },
-        },
-      }
-
-      const heroContentVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            staggerChildren: 0.15,
-            delayChildren: 0.3,
-          },
-        },
-      }
-
-      const heroItemVariants = {
-        hidden: { 
-          opacity: 0, 
-          y: 50,
-          filter: 'blur(10px)',
-        },
-        visible: {
-          opacity: 1,
-          y: 0,
-          filter: 'blur(0px)',
-          transition: {
-            duration: 0.8,
-            ease: [0.22, 1, 0.36, 1],
-          },
-        },
-      }
-
-      const heroTitleVariants = {
-        hidden: { 
-          opacity: 0, 
-          y: 60,
-          scale: 0.95,
-        },
-        visible: {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          transition: {
-            duration: 0.9,
-            ease: [0.22, 1, 0.36, 1],
-          },
-        },
-      }
-
-      const heroButtonVariants = {
-        hidden: { 
-          opacity: 0, 
-          y: 30,
-          scale: 0.9,
-        },
-        visible: {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          transition: {
-            duration: 0.6,
-            ease: [0.22, 1, 0.36, 1],
-          },
-        },
-        hover: {
-          scale: 1.05,
-          transition: {
-            duration: 0.2,
-            ease: [0.22, 1, 0.36, 1],
-          },
-        },
-      }
-
-      const backgroundImageVariants = {
-        hidden: { 
-          opacity: 0,
-          scale: 1.15,
-        },
-        visible: {
-          opacity: 1,
-          scale: 1,
-          transition: {
-            duration: 1.2,
-            ease: [0.22, 1, 0.36, 1],
-          },
-        },
-      }
-      
       // Calculate height accounting for navigation (h-20 = 80px on md, h-24 = 96px on lg)
       const heroHeightStyle = data.height === 'screen' 
         ? { minHeight: 'calc(100vh - 80px)' } 
@@ -324,24 +282,17 @@ export function ComponentRenderer({
       
       const combinedStyle = {
         ...heroHeightStyle,
-        ...(Object.keys(heroStyle).length > 0 ? heroStyle : {})
+        ...heroStyle
       }
       
       return (
-        <motion.div 
-          className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex items-center justify-center ${gradientClass || defaultHeroBg} overflow-hidden`}
+        <div 
+          data-hero-section
+          className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex items-center justify-center ${backgroundClass} overflow-hidden hero-fade-in`}
           style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
-          variants={heroContainerVariants}
-          initial="hidden"
-          animate="visible"
         >
           {data.backgroundImage && (
-            <motion.div 
-              className="absolute inset-0"
-              variants={backgroundImageVariants}
-              initial="hidden"
-              animate="visible"
-            >
+            <div className="absolute inset-0 hero-bg-fade-in">
               <Image
                 src={data.backgroundImage}
                 alt=""
@@ -349,26 +300,19 @@ export function ComponentRenderer({
                 className="object-cover"
                 priority
               />
-              <motion.div 
-                className="absolute inset-0 bg-black"
-                initial={{ opacity: 0.6 }}
-                animate={{ opacity: 0.4 }}
-                transition={{ duration: 1 }}
+              <div 
+                className="absolute inset-0" 
+                style={{ 
+                  backgroundColor: data.backgroundOverlayColor || '#000000',
+                  opacity: (data.backgroundOverlayOpacity !== undefined ? data.backgroundOverlayOpacity : 0) / 100 
+                }}
               />
-            </motion.div>
+            </div>
           )}
           
-          <motion.div 
-            className="relative z-10 max-w-5xl mx-auto text-center py-8"
-            variants={heroContentVariants}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="relative z-10 max-w-5xl mx-auto text-center py-8">
             {data.title && (
-              <motion.h1 
-                className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 leading-tight"
-                variants={heroTitleVariants}
-              >
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 leading-tight hero-text-fade-in hero-text-delay-1">
                 {isEditing ? (
                   <EditableText
                     value={getText(data.title)}
@@ -379,14 +323,11 @@ export function ComponentRenderer({
                 ) : (
                   getText(data.title)
                 )}
-              </motion.h1>
+              </h1>
             )}
             
             {data.subtitle && (
-              <motion.p 
-                className="text-xl sm:text-2xl lg:text-3xl mb-4 opacity-90 font-light"
-                variants={heroItemVariants}
-              >
+              <p className="text-xl sm:text-2xl lg:text-3xl mb-4 opacity-90 font-light hero-text-fade-in hero-text-delay-2">
                 {isEditing ? (
                   <EditableText
                     value={getText(data.subtitle)}
@@ -397,14 +338,11 @@ export function ComponentRenderer({
                 ) : (
                   getText(data.subtitle)
                 )}
-              </motion.p>
+              </p>
             )}
             
             {data.description && (
-              <motion.p 
-                className="text-lg sm:text-xl mb-8 opacity-80 max-w-3xl mx-auto leading-relaxed"
-                variants={heroItemVariants}
-              >
+              <p className="text-lg sm:text-xl mb-8 opacity-80 max-w-3xl mx-auto leading-relaxed hero-text-fade-in hero-text-delay-3">
                 {isEditing ? (
                   <EditableText
                     value={getText(data.description)}
@@ -416,19 +354,12 @@ export function ComponentRenderer({
                 ) : (
                   getText(data.description)
                 )}
-              </motion.p>
+              </p>
             )}
             
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              variants={heroContentVariants}
-            >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center hero-text-fade-in hero-text-delay-4">
               {(data.primaryButton || data.heroButtonText) && (
-                <motion.div 
-                  variants={heroButtonVariants}
-                  whileHover={!isEditing ? "hover" : undefined}
-                  whileTap={!isEditing ? { scale: 0.95 } : undefined}
-                >
+                <div>
                   {isEditing ? (
                     <div className="inline-block">
                       <EditableText
@@ -445,26 +376,15 @@ export function ComponentRenderer({
                         className="w-full sm:w-auto text-lg px-8 py-4 h-auto bg-white text-slate-900 hover:bg-gray-100 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-100 border-2 border-transparent transition-all duration-300"
                       >
                         {getText(data.primaryButton || data.heroButtonText)}
-                        <motion.span
-                          initial={{ x: 0 }}
-                          whileHover={{ x: 5 }}
-                          transition={{ duration: 0.2 }}
-                          className="inline-block"
-                        >
-                          <ArrowRight className="w-5 h-5 ml-2" />
-                        </motion.span>
+                        <ArrowRight className="w-5 h-5 ml-2 inline-block transition-transform duration-200 group-hover:translate-x-1" />
                       </Button>
                     </Link>
                   )}
-                </motion.div>
+                </div>
               )}
               
               {data.secondaryButton && (
-                <motion.div 
-                  variants={heroButtonVariants}
-                  whileHover={!isEditing ? "hover" : undefined}
-                  whileTap={!isEditing ? { scale: 0.95 } : undefined}
-                >
+                <div>
                   {isEditing ? (
                     <div className="inline-block">
                       <EditableText
@@ -485,11 +405,11 @@ export function ComponentRenderer({
                       </Button>
                     </Link>
                   )}
-                </motion.div>
+                </div>
               )}
-            </motion.div>
-          </motion.div>
-        </motion.div>
+            </div>
+          </div>
+        </div>
       )
 
     case 'features':
@@ -505,7 +425,33 @@ export function ComponentRenderer({
           zap: Zap,
           target: Target,
           lightbulb: Lightbulb,
-          palette: Palette
+          palette: Palette,
+          hammer: Hammer,
+          wrench: Wrench,
+          settings: Settings,
+          cog: Cog,
+          hardhat: HardHat,
+          tool: ToolCase,
+          box: Box,
+          package: Package,
+          factory: Factory,
+          truck: Truck,
+          ruler: Ruler,
+          square: Square,
+          scissors: Scissors,
+          paintbrush: Paintbrush,
+          pen: Pen,
+          layers: Layers,
+          filetext: FileText,
+          briefcase: Briefcase,
+          building: Building,
+          home: Home,
+          sofa: Sofa,
+          table: Table,
+          archive: Archive,
+          sparkles: Sparkles,
+          hand: Hand,
+          handshake: Handshake
         }
         const IconComponent = icons[iconName as keyof typeof icons] || Award
         return <IconComponent className="w-12 h-12" />
@@ -681,6 +627,19 @@ export function ComponentRenderer({
 
     case 'gallery':
       const [featuredProjects, setFeaturedProjects] = useState([])
+      const [currentScrollIndex, setCurrentScrollIndex] = useState(0)
+      const scrollContainerRef = useRef<HTMLDivElement>(null)
+      const carouselRef = useRef<HTMLDivElement>(null)
+      const [isHovered, setIsHovered] = useState(false)
+      const useCarousel = data.useCarousel !== false && (data.useCarousel === true || featuredProjects.length > 3)
+      const projectsToShow = data.maxItems ? Math.min(featuredProjects.length, data.maxItems) : featuredProjects.length
+      const projectsPerView = 3 // Number of projects visible at once
+      const maxScrollIndex = Math.max(0, projectsToShow - projectsPerView) // Stop when last project is visible
+      
+      // Calculate min-height for full page (accounting for navigation)
+      const minHeightStyle = useCarousel 
+        ? { minHeight: 'calc(100vh - 80px)' }
+        : {}
       
       useEffect(() => {
         if (data.showFeatured) {
@@ -690,6 +649,54 @@ export function ComponentRenderer({
             .catch(err => console.error('Error fetching featured projects:', err))
         }
       }, [data.showFeatured])
+
+      // Mouse wheel scroll handler - only works when hovering over the carousel
+      useEffect(() => {
+        const carousel = carouselRef.current
+        if (!carousel || !useCarousel || isEditing) return
+
+        let scrollTimeout: NodeJS.Timeout | null = null
+        let lastScrollTime = 0
+        const scrollThrottle = 100 // ms between scrolls
+
+        const handleWheel = (e: WheelEvent) => {
+          if (!isHovered) return
+          
+          const now = Date.now()
+          if (now - lastScrollTime < scrollThrottle) {
+            e.preventDefault()
+            return
+          }
+          
+          e.preventDefault()
+          e.stopPropagation()
+          lastScrollTime = now
+          
+          // Determine scroll direction and amount
+          const scrollAmount = Math.abs(e.deltaY) > 50 ? 1 : 0 // Only scroll if significant movement
+          if (scrollAmount === 0) return
+          
+          const delta = e.deltaY > 0 ? 1 : -1
+          setCurrentScrollIndex((prev) => {
+            const next = prev + delta
+            return Math.max(0, Math.min(maxScrollIndex, next))
+          })
+        }
+
+        carousel.addEventListener('wheel', handleWheel, { passive: false })
+        return () => {
+          carousel.removeEventListener('wheel', handleWheel)
+          if (scrollTimeout) clearTimeout(scrollTimeout)
+        }
+      }, [isHovered, useCarousel, isEditing, maxScrollIndex])
+
+      const handleScrollLeft = () => {
+        setCurrentScrollIndex((prev) => Math.max(0, prev - 1))
+      }
+
+      const handleScrollRight = () => {
+        setCurrentScrollIndex((prev) => Math.min(maxScrollIndex, prev + 1))
+      }
 
       // Use Tailwind classes only for specific string values, otherwise use inline style
       const galleryBgClass = data.backgroundColor === 'gray-50' 
@@ -711,14 +718,21 @@ export function ComponentRenderer({
       }
 
       return (
-        <div 
-          className={`py-20 px-4 sm:px-6 lg:px-8 ${galleryBgClass}`}
-          style={Object.keys(galleryStyle).length > 0 ? galleryStyle : undefined}
+        <section 
+          className={`flex flex-col ${galleryBgClass}`}
+          style={{
+            ...(Object.keys(galleryStyle).length > 0 ? galleryStyle : {}),
+            ...minHeightStyle,
+            paddingTop: data.padding?.top ? `${data.padding.top}px` : '4rem',
+            paddingBottom: data.padding?.bottom ? `${data.padding.bottom}px` : '4rem',
+            paddingLeft: data.padding?.left ? `${data.padding.left}px` : '1rem',
+            paddingRight: data.padding?.right ? `${data.padding.right}px` : '1rem',
+          }}
         >
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+          <div className="max-w-[95%] mx-auto w-full flex-1 flex flex-col">
+            <div className="text-center mb-12">
               {data.title && (
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
                   {isEditing ? (
                     <EditableText
                       value={getText(data.title)}
@@ -749,20 +763,144 @@ export function ComponentRenderer({
             
             {data.showFeatured && featuredProjects.length > 0 ? (
               <>
-                <div className={`grid grid-cols-1 sm:grid-cols-2 ${
-                  data.columns === 4 ? 'lg:grid-cols-4' : 
-                  data.columns === 3 ? 'lg:grid-cols-3' : 
-                  data.columns === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'
-                } gap-8`}>
-                  {featuredProjects.slice(0, data.maxItems || 8).map((project: any) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      onClick={() => onProjectClick?.(project)}
-                      languageId={currentLanguage}
-                    />
-                  ))}
-                </div>
+                {useCarousel ? (
+                  <div className="flex-1 flex flex-col justify-center" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
+                    <div className="relative flex items-center gap-8 px-8">
+                      {/* Left Arrow - Outside container with more space */}
+                      <button
+                        onClick={handleScrollLeft}
+                        className="flex-shrink-0 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 z-10"
+                        aria-label="Scroll left"
+                        disabled={currentScrollIndex === 0}
+                      >
+                        <ArrowLeft className="w-10 h-10" />
+                      </button>
+
+                      {/* Scrollable Container - Wider with more padding for shadows */}
+                      <div 
+                        ref={carouselRef}
+                        className="flex-1 w-full relative"
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                      >
+                        {/* Outer container for clipping horizontal overflow */}
+                        <div 
+                          className="relative overflow-hidden"
+                          style={{
+                            width: '100%',
+                            paddingTop: '2rem',
+                            paddingBottom: '2rem',
+                          }}
+                        >
+                          {/* Inner container with padding for shadows */}
+                          <div 
+                            ref={scrollContainerRef}
+                            className="overflow-y-visible scrollbar-hide"
+                            style={{
+                              paddingLeft: '2rem',
+                              paddingRight: '2rem',
+                              marginTop: '-2rem',
+                              marginBottom: '-2rem',
+                              paddingTop: '2rem',
+                              paddingBottom: '2rem',
+                            }}
+                          >
+                            <div
+                              className="flex transition-transform duration-300 ease-out items-stretch"
+                              style={{
+                                gap: '1.5rem',
+                                transform: `translateX(calc(-${currentScrollIndex} * (100% / ${projectsPerView} + 1.5rem / ${projectsPerView})))`,
+                              }}
+                            >
+                              {featuredProjects.slice(0, projectsToShow).map((project: any, index: number) => (
+                                <div
+                                  key={project.id}
+                                  className="flex-shrink-0 flex items-stretch"
+                                  style={{
+                                    width: `calc((100% - ${(projectsPerView - 1) * 1.5}rem) / ${projectsPerView})`,
+                                    paddingLeft: '0.5rem',
+                                    paddingRight: '0.5rem',
+                                  }}
+                                >
+                                  <div className="w-full h-full">
+                                    <ProjectCard
+                                      project={project}
+                                      onClick={() => onProjectClick?.(project)}
+                                      languageId={currentLanguage}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Arrow - Outside container with more space */}
+                      <button
+                        onClick={handleScrollRight}
+                        className="flex-shrink-0 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 z-10"
+                        aria-label="Scroll right"
+                        disabled={currentScrollIndex >= maxScrollIndex}
+                      >
+                        <ArrowRight className="w-10 h-10" />
+                      </button>
+                    </div>
+
+                    {/* Scroll Indicators - show position in carousel */}
+                    {maxScrollIndex > 0 && (
+                      <div className="flex justify-center gap-2 mt-12 mb-4">
+                        {Array.from({ length: maxScrollIndex + 1 }).map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentScrollIndex(index)}
+                            className={`h-2 rounded-full transition-all ${
+                              currentScrollIndex === index
+                                ? 'w-8 bg-gray-900 dark:bg-white'
+                                : 'w-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                            }`}
+                            aria-label={`Go to position ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  data.layout === 'masonry' ? (
+                    <div 
+                      className={`columns-1 ${data.columns === 2 ? 'sm:columns-2' : data.columns === 4 ? 'sm:columns-2 lg:columns-4' : 'sm:columns-2 lg:columns-3'}`}
+                      style={{
+                        columnGap: '1.5rem',
+                      }}
+                    >
+                      {featuredProjects.slice(0, data.maxItems || 8).map((project: any) => (
+                        <div key={project.id} className="break-inside-avoid mb-6">
+                          <ProjectCard
+                            project={project}
+                            onClick={() => onProjectClick?.(project)}
+                            languageId={currentLanguage}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${
+                      data.columns === 4 ? 'lg:grid-cols-4' : 
+                      data.columns === 3 ? 'lg:grid-cols-3' : 
+                      data.columns === 2 ? 'lg:grid-cols-2' : 'lg:grid-cols-3'
+                    } gap-8 items-stretch`}>
+                      {featuredProjects.slice(0, data.maxItems || 8).map((project: any) => (
+                        <div key={project.id} className="h-full">
+                          <ProjectCard
+                            project={project}
+                            onClick={() => onProjectClick?.(project)}
+                            languageId={currentLanguage}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
                 
                 {featuredProjects.length > (data.maxItems || 8) && (
                   <div className="text-center mt-12">
@@ -777,7 +915,7 @@ export function ComponentRenderer({
               </>
             ) : data.images && data.images.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {data.images.map((image: any, index: number) => (
+                {(data.images || []).map((image: any, index: number) => (
                   <div key={image.id || index} className="relative aspect-square">
                     <Image
                       src={image.url}
@@ -794,7 +932,7 @@ export function ComponentRenderer({
               </div>
             )}
           </div>
-        </div>
+        </section>
       )
 
     case 'gallery-showcase':
@@ -803,16 +941,16 @@ export function ComponentRenderer({
       const autoScrollSpeed = data.autoScrollSpeed || 4000 // default 4 seconds
       const transitionDuration = data.transitionDuration || 1000 // default 1 second
 
-      // Auto-scroll through images
+      // Auto-scroll through images (only when not editing)
       useEffect(() => {
-        if (showcaseImages.length <= 1) return
+        if (showcaseImages.length <= 1 || isEditing) return
 
         const interval = setInterval(() => {
           setCurrentImageIndex((prev) => (prev + 1) % showcaseImages.length)
         }, autoScrollSpeed)
 
         return () => clearInterval(interval)
-      }, [showcaseImages.length, autoScrollSpeed])
+      }, [showcaseImages.length, autoScrollSpeed, isEditing])
 
       // Build style object
       const showcaseStyle: React.CSSProperties = {}
@@ -838,19 +976,21 @@ export function ComponentRenderer({
         <div 
           className="w-full h-[50vh] relative overflow-hidden"
           style={Object.keys(showcaseStyle).length > 0 ? showcaseStyle : undefined}
+          onClick={(e) => {
+            // Allow clicks to pass through to sortable component when not editing
+            if (!isEditing) {
+              e.stopPropagation()
+            }
+          }}
         >
           {showcaseImages.map((image: any, index: number) => (
-            <motion.div
+            <div
               key={image.id || index}
-              className="absolute inset-0"
-              initial={{ opacity: 0, x: '100%' }}
-              animate={{
-                opacity: currentImageIndex === index ? 1 : 0,
-                x: currentImageIndex === index ? '0%' : currentImageIndex > index ? '-100%' : '100%',
-              }}
-              transition={{
-                duration: transitionDuration / 1000,
-                ease: [0.22, 1, 0.36, 1],
+              className={`absolute inset-0 transition-opacity duration-1000 ease-out ${
+                currentImageIndex === index ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
+              }`}
+              style={{
+                transitionDuration: `${transitionDuration}ms`,
               }}
             >
               <Image
@@ -861,21 +1001,24 @@ export function ComponentRenderer({
                 priority={index === 0}
               />
               {image.caption && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 z-[2]">
                   <p className="text-white text-lg font-medium">{image.caption}</p>
                 </div>
               )}
-            </motion.div>
+            </div>
           ))}
           
           {/* Progress indicators */}
           {showcaseImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-[5] pointer-events-auto">
               {showcaseImages.map((_: any, index: number) => (
                 <button
                   key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setCurrentImageIndex(index)
+                  }}
+                  className={`h-2 rounded-full transition-all pointer-events-auto ${
                     currentImageIndex === index
                       ? 'w-8 bg-white'
                       : 'w-2 bg-white/50 hover:bg-white/75'

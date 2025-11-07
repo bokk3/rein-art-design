@@ -32,10 +32,10 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
 
   return (
     <div 
-      className="group cursor-pointer bg-white dark:bg-gray-800/90 backdrop-blur-sm border-2 border-gray-200/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl dark:hover:shadow-gray-900/40 transition-all duration-500 ease-out hover:-translate-y-2 hover:border-gray-300 dark:hover:border-gray-600 animate-fade-in"
+      className="group cursor-pointer bg-white dark:bg-gray-800/90 backdrop-blur-sm border-2 border-gray-200/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl dark:hover:shadow-gray-900/40 transition-all duration-500 ease-out hover:-translate-y-2 hover:border-gray-300 dark:hover:border-gray-600 animate-fade-in h-full flex flex-col"
       onClick={onClick}
     >
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+      <div className="relative aspect-[3/2] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
         {thumbnailImage && !imageError ? (
           <>
             <Image
@@ -84,34 +84,34 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
         )}
       </div>
       
-      <div className="p-6 bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-800/90 dark:to-gray-900/50">
-        <h3 className="font-bold text-xl text-gray-900 dark:text-white mb-3 line-clamp-2 min-h-[3.5rem] group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+      <div className="p-4 bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-800/90 dark:to-gray-900/50 flex flex-col flex-1">
+        <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
           {translation.title}
         </h3>
         
-        {/* Materials - Stacked vertically for consistent card height */}
+        {/* Materials - Compact inline display */}
         {translation.materials.length > 0 && (
-          <div className="flex flex-col gap-2 mb-4">
-            {translation.materials.slice(0, 3).map((material, index) => (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {translation.materials.slice(0, 4).map((material, index) => (
               <span 
                 key={index}
-                className="text-xs font-medium bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-600/50 shadow-sm w-fit"
+                className="text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded border border-gray-200/50 dark:border-gray-600/50"
               >
                 {material}
               </span>
             ))}
-            {translation.materials.length > 3 && (
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 px-3 py-1.5">
-                +{translation.materials.length - 3} more
+            {translation.materials.length > 4 && (
+              <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 px-2 py-0.5">
+                +{translation.materials.length - 4}
               </span>
             )}
           </div>
         )}
         
-        {/* View details indicator - Beautiful arrow animation */}
-        <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-all duration-300">
+        {/* View details indicator - Compact */}
+        <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-all duration-300 mt-auto pt-2">
           <span>View details</span>
-          <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+          <span className="ml-1 group-hover:translate-x-0.5 transition-transform duration-300">→</span>
         </div>
       </div>
     </div>

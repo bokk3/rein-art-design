@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageComponent, ComponentData, MultilingualText } from '@/types/page-builder'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,17 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   const [isTranslating, setIsTranslating] = useState(false)
   const [translationStatus, setTranslationStatus] = useState<string>('')
   const [apiConfigured, setApiConfigured] = useState(false)
+  const [featuredProjects, setFeaturedProjects] = useState<any[]>([])
+  
+  // Fetch featured projects count for carousel auto-enable logic
+  useEffect(() => {
+    if (component.type === 'gallery' && component.data.showFeatured) {
+      fetch('/api/projects?featured=true')
+        .then(res => res.json())
+        .then(data => setFeaturedProjects(data.projects || []))
+        .catch(() => setFeaturedProjects([]))
+    }
+  }, [component.type, component.data.showFeatured])
 
   // Fetch available languages
   useEffect(() => {
@@ -70,11 +81,19 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   }, [])
 
   const updateData = (key: string, value: any) => {
-    onChange({
+    const updatedData = {
       ...component.data,
       [key]: value
-    })
+    }
+    onChange(updatedData)
   }
+  
+  // Use a local state to track the overlay opacity for immediate UI feedback
+  const [localOverlayOpacity, setLocalOverlayOpacity] = useState(component.data.backgroundOverlayOpacity ?? 0)
+  
+  useEffect(() => {
+    setLocalOverlayOpacity(component.data.backgroundOverlayOpacity ?? 0)
+  }, [component.data.backgroundOverlayOpacity])
 
   const updateMultilingualText = (key: string, languageCode: string, value: string) => {
     const currentValue = component.data[key as keyof ComponentData] as MultilingualText | undefined
@@ -560,48 +579,248 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                 </Select>
               </div>
               
-              {component.data.backgroundType === 'gradient' && (
+              {component.data.backgroundType === 'solid' && (
                 <div>
-                  <Label htmlFor="gradient">Gradient Classes</Label>
-                  <Input
-                    id="gradient"
-                    value={component.data.gradient || ''}
-                    onChange={(e) => updateData('gradient', e.target.value)}
-                    placeholder="from-white via-gray-50 to-gray-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Use Tailwind gradient classes (e.g., from-blue-500 via-purple-500 to-pink-500)
+                  <Label htmlFor="solidBackgroundColor">Background Color</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      id="solidBackgroundColor"
+                      type="color"
+                      value={component.data.backgroundColor || '#ffffff'}
+                      onChange={(e) => updateData('backgroundColor', e.target.value)}
+                      className="w-16 h-10 p-1"
+                    />
+                    <Input
+                      value={component.data.backgroundColor || '#ffffff'}
+                      onChange={(e) => updateData('backgroundColor', e.target.value)}
+                      placeholder="#ffffff"
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Choose a solid background color for the hero section
                   </p>
                 </div>
               )}
               
+              {component.data.backgroundType === 'gradient' && (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="gradientFrom">Gradient Start Color</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="gradientFrom"
+                        type="color"
+                        value={component.data.gradientFrom || '#ffffff'}
+                        onChange={(e) => updateData('gradientFrom', e.target.value)}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={component.data.gradientFrom || '#ffffff'}
+                        onChange={(e) => updateData('gradientFrom', e.target.value)}
+                        placeholder="#ffffff"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="gradientVia">Gradient Middle Color (Optional)</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="gradientVia"
+                        type="color"
+                        value={component.data.gradientVia || ''}
+                        onChange={(e) => updateData('gradientVia', e.target.value || undefined)}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={component.data.gradientVia || ''}
+                        onChange={(e) => updateData('gradientVia', e.target.value || undefined)}
+                        placeholder="Leave empty for no middle color"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="gradientTo">Gradient End Color</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        id="gradientTo"
+                        type="color"
+                        value={component.data.gradientTo || '#000000'}
+                        onChange={(e) => updateData('gradientTo', e.target.value)}
+                        className="w-16 h-10 p-1"
+                      />
+                      <Input
+                        value={component.data.gradientTo || '#000000'}
+                        onChange={(e) => updateData('gradientTo', e.target.value)}
+                        placeholder="#000000"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="gradientDirection">Gradient Direction</Label>
+                    <Select
+                      id="gradientDirection"
+                      value={component.data.gradientDirection || 'to-br'}
+                      onChange={(e) => updateData('gradientDirection', e.target.value)}
+                    >
+                      <option value="to-t">To Top</option>
+                      <option value="to-tr">To Top Right</option>
+                      <option value="to-r">To Right</option>
+                      <option value="to-br">To Bottom Right</option>
+                      <option value="to-b">To Bottom</option>
+                      <option value="to-bl">To Bottom Left</option>
+                      <option value="to-l">To Left</option>
+                      <option value="to-tl">To Top Left</option>
+                    </Select>
+                  </div>
+                  
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Preview</p>
+                    <div 
+                      className="h-16 rounded"
+                      style={{
+                        background: (() => {
+                          const direction = component.data.gradientDirection || 'to-br'
+                          const gradientDirectionMap: { [key: string]: string } = {
+                            'to-t': 'to top',
+                            'to-tr': 'to top right',
+                            'to-r': 'to right',
+                            'to-br': 'to bottom right',
+                            'to-b': 'to bottom',
+                            'to-bl': 'to bottom left',
+                            'to-l': 'to left',
+                            'to-tl': 'to top left'
+                          }
+                          const dir = gradientDirectionMap[direction] || 'to bottom right'
+                          const from = component.data.gradientFrom || '#ffffff'
+                          const via = component.data.gradientVia
+                          const to = component.data.gradientTo || '#000000'
+                          
+                          return via 
+                            ? `linear-gradient(${dir}, ${from}, ${via}, ${to})`
+                            : `linear-gradient(${dir}, ${from}, ${to})`
+                        })()
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              
               {component.data.backgroundType === 'image' && (
-                <div>
-                  <Label>Background Image</Label>
-                  <div className="mt-2">
-                    {component.data.backgroundImage ? (
-                      <div className="flex items-center gap-2">
-                        <img 
-                          src={component.data.backgroundImage} 
-                          alt="Background" 
-                          className="w-16 h-16 object-cover rounded"
-                        />
+                <div className="space-y-4">
+                  <div>
+                    <Label>Background Image</Label>
+                    <div className="mt-2">
+                      {component.data.backgroundImage ? (
+                        <div className="flex items-center gap-2">
+                          <img 
+                            src={component.data.backgroundImage} 
+                            alt="Background" 
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateData('backgroundImage', '')}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
                         <Button
                           variant="outline"
-                          size="sm"
-                          onClick={() => updateData('backgroundImage', '')}
+                          onClick={() => openMediaLibrary('backgroundImage')}
                         >
-                          Remove
+                          Select Image
                         </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="overlay-color">Overlay Color</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          id="overlay-color"
+                          type="color"
+                          value={component.data.backgroundOverlayColor || '#000000'}
+                          onChange={(e) => {
+                            updateData('backgroundOverlayColor', e.target.value)
+                          }}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          value={component.data.backgroundOverlayColor || '#000000'}
+                          onChange={(e) => {
+                            updateData('backgroundOverlayColor', e.target.value)
+                          }}
+                          placeholder="#000000"
+                          className="flex-1"
+                        />
                       </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        onClick={() => openMediaLibrary('backgroundImage')}
-                      >
-                        Select Image
-                      </Button>
-                    )}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Choose the color for the overlay on the background image
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="overlay-opacity">
+                        Overlay Opacity: {localOverlayOpacity}%
+                      </Label>
+                      <div className="mt-2 space-y-2">
+                        <input
+                          id="overlay-opacity"
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={localOverlayOpacity}
+                          onChange={(e) => {
+                            const numVal = Number(e.target.value)
+                            setLocalOverlayOpacity(numVal)
+                            updateData('backgroundOverlayOpacity', numVal)
+                          }}
+                          onInput={(e) => {
+                            const numVal = Number((e.target as HTMLInputElement).value)
+                            setLocalOverlayOpacity(numVal)
+                            updateData('backgroundOverlayOpacity', numVal)
+                          }}
+                          className="w-full slider"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={localOverlayOpacity}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10)
+                              if (!isNaN(val) && val >= 0 && val <= 100) {
+                                setLocalOverlayOpacity(val)
+                                updateData('backgroundOverlayOpacity', val)
+                              }
+                            }}
+                            className="w-20"
+                          />
+                          <span className="text-sm text-gray-500">%</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                          <span>0% (No Overlay)</span>
+                          <span>50%</span>
+                          <span>100% (Full Overlay)</span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Adjust the opacity of the overlay on the background image. Lower values make the image brighter, higher values make it darker.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -702,17 +921,58 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                         updateData('features', updatedFeatures)
                       }}
                     >
-                      <option value="award">Award</option>
-                      <option value="users">Users</option>
-                      <option value="clock">Clock</option>
-                      <option value="star">Star</option>
-                      <option value="check">Check</option>
-                      <option value="heart">Heart</option>
-                      <option value="shield">Shield</option>
-                      <option value="zap">Zap</option>
-                      <option value="target">Target</option>
-                      <option value="lightbulb">Lightbulb</option>
-                      <option value="palette">Palette</option>
+                      <optgroup label="General">
+                        <option value="award">Award</option>
+                        <option value="users">Users</option>
+                        <option value="clock">Clock</option>
+                        <option value="star">Star</option>
+                        <option value="check">Check</option>
+                        <option value="heart">Heart</option>
+                        <option value="shield">Shield</option>
+                        <option value="zap">Zap</option>
+                        <option value="target">Target</option>
+                        <option value="lightbulb">Lightbulb</option>
+                      </optgroup>
+                      <optgroup label="Tools & Construction">
+                        <option value="hammer">Hammer</option>
+                        <option value="wrench">Wrench</option>
+                        <option value="tool">Tool Case</option>
+                        <option value="hardhat">Hard Hat</option>
+                        <option value="ruler">Ruler</option>
+                        <option value="square">Square</option>
+                        <option value="scissors">Scissors</option>
+                        <option value="building">Building</option>
+                        <option value="factory">Factory</option>
+                      </optgroup>
+                      <optgroup label="Workshop & Materials">
+                        <option value="settings">Settings</option>
+                        <option value="cog">Cog</option>
+                        <option value="box">Box</option>
+                        <option value="package">Package</option>
+                        <option value="archive">Archive</option>
+                        <option value="layers">Layers</option>
+                      </optgroup>
+                      <optgroup label="Design & Finish">
+                        <option value="palette">Palette</option>
+                        <option value="paintbrush">Paintbrush</option>
+                        <option value="pen">Pen</option>
+                        <option value="sparkles">Sparkles</option>
+                      </optgroup>
+                      <optgroup label="Furniture">
+                        <option value="sofa">Sofa</option>
+                        <option value="chair">Chair</option>
+                        <option value="table">Table</option>
+                        <option value="home">Home</option>
+                      </optgroup>
+                      <optgroup label="Business & Delivery">
+                        <option value="truck">Truck</option>
+                        <option value="briefcase">Briefcase</option>
+                        <option value="filetext">File Text</option>
+                      </optgroup>
+                      <optgroup label="Handcrafted">
+                        <option value="hand">Hand</option>
+                        <option value="handshake">Handshake</option>
+                      </optgroup>
                     </Select>
                   </div>
                   
@@ -1104,28 +1364,74 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               <h5 className="font-medium text-gray-900 mb-3">Display Options</h5>
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="maxItems">Max Items</Label>
-                  <Input
-                    id="maxItems"
-                    type="number"
-                    value={component.data.maxItems || 8}
-                    onChange={(e) => updateData('maxItems', parseInt(e.target.value) || 8)}
-                    min="1"
-                    max="20"
-                  />
+                  <Label htmlFor="useCarousel" className="flex items-center gap-2">
+                    <input
+                      id="useCarousel"
+                      type="checkbox"
+                      checked={component.data.useCarousel === undefined 
+                        ? (featuredProjects.length > 3) 
+                        : component.data.useCarousel}
+                      onChange={(e) => {
+                        updateData('useCarousel', e.target.checked)
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span>Use Carousel</span>
+                  </Label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                    {featuredProjects.length > 3 
+                      ? 'Carousel is recommended when displaying more than 3 items'
+                      : 'Enable horizontal scrolling carousel mode'}
+                  </p>
                 </div>
                 
-                <div>
-                  <Label htmlFor="layout">Layout</Label>
-                  <Select
-                    id="layout"
-                    value={component.data.layout || 'grid'}
-                    onChange={(e) => updateData('layout', e.target.value)}
-                  >
-                    <option value="grid">Grid</option>
-                    <option value="masonry">Masonry</option>
-                  </Select>
-                </div>
+                {(component.data.useCarousel === false || (component.data.useCarousel === undefined && featuredProjects.length <= 3)) && (
+                  <>
+                    <div>
+                      <Label htmlFor="maxItems">Max Items</Label>
+                      <Input
+                        id="maxItems"
+                        type="number"
+                        value={component.data.maxItems || 8}
+                        onChange={(e) => updateData('maxItems', parseInt(e.target.value) || 8)}
+                        min="1"
+                        max="20"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="layout">Layout</Label>
+                      <select
+                        id="layout"
+                        value={component.data.layout || 'grid'}
+                        onChange={(e) => updateData('layout', e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="grid">Grid</option>
+                        <option value="masonry">Masonry</option>
+                      </select>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {component.data.layout === 'masonry' 
+                          ? 'Masonry layout creates a Pinterest-style waterfall effect'
+                          : 'Grid layout displays items in a uniform grid pattern'}
+                      </p>
+                    </div>
+                  </>
+                )}
+                
+                {component.data.useCarousel && (
+                  <div>
+                    <Label htmlFor="maxItems">Max Items</Label>
+                    <Input
+                      id="maxItems"
+                      type="number"
+                      value={component.data.maxItems || 8}
+                      onChange={(e) => updateData('maxItems', parseInt(e.target.value) || 8)}
+                      min="1"
+                      max="20"
+                    />
+                  </div>
+                )}
                 
                 <div>
                   <Label htmlFor="columns">Columns</Label>

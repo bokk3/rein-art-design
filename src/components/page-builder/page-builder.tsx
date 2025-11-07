@@ -102,6 +102,10 @@ export function PageBuilder({
         comp.id === id ? { ...comp, data } : comp
       )
     )
+    // Update selectedComponent if it's the one being updated
+    setSelectedComponent(prev => 
+      prev && prev.id === id ? { ...prev, data } : prev
+    )
   }, [])
 
   const deleteComponent = useCallback((id: string) => {
@@ -495,23 +499,27 @@ export function PageBuilder({
                 </div>
               ) : (
                 <div>
-                  {components.map((component, index) => (
-                    <SortableComponent
-                      key={component.id}
-                      component={component}
-                      index={index}
-                      isSelected={selectedComponent?.id === component.id}
-                      onSelect={() => {
-                        setSelectedComponent(component)
-                        setIsEditing(true)
-                      }}
-                      onUpdate={(data) => updateComponent(component.id, data)}
-                      onDelete={() => deleteComponent(component.id)}
-                      onDuplicate={() => duplicateComponent(component)}
-                      onMoveUp={index > 0 ? () => moveComponent(index, index - 1) : undefined}
-                      onMoveDown={index < components.length - 1 ? () => moveComponent(index, index + 1) : undefined}
-                    />
-                  ))}
+                  {components.map((component, index) => {
+                    // Always get the latest component data
+                    const currentComponent = components.find(c => c.id === component.id) || component
+                    return (
+                      <SortableComponent
+                        key={component.id}
+                        component={currentComponent}
+                        index={index}
+                        isSelected={selectedComponent?.id === component.id}
+                        onSelect={() => {
+                          setSelectedComponent(currentComponent)
+                          setIsEditing(true)
+                        }}
+                        onUpdate={(data) => updateComponent(component.id, data)}
+                        onDelete={() => deleteComponent(component.id)}
+                        onDuplicate={() => duplicateComponent(component)}
+                        onMoveUp={index > 0 ? () => moveComponent(index, index - 1) : undefined}
+                        onMoveDown={index < components.length - 1 ? () => moveComponent(index, index + 1) : undefined}
+                      />
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -520,29 +528,40 @@ export function PageBuilder({
       </div>
 
       {/* Component Editor Sidebar */}
-      {isEditing && selectedComponent && (
-        <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Edit Component</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(false)}
-              >
-                ×
-              </Button>
+      {selectedComponent && (() => {
+        // Always get the latest component data from the components array
+        const latestComponent = components.find(c => c.id === selectedComponent.id)
+        if (!latestComponent) return null
+        
+        return (
+          <div className="w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Edit Component</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditing(false)
+                    setSelectedComponent(null)
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  ×
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-auto">
+              <ComponentEditor
+                key={`${latestComponent.id}-${latestComponent.data.backgroundOverlayOpacity ?? 0}-${latestComponent.data.backgroundOverlayColor || ''}`}
+                component={latestComponent}
+                onChange={(data) => updateComponent(latestComponent.id, data)}
+              />
             </div>
           </div>
-          
-          <div className="flex-1 overflow-auto">
-            <ComponentEditor
-              component={selectedComponent}
-              onChange={(data) => updateComponent(selectedComponent.id, data)}
-            />
-          </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
@@ -565,7 +584,8 @@ function getDefaultComponentData(type: PageComponent['type']): ComponentData {
         },
         heroButtonLink: '/projects',
         backgroundColor: '#ffffff',
-        textColor: '#000000'
+        textColor: '#000000',
+        backgroundOverlayOpacity: 0 // Default: no overlay
       }
     case 'text':
       return {
