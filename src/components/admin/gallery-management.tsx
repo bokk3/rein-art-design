@@ -59,16 +59,24 @@ export function GalleryManagement() {
 
       if (response.ok) {
         const result = await response.json()
-        alert(`Successfully uploaded ${result.uploaded} images`)
-        setBulkUploadFiles(null)
-        // Refresh the library
-        setActiveTab('library')
+        const uploadedCount = result.uploaded || result.items?.length || 0
+        if (uploadedCount > 0) {
+          alert(`Successfully uploaded ${uploadedCount} image(s)`)
+          setBulkUploadFiles(null)
+          // Refresh the library
+          setActiveTab('library')
+        } else {
+          alert('No images were uploaded. Please check file formats and sizes.')
+        }
       } else {
-        alert('Failed to upload images')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        const errorMessage = errorData.error || `Failed to upload images (${response.status})`
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Error uploading:', error)
-      alert('Error uploading images')
+      const errorMessage = error instanceof Error ? error.message : 'Error uploading images. Please try again.'
+      alert(errorMessage)
     }
   }
 

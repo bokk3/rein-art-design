@@ -60,14 +60,18 @@ export function ThemeSettings() {
       if (response.ok) {
         // Apply the theme settings immediately
         applyThemeSettings()
+        alert('Theme settings saved successfully!')
         // Reload page to apply image settings changes
         window.location.reload()
       } else {
-        alert('Failed to save theme settings')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        const errorMessage = errorData.error || `Failed to save theme settings (${response.status})`
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Error saving theme settings:', error)
-      alert('Error saving theme settings')
+      const errorMessage = error instanceof Error ? error.message : 'Error saving theme settings'
+      alert(errorMessage)
     } finally {
       setSaving(false)
     }

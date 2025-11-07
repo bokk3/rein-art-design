@@ -55,10 +55,15 @@ export function ImageUploader({ images, onImagesChange }: ImageUploaderProps) {
         })
 
         if (!response.ok) {
-          throw new Error(`Failed to upload ${file.name}`)
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Failed to upload ${file.name}: ${response.status}`)
         }
 
         const result = await response.json()
+        
+        if (!result.originalUrl || !result.thumbnailUrl) {
+          throw new Error(`Invalid response from server for ${file.name}`)
+        }
         
         newImages.push({
           originalUrl: result.originalUrl,
@@ -68,10 +73,14 @@ export function ImageUploader({ images, onImagesChange }: ImageUploaderProps) {
         })
       }
 
-      onImagesChange([...images, ...newImages])
+      if (newImages.length > 0) {
+        onImagesChange([...images, ...newImages])
+        console.log(`✅ Successfully uploaded ${newImages.length} image(s)`)
+      }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Failed to upload images. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload images. Please try again.'
+      alert(errorMessage)
     } finally {
       setUploading(false)
     }

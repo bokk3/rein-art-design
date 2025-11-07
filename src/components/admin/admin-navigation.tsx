@@ -106,7 +106,7 @@ export function AdminNavigation() {
           <div className="flex items-center space-x-4">
             <Link href={getLocalizedHref('/')} className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              <span className="text-sm font-medium">{t('nav.backToSite')}</span>
+              <span className="text-sm font-medium">{t('nav.backToSite') || 'Terug naar site'}</span>
             </Link>
             <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
             <Link href={getLocalizedHref('/admin')} className="flex items-center">
@@ -270,7 +270,7 @@ export function AdminNavigation() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 <ArrowLeft className="h-4 w-4 mr-3" />
-                <span className="font-medium">{t('nav.backToSite')}</span>
+                <span className="font-medium">{t('nav.backToSite') || 'Terug naar site'}</span>
               </Link>
               
               <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>

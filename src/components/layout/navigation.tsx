@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
@@ -78,9 +79,15 @@ export function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href={getLocalizedHref('/')} className="flex items-center group">
-            <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent group-hover:from-gray-700 group-hover:to-gray-900 dark:group-hover:from-gray-200 dark:group-hover:to-white transition-all duration-300">
-              Portfolio
-            </span>
+            <Image
+              src="/logo.png"
+              alt="Rein Art Design"
+              width={120}
+              height={40}
+              className="h-10 w-auto object-contain dark:brightness-0 dark:invert transition-opacity group-hover:opacity-80"
+              priority
+              unoptimized
+            />
           </Link>
 
           {/* Desktop Navigation */}

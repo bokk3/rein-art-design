@@ -182,13 +182,24 @@ export function MediaLibrary({
         // Refresh the media list to show the new uploads
         await fetchMedia()
         
-        console.log(`Successfully uploaded ${result.uploaded} images`)
+        const uploadedCount = result.uploaded || result.items?.length || 0
+        if (uploadedCount > 0) {
+          console.log(`✅ Successfully uploaded ${uploadedCount} image(s)`)
+          // Show success message
+          alert(`Successfully uploaded ${uploadedCount} image(s)`)
+        } else {
+          alert('No images were uploaded. Please check file formats and sizes.')
+        }
       } else {
-        const errorText = await response.text()
-        console.error('Failed to upload images:', response.status, errorText)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        const errorMessage = errorData.error || `Failed to upload images (${response.status})`
+        console.error('Failed to upload images:', response.status, errorMessage)
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('Error uploading files:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error uploading images. Please try again.'
+      alert(errorMessage)
     } finally {
       setUploading(false)
     }

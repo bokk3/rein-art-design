@@ -67,8 +67,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.email')}</div>
-                    <a href="mailto:info@example.com" className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
-                      info@example.com
+                    <a href="mailto:contact@reinartdesign.be" className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
+                      contact@reinartdesign.be
                     </a>
                   </div>
                 </div>
@@ -78,8 +78,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.phone')}</div>
-                    <a href="tel:+32123456789" className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
-                      +32 123 456 789
+                    <a href="tel:+32487837041" className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
+                      + 32 (0) 487 837 041
                     </a>
                   </div>
                 </div>
@@ -89,8 +89,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.location')}</div>
-                    <span className="text-gray-900 dark:text-gray-100 font-medium">
-                      Brussels, Belgium
+                    <span className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-line">
+                      Bornestraat 285{'\n'}3012 Wilsele
                     </span>
                   </div>
                 </div>

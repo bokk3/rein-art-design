@@ -95,10 +95,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700 text-center">
-          <p className="text-gray-600 dark:text-gray-300">
-            © {currentYear} {t('footer.brand')}. {t('footer.allRightsReserved')}
-          </p>
+        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-center space-y-2">
+            <p className="text-gray-600 dark:text-gray-300">
+              © {currentYear} {t('footer.brand')}. {t('footer.allRightsReserved')}
+            </p>
+            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+              <p>Rein Art Design BVBA</p>
+              <p>IBAN: BE 92 0018 2117 7323</p>
+              <p>BTW: BE 0682 403 611</p>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
