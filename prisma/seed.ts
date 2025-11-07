@@ -74,30 +74,77 @@ async function main() {
   const settings = [
     {
       key: 'site_title',
-      value: { nl: 'Mijn Portfolio', fr: 'Mon Portfolio' },
+      value: { nl: 'Rein Art Design', fr: 'Rein Art Design', en: 'Rein Art Design' },
       category: 'general',
       description: 'Site title in different languages'
     },
     {
       key: 'site_description',
       value: { 
-        nl: 'Welkom bij mijn portfolio van handgemaakte creaties',
-        fr: 'Bienvenue dans mon portfolio de créations artisanales'
+        nl: 'Elegante en functionele meubels handgemaakt in onze werkplaats',
+        fr: 'Meubles élégants et fonctionnels fabriqués à la main dans notre atelier',
+        en: 'Elegant and functional furniture handmade in our workshop'
       },
       category: 'general',
       description: 'Site description in different languages'
     },
     {
+      key: 'company_name',
+      value: 'Rein Art Design',
+      category: 'company',
+      description: 'Company name'
+    },
+    {
+      key: 'company_owner',
+      value: 'Rein De Keyser',
+      category: 'company',
+      description: 'Company owner name'
+    },
+    {
+      key: 'company_address',
+      value: 'Bornestraat 285\n3012 Wilsele',
+      category: 'company',
+      description: 'Company address'
+    },
+    {
+      key: 'company_details',
+      value: {
+        legalName: 'Rein Art Design BVBA',
+        iban: 'BE 92 0018 2117 7323',
+        vat: 'BE 0682 403 611'
+      },
+      category: 'company',
+      description: 'Company legal details (IBAN, VAT, etc.)'
+    },
+    {
+      key: 'site_url',
+      value: 'https://www.reinartdesign.be/',
+      category: 'general',
+      description: 'Site URL when deployed'
+    },
+    {
       key: 'contact_email',
-      value: 'contact@example.com',
+      value: 'contact@reinartdesign.be',
       category: 'contact',
       description: 'Primary contact email address'
     },
     {
       key: 'contact_phone',
-      value: '+32 123 456 789',
+      value: '+ 32 (0) 487 837 041',
       category: 'contact',
       description: 'Primary contact phone number'
+    },
+    {
+      key: 'footer_copyright',
+      value: '© {year} Rein Art Design. Designed with <3 by truyens.pro',
+      category: 'footer',
+      description: 'Footer copyright text with year placeholder'
+    },
+    {
+      key: 'instagram_url',
+      value: 'https://www.instagram.com/rein_art_design/',
+      category: 'social',
+      description: 'Instagram profile URL'
     },
     {
       key: 'theme_colors',
@@ -142,7 +189,8 @@ async function main() {
         accessToken: '',
         refreshToken: '',
         userId: '',
-        syncInterval: 3600000 // 1 hour in milliseconds
+        syncInterval: 3600000, // 1 hour in milliseconds
+        profileUrl: 'https://www.instagram.com/rein_art_design/'
       },
       isActive: false
     },
@@ -191,7 +239,7 @@ async function main() {
         translations: [
           {
             languageId: defaultLanguage.id,
-            title: 'Over Mij',
+            title: 'Over Ons',
             content: {
               type: 'doc',
               content: [
@@ -200,7 +248,16 @@ async function main() {
                   content: [
                     {
                       type: 'text',
-                      text: 'Welkom bij mijn portfolio. Hier vind je een overzicht van mijn handgemaakte creaties.'
+                      text: 'Wij maken elegante en functionele meubels die afgestemd zijn op mensen die ze dagdagelijks gebruiken. Alle meubels worden in huis ontworpen en handgemaakt in onze werkplaats. We voeren zoveel mogelijk zelf uit zodat de meubels precies worden zoals we ze willen hebben. Onze geliefkoosde materialen zijn staal en hout van een duurzame oorsprong. Maar als een ontwerp nog wat extras vraagt schromen we niet om te werken met materialen zoals glas, terrazzo en messing.'
+                    }
+                  ]
+                },
+                {
+                  type: 'paragraph',
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'Elk ontwerp wordt tot in het kleinste detail afgewerkt. We testen onze meubels grondig op levensduurte en stabiliteit, want wij willen dat ze landurig gebruikt kunnen worden en men er jaren kan van genieten. Voor ons is het belangrijk dat bij het op maat ontwerpen er rekening gehouden wordt met de ruimte waar het werk terecht zal komen. Onze meubels zijn zowel een praktische als esthetische toevoeging aan de plaats waar ze zullen staan.'
                     }
                   ]
                 }
@@ -218,7 +275,16 @@ async function main() {
                   content: [
                     {
                       type: 'text',
-                      text: 'Bienvenue dans mon portfolio. Vous trouverez ici un aperçu de mes créations artisanales.'
+                      text: 'Nous créons des meubles élégants et fonctionnels adaptés aux personnes qui les utilisent quotidiennement. Tous les meubles sont conçus en interne et fabriqués à la main dans notre atelier. Nous effectuons autant que possible nous-mêmes pour que les meubles soient exactement comme nous le souhaitons. Nos matériaux préférés sont l\'acier et le bois d\'origine durable. Mais si un design demande encore quelques extras, nous n\'hésitons pas à travailler avec des matériaux comme le verre, le terrazzo et le laiton.'
+                    }
+                  ]
+                },
+                {
+                  type: 'paragraph',
+                  content: [
+                    {
+                      type: 'text',
+                      text: 'Chaque design est fini dans les moindres détails. Nous testons nos meubles en profondeur pour leur durabilité et leur stabilité, car nous voulons qu\'ils puissent être utilisés pendant longtemps et que l\'on puisse en profiter pendant des années. Pour nous, il est important que lors de la conception sur mesure, on tienne compte de l\'espace où l\'œuvre sera placée. Nos meubles sont à la fois un ajout pratique et esthétique à l\'endroit où ils seront placés.'
                     }
                   ]
                 }
