@@ -54,108 +54,138 @@ async function scrapeProjects() {
     
     const scrapedProjects: ScrapedProject[] = []
     
-    // Try to find project containers - adjust selectors based on actual HTML structure
-    // Common patterns to look for:
-    // - Article tags
-    // - Divs with class names containing "project", "werk", "item", "card", "gallery"
-    // - List items
-    
-    // First, let's log the HTML structure to help identify the right selectors
     console.log('\n📋 Analyzing page structure...')
     
-    // Try multiple common selectors
-    const possibleSelectors = [
-      'article',
-      '[class*="project"]',
-      '[class*="werk"]',
-      '[class*="item"]',
-      '[class*="card"]',
-      '[class*="gallery"]',
-      '.project',
-      '.werk',
-      '.portfolio-item',
-      '.gallery-item'
-    ]
+    // Find all project rows - each vce-row-container represents a project
+    const projectRows = $('.vce-row-container')
     
-    let projectElements: cheerio.Cheerio<cheerio.Element> | null = null
-    let usedSelector = ''
-    
-    for (const selector of possibleSelectors) {
-      const elements = $(selector)
-      if (elements.length > 0) {
-        projectElements = elements
-        usedSelector = selector
-        console.log(`✅ Found ${elements.length} elements using selector: ${selector}`)
-        break
-      }
-    }
-    
-    if (!projectElements || projectElements.length === 0) {
-      console.log('\n⚠️  Could not automatically detect project structure.')
-      console.log('📝 Please inspect the HTML and update the selectors in the script.')
-      console.log('\n💡 Common HTML structure to look for:')
-      console.log('   - Project containers (article, div, li)')
-      console.log('   - Title elements (h1, h2, h3, .title, .name)')
-      console.log('   - Image elements (img, picture)')
-      console.log('   - Description elements (p, .description, .text)')
-      
-      // Save HTML to file for inspection
+    if (projectRows.length === 0) {
+      console.log('\n⚠️  Could not find project rows (.vce-row-container)')
       const fs = await import('fs/promises')
       await fs.writeFile('scraped-page.html', html)
-      console.log('\n💾 Saved HTML to scraped-page.html for inspection')
+      console.log('💾 Saved HTML to scraped-page.html for inspection')
       return
     }
     
-    console.log(`\n🔍 Extracting projects using selector: ${usedSelector}\n`)
+    console.log(`✅ Found ${projectRows.length} project row(s)\n`)
     
-    // Extract projects
-    projectElements.each((index, element) => {
-      const $element = $(element)
+    // Extract projects from each row
+    projectRows.each((index, rowElement) => {
+      const $row = $(rowElement)
       
-      // Try to find title - common patterns
-      const title = 
-        $element.find('h1, h2, h3, h4, .title, .name, [class*="title"], [class*="name"]').first().text().trim() ||
-        $element.find('a').first().text().trim() ||
-        $element.attr('title') ||
-        $element.attr('data-title') ||
-        `Project ${index + 1}`
+      // Find text block with title and description
+      const $textBlock = $row.find('.vce-text-block')
       
-      // Try to find description
-      const description = 
-        $element.find('p, .description, .text, [class*="description"], [class*="text"]').first().text().trim() ||
-        $element.find('p').first().text().trim() ||
-        ''
+      if ($textBlock.length === 0) {
+        console.log(`⚠️  Row ${index + 1}: No text block found, skipping`)
+        return
+      }
       
-      // Find images
-      const images: string[] = []
-      $element.find('img, picture img').each((_, img) => {
-        const src = $(img).attr('src') || $(img).attr('data-src') || $(img).attr('data-lazy-src')
-        if (src) {
-          // Convert relative URLs to absolute
-          const imageUrl = src.startsWith('http') ? src : `https://www.reinartdesign.be${src.startsWith('/') ? src : '/' + src}`
-          images.push(imageUrl)
+      // Extract title from h1
+      const title = $textBlock.find('h1').first().text().trim().replace(/\s+/g, ' ')
+      
+      if (!title) {
+        console.log(`⚠️  Row ${index + 1}: No title found, skipping`)
+        return
+      }
+      
+      // Extract description from h6 tags (excluding those with dimensions)
+      const descriptionParts: string[] = []
+      const materials: string[] = []
+      
+      $textBlock.find('h6').each((_, h6Element) => {
+        const text = $(h6Element).text().trim()
+        if (!text) return
+        
+        // Check if it contains dimensions (Ø symbol or cm)
+        if (text.includes('Ø') || text.includes('cm') || text.match(/\d+x\d+x\d+/)) {
+          // This is a dimension/spec, add to materials
+          materials.push(text)
+        } else {
+          // This is description text
+          descriptionParts.push(text)
         }
       })
       
-      // Try to find materials (might be in description or separate elements)
-      const materials: string[] = []
-      $element.find('[class*="material"], [class*="materiaal"]').each((_, el) => {
-        const material = $(el).text().trim()
-        if (material) materials.push(material)
+      const description = descriptionParts.join(' ').trim() || undefined
+      
+      // Extract images from two sources:
+      // 1. Slider images (background-image in style attribute)
+      const images: string[] = []
+      
+      $row.find('.vce-simple-image-slider-item').each((_, sliderItem) => {
+        const style = $(sliderItem).find('div[style*="background-image"]').attr('style')
+        if (style) {
+          const match = style.match(/background-image:url\(([^)]+)\)/)
+          if (match && match[1]) {
+            let imageUrl = match[1].trim()
+            // Remove quotes if present
+            imageUrl = imageUrl.replace(/^["']|["']$/g, '')
+            // Convert to https if needed
+            if (imageUrl.startsWith('http://')) {
+              imageUrl = imageUrl.replace('http://', 'https://')
+            }
+            if (imageUrl && !images.includes(imageUrl)) {
+              images.push(imageUrl)
+            }
+          }
+        }
       })
       
-      if (title && title !== `Project ${index + 1}`) {
-        scrapedProjects.push({
-          title,
-          description: description || undefined,
-          images,
-          materials: materials.length > 0 ? materials : undefined
-        })
-        
-        console.log(`📦 Found project: ${title}`)
-        if (images.length > 0) console.log(`   Images: ${images.length}`)
-        if (description) console.log(`   Description: ${description.substring(0, 50)}...`)
+      // 2. Gallery images (img src)
+      $row.find('.vce-image-masonry-gallery-item img').each((_, img) => {
+        let src = $(img).attr('src')
+        if (src) {
+          // Convert to https if needed
+          if (src.startsWith('http://')) {
+            src = src.replace('http://', 'https://')
+          }
+          // Convert relative URLs to absolute
+          if (!src.startsWith('http')) {
+            src = `https://www.reinartdesign.be${src.startsWith('/') ? src : '/' + src}`
+          }
+          if (src && !images.includes(src)) {
+            images.push(src)
+          }
+        }
+      })
+      
+      // Also check for href in gallery links (full-size images)
+      $row.find('.vce-image-masonry-gallery-item[href]').each((_, link) => {
+        let href = $(link).attr('href')
+        if (href) {
+          // Convert to https if needed
+          if (href.startsWith('http://')) {
+            href = href.replace('http://', 'https://')
+          }
+          // Convert relative URLs to absolute
+          if (!href.startsWith('http')) {
+            href = `https://www.reinartdesign.be${href.startsWith('/') ? href : '/' + href}`
+          }
+          if (href && !images.includes(href)) {
+            images.push(href)
+          }
+        }
+      })
+      
+      scrapedProjects.push({
+        title,
+        description,
+        images,
+        materials: materials.length > 0 ? materials : undefined
+      })
+      
+      console.log(`📦 Found project: ${title}`)
+      if (description) {
+        console.log(`   Description: ${description.substring(0, 80)}${description.length > 80 ? '...' : ''}`)
       }
+      if (images.length > 0) {
+        console.log(`   Images: ${images.length}`)
+      }
+      if (materials.length > 0) {
+        console.log(`   Materials/Specs: ${materials.length} item(s)`)
+      }
+      console.log('')
     })
     
     if (scrapedProjects.length === 0) {
@@ -172,20 +202,27 @@ async function scrapeProjects() {
     // Create projects in database
     for (const projectData of scrapedProjects) {
       try {
+        // Combine description and materials/specs
+        let fullDescription = projectData.description || ''
+        if (projectData.materials && projectData.materials.length > 0) {
+          if (fullDescription) {
+            fullDescription += '\n\n'
+          }
+          fullDescription += projectData.materials.join('\n')
+        }
+        
         // Convert description to TipTap JSON format
-        const descriptionJson = projectData.description ? {
+        const descriptionJson = fullDescription ? {
           type: 'doc',
-          content: [
-            {
-              type: 'paragraph',
-              content: [
-                {
-                  type: 'text',
-                  text: projectData.description
-                }
-              ]
-            }
-          ]
+          content: fullDescription.split('\n\n').map(paragraph => ({
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: paragraph.trim()
+              }
+            ]
+          })).filter(p => p.content[0].text)
         } : {
           type: 'doc',
           content: []
@@ -202,7 +239,7 @@ async function scrapeProjects() {
                 languageId: defaultLanguage.id,
                 title: projectData.title,
                 description: descriptionJson,
-                materials: projectData.materials || []
+                materials: projectData.materials || [] // Dimensions and specs are stored here
               }
             },
             images: projectData.images.length > 0 ? {

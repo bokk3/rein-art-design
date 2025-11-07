@@ -795,20 +795,20 @@ const commonTranslations = {
     category: 'content',
     description: 'Footer brand name',
     translations: {
-      nl: 'Portfolio',
-      fr: 'Portfolio',
-      en: 'Portfolio',
-      de: 'Portfolio'
+      nl: 'Rein Art Design',
+      fr: 'Rein Art Design',
+      en: 'Rein Art Design',
+      de: 'Rein Art Design'
     }
   },
   'footer.tagline': {
     category: 'content',
     description: 'Footer tagline',
     translations: {
-      nl: 'Aangepast ambachtelijk werk gemaakt met kwaliteitsmaterialen en aandacht voor detail.',
-      fr: 'Travail artisanal personnalisé réalisé avec des matériaux de qualité et une attention aux détails.',
-      en: 'Custom artisan work crafted with quality materials and attention to detail.',
-      de: 'Maßgeschneiderte handwerkliche Arbeit mit hochwertigen Materialien und Liebe zum Detail.'
+      nl: 'Elegante en functionele meubels handgemaakt in onze werkplaats',
+      fr: 'Meubles élégants et fonctionnels fabriqués à la main dans notre atelier',
+      en: 'Elegant and functional furniture handmade in our workshop',
+      de: 'Elegante und funktionale Möbel handgefertigt in unserer Werkstatt'
     }
   },
   'footer.navigation': {
@@ -885,10 +885,10 @@ const commonTranslations = {
     category: 'content',
     description: 'Contact page subtitle',
     translations: {
-      nl: 'Neem contact met ons op over uw project. We horen graag van u!',
-      fr: 'Contactez-nous concernant votre projet. Nous serions ravis de vous entendre!',
-      en: 'Get in touch with us about your project. We\'d love to hear from you!',
-      de: 'Kontaktieren Sie uns zu Ihrem Projekt. Wir freuen uns von Ihnen zu hören!'
+      nl: 'Neem contact met ons op voor vragen over onze meubels of voor een op maat gemaakte opdracht. We staan klaar om samen met u uw droommeubel te ontwerpen en te realiseren.',
+      fr: 'Contactez-nous pour des questions sur nos meubles ou pour une commande sur mesure. Nous sommes prêts à concevoir et réaliser votre meuble de rêve avec vous.',
+      en: 'Contact us for questions about our furniture or for a custom-made order. We are ready to design and realize your dream furniture together with you.',
+      de: 'Kontaktieren Sie uns für Fragen zu unseren Möbeln oder für eine maßgeschneiderte Bestellung. Wir sind bereit, gemeinsam mit Ihnen Ihr Traummöbel zu entwerfen und zu realisieren.'
     }
   },
   'contact.sendMessage': {
@@ -1425,10 +1425,10 @@ const commonTranslations = {
     category: 'content',
     description: 'Projects page subtitle',
     translations: {
-      nl: 'Ontdek onze collectie van aangepast werk en ambachtelijke projecten. Elk stuk wordt gemaakt met aandacht voor detail en kwaliteitsmaterialen.',
-      fr: 'Explorez notre collection de travaux personnalisés et de projets artisanaux. Chaque pièce est fabriquée avec attention aux détails et des matériaux de qualité.',
-      en: 'Explore our collection of custom work and artisan projects. Each piece is crafted with attention to detail and quality materials.',
-      de: 'Entdecken Sie unsere Sammlung von maßgeschneiderten Arbeiten und handwerklichen Projekten. Jedes Stück wird mit Liebe zum Detail und hochwertigen Materialien hergestellt.'
+      nl: 'Ontdek onze collectie van op maat gemaakte meubels. Elk stuk wordt in huis ontworpen en handgemaakt in onze werkplaats met aandacht voor detail en duurzaamheid.',
+      fr: 'Explorez notre collection de meubles sur mesure. Chaque pièce est conçue en interne et fabriquée à la main dans notre atelier avec attention aux détails et durabilité.',
+      en: 'Explore our collection of custom-made furniture. Each piece is designed in-house and handmade in our workshop with attention to detail and durability.',
+      de: 'Entdecken Sie unsere Sammlung von maßgeschneiderten Möbeln. Jedes Stück wird intern entworfen und in unserer Werkstatt handgefertigt mit Liebe zum Detail und Langlebigkeit.'
     }
   },
   'projects.backToProjects': {
