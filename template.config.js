@@ -24,6 +24,6 @@ module.exports = {
     "{{CONTAINER_PREFIX}}": "nextjs-auth",
     "{{ADMIN_EMAIL}}": "admin@example.com",
     "{{COMPANY_NAME}}": "Your Company",
-    "{{DOMAIN}}": "localhost:3000"
+    "{{DOMAIN}}": "localhost:3020"
   }
 }

@@ -2,15 +2,15 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: nextjs-cms-postgres
+    container_name: rein-postgres
     environment:
-      POSTGRES_DB: nextjs_cms
+      POSTGRES_DB: rein
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_rein:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -22,9 +22,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nextjs-cms-app
+    container_name: rein-app
     ports:
-      - "3000:3000"
+      - "3020:3000"
     env_file:
       - .env.local
     environment:
@@ -39,9 +39,9 @@ services:
       - /app/.next
 
 volumes:
-  postgres_data:
+  postgres_data_rein:
 
 
 networks:
   default:
-    name: nextjs-cms-network
+    name: rein-network

@@ -89,8 +89,8 @@ A secure web application built with Next.js, Better Auth, and Prisma.
    \`\`\`
 
 3. **Access the application:**
-   - Homepage: http://localhost:3000
-   - Admin: http://localhost:3000/admin
+   - Homepage: http://localhost:3020
+   - Admin: http://localhost:3020/admin
    - Login: ${adminEmail} / admin123
 
 ## Project Details

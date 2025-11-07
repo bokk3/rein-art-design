@@ -237,12 +237,12 @@ export default async function ContentPage({ params, searchParams }: PageProps) {
               '@type': 'WebPage',
               name: translation.title,
               description: ContentValidator.generateExcerpt(translation.content as JSONContent),
-              url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/${resolvedParams.slug}`,
+              url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3020'}/${resolvedParams.slug}`,
               inLanguage: (translation as TranslationWithLanguage).language?.code || 'nl',
               isPartOf: {
                 '@type': 'WebSite',
                 name: 'Portfolio Website',
-                url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+                url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3020'
               }
             })
           }}
