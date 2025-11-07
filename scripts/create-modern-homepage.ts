@@ -25,34 +25,34 @@ async function createModernHomepage() {
         order: 1,
         data: {
           title: {
-            en: 'Exceptional Craftsmanship',
-            nl: 'Uitzonderlijk Vakmanschap',
-            fr: 'Artisanat Exceptionnel',
-            de: 'Außergewöhnliche Handwerkskunst'
+            en: 'Rein Art Design',
+            nl: 'Rein Art Design',
+            fr: 'Rein Art Design',
+            de: 'Rein Art Design'
           },
           subtitle: {
-            en: 'Where tradition meets innovation',
-            nl: 'Waar traditie innovatie ontmoet',
-            fr: 'Où la tradition rencontre l\'innovation',
-            de: 'Wo Tradition auf Innovation trifft'
+            en: 'Elegant and functional furniture handmade in our workshop',
+            nl: 'Elegante en functionele meubels handgemaakt in onze werkplaats',
+            fr: 'Meubles élégants et fonctionnels fabriqués à la main dans notre atelier',
+            de: 'Elegante und funktionale Möbel handgefertigt in unserer Werkstatt'
           },
           description: {
-            en: 'Discover unique handcrafted pieces made with premium materials and meticulous attention to detail. Each project tells a story of passion, skill, and artistic vision.',
-            nl: 'Ontdek unieke handgemaakte stukken gemaakt met premium materialen en nauwgezette aandacht voor detail. Elk project vertelt een verhaal van passie, vaardigheid en artistieke visie.',
-            fr: 'Découvrez des pièces artisanales uniques fabriquées avec des matériaux de qualité et une attention méticuleuse aux détails. Chaque projet raconte une histoire de passion, de compétence et de vision artistique.',
-            de: 'Entdecken Sie einzigartige handgefertigte Stücke aus hochwertigen Materialien mit akribischer Liebe zum Detail. Jedes Projekt erzählt eine Geschichte von Leidenschaft, Können und künstlerischer Vision.'
+            en: 'We create elegant and functional furniture tailored to people who use them daily. All furniture is designed in-house and handmade in our workshop. We prefer steel and wood from sustainable sources, but we don\'t hesitate to work with materials like glass, terrazzo, and brass when a design requires it.',
+            nl: 'Wij maken elegante en functionele meubels die afgestemd zijn op mensen die ze dagdagelijks gebruiken. Alle meubels worden in huis ontworpen en handgemaakt in onze werkplaats. Onze geliefkoosde materialen zijn staal en hout van een duurzame oorsprong. Maar als een ontwerp nog wat extras vraagt schromen we niet om te werken met materialen zoals glas, terrazzo en messing.',
+            fr: 'Nous créons des meubles élégants et fonctionnels adaptés aux personnes qui les utilisent quotidiennement. Tous les meubles sont conçus en interne et fabriqués à la main dans notre atelier. Nos matériaux préférés sont l\'acier et le bois d\'origine durable. Mais si un design demande encore quelques extras, nous n\'hésitons pas à travailler avec des matériaux comme le verre, le terrazzo et le laiton.',
+            de: 'Wir schaffen elegante und funktionale Möbel, die auf Menschen zugeschnitten sind, die sie täglich nutzen. Alle Möbel werden intern entworfen und in unserer Werkstatt handgefertigt. Unsere bevorzugten Materialien sind Stahl und Holz aus nachhaltiger Herkunft. Aber wenn ein Design noch etwas Extras erfordert, zögern wir nicht, mit Materialien wie Glas, Terrazzo und Messing zu arbeiten.'
           },
           primaryButton: {
-            en: 'View Portfolio',
-            nl: 'Bekijk Portfolio',
-            fr: 'Voir le Portfolio',
-            de: 'Portfolio Ansehen'
+            en: 'View Projects',
+            nl: 'Bekijk Projecten',
+            fr: 'Voir les Projets',
+            de: 'Projekte Ansehen'
           },
           secondaryButton: {
-            en: 'Commission Work',
-            nl: 'Werk Opdragen',
-            fr: 'Commander un Travail',
-            de: 'Arbeit Beauftragen'
+            en: 'Contact Us',
+            nl: 'Contact Opnemen',
+            fr: 'Nous Contacter',
+            de: 'Kontakt Aufnehmen'
           },
           // Use light gradient in light mode, dark in dark mode (via Tailwind classes)
           backgroundType: 'gradient',
@@ -66,16 +66,16 @@ async function createModernHomepage() {
         order: 2,
         data: {
           title: {
-            en: 'Why Choose Our Craftsmanship',
-            nl: 'Waarom Kiezen Voor Ons Vakmanschap',
-            fr: 'Pourquoi Choisir Notre Artisanat',
-            de: 'Warum Unser Handwerk Wählen'
+            en: 'Why Choose Rein Art Design',
+            nl: 'Waarom Kiezen Voor Rein Art Design',
+            fr: 'Pourquoi Choisir Rein Art Design',
+            de: 'Warum Rein Art Design Wählen'
           },
           subtitle: {
-            en: 'Excellence in every detail',
-            nl: 'Excellentie in elk detail',
-            fr: 'Excellence dans chaque détail',
-            de: 'Exzellenz in jedem Detail'
+            en: 'Quality and durability in every piece',
+            nl: 'Kwaliteit en duurzaamheid in elk stuk',
+            fr: 'Qualité et durabilité dans chaque pièce',
+            de: 'Qualität und Langlebigkeit in jedem Stück'
           },
           features: [
             {
@@ -87,40 +87,40 @@ async function createModernHomepage() {
                 de: 'Premium Materialien'
               },
               description: {
-                en: 'We source only the finest materials from trusted suppliers, ensuring durability and beauty in every piece.',
-                nl: 'We gebruiken alleen de beste materialen van vertrouwde leveranciers, wat duurzaamheid en schoonheid in elk stuk garandeert.',
-                fr: 'Nous nous approvisionnons uniquement en matériaux de la plus haute qualité auprès de fournisseurs de confiance, garantissant durabilité et beauté dans chaque pièce.',
-                de: 'Wir beziehen nur die besten Materialien von vertrauenswürdigen Lieferanten und gewährleisten so Langlebigkeit und Schönheit in jedem Stück.'
+                en: 'We prefer steel and wood from sustainable sources, and we don\'t hesitate to work with materials like glass, terrazzo, and brass when a design requires it.',
+                nl: 'Onze geliefkoosde materialen zijn staal en hout van een duurzame oorsprong. Maar als een ontwerp nog wat extras vraagt schromen we niet om te werken met materialen zoals glas, terrazzo en messing.',
+                fr: 'Nos matériaux préférés sont l\'acier et le bois d\'origine durable. Mais si un design demande encore quelques extras, nous n\'hésitons pas à travailler avec des matériaux comme le verre, le terrazzo et le laiton.',
+                de: 'Unsere bevorzugten Materialien sind Stahl und Holz aus nachhaltiger Herkunft. Aber wenn ein Design noch etwas Extras erfordert, zögern wir nicht, mit Materialien wie Glas, Terrazzo und Messing zu arbeiten.'
               }
             },
             {
               icon: 'users',
               title: {
-                en: 'Expert Artisans',
-                nl: 'Expert Ambachtslieden',
-                fr: 'Artisans Experts',
-                de: 'Experten-Handwerker'
+                en: 'In-House Design & Production',
+                nl: 'In-Huis Ontwerp & Productie',
+                fr: 'Conception et Production Internes',
+                de: 'In-House Design & Produktion'
               },
               description: {
-                en: 'Our team of skilled craftspeople brings decades of experience and passion to every project.',
-                nl: 'Ons team van bekwame ambachtslieden brengt tientallen jaren ervaring en passie naar elk project.',
-                fr: 'Notre équipe d\'artisans qualifiés apporte des décennies d\'expérience et de passion à chaque projet.',
-                de: 'Unser Team erfahrener Handwerker bringt jahrzehntelange Erfahrung und Leidenschaft in jedes Projekt ein.'
+                en: 'All furniture is designed in-house and handmade in our workshop. We do as much as possible ourselves so the furniture becomes exactly as we want it.',
+                nl: 'Alle meubels worden in huis ontworpen en handgemaakt in onze werkplaats. We voeren zoveel mogelijk zelf uit zodat de meubels precies worden zoals we ze willen hebben.',
+                fr: 'Tous les meubles sont conçus en interne et fabriqués à la main dans notre atelier. Nous effectuons autant que possible nous-mêmes pour que les meubles soient exactement comme nous le souhaitons.',
+                de: 'Alle Möbel werden intern entworfen und in unserer Werkstatt handgefertigt. Wir führen so viel wie möglich selbst aus, damit die Möbel genau so werden, wie wir sie haben wollen.'
               }
             },
             {
               icon: 'clock',
               title: {
-                en: 'Timeless Design',
-                nl: 'Tijdloos Design',
-                fr: 'Design Intemporel',
-                de: 'Zeitloses Design'
+                en: 'Durability & Testing',
+                nl: 'Duurzaamheid & Testen',
+                fr: 'Durabilité & Tests',
+                de: 'Langlebigkeit & Tests'
               },
               description: {
-                en: 'Our designs blend classic techniques with contemporary aesthetics for pieces that endure.',
-                nl: 'Onze ontwerpen combineren klassieke technieken met hedendaagse esthetiek voor stukken die blijven bestaan.',
-                fr: 'Nos designs mélangent techniques classiques et esthétiques contemporaines pour des pièces qui perdurent.',
-                de: 'Unsere Designs verbinden klassische Techniken mit zeitgenössischer Ästhetik für dauerhafte Stücke.'
+                en: 'Each design is finished to the smallest detail. We thoroughly test our furniture for durability and stability, because we want them to be used for a long time and enjoyed for years.',
+                nl: 'Elk ontwerp wordt tot in het kleinste detail afgewerkt. We testen onze meubels grondig op levensduurte en stabiliteit, want wij willen dat ze landurig gebruikt kunnen worden en men er jaren kan van genieten.',
+                fr: 'Chaque design est fini dans les moindres détails. Nous testons nos meubles en profondeur pour leur durabilité et leur stabilité, car nous voulons qu\'ils puissent être utilisés pendant longtemps et que l\'on puisse en profiter pendant des années.',
+                de: 'Jedes Design wird bis ins kleinste Detail fertiggestellt. Wir testen unsere Möbel gründlich auf Langlebigkeit und Stabilität, denn wir möchten, dass sie lange genutzt werden können und man jahrelang Freude daran hat.'
               }
             }
           ],
@@ -139,10 +139,10 @@ async function createModernHomepage() {
             de: 'Ausgewählte Projekte'
           },
           subtitle: {
-            en: 'A showcase of our finest work',
-            nl: 'Een showcase van ons beste werk',
-            fr: 'Une vitrine de notre meilleur travail',
-            de: 'Eine Präsentation unserer besten Arbeit'
+            en: 'Discover our custom-made furniture',
+            nl: 'Ontdek onze op maat gemaakte meubels',
+            fr: 'Découvrez nos meubles sur mesure',
+            de: 'Entdecken Sie unsere maßgeschneiderten Möbel'
           },
           showFeatured: true,
           maxItems: 8,
@@ -221,28 +221,28 @@ async function createModernHomepage() {
         order: 5,
         data: {
           title: {
-            en: 'Ready to Create Something Beautiful?',
-            nl: 'Klaar Om Iets Moois Te Creëren?',
-            fr: 'Prêt à Créer Quelque Chose de Beau?',
-            de: 'Bereit, Etwas Schönes zu Schaffen?'
+            en: 'Ready for Your Custom-Made Furniture?',
+            nl: 'Klaar voor Uw Op Maat Gemaakte Meubel?',
+            fr: 'Prêt pour Votre Meuble sur Mesure?',
+            de: 'Bereit für Ihr Maßgeschneidertes Möbel?'
           },
           description: {
-            en: 'Let\'s discuss your project and explore how we can bring your vision to life with exceptional craftsmanship.',
-            nl: 'Laten we uw project bespreken en verkennen hoe we uw visie tot leven kunnen brengen met uitzonderlijk vakmanschap.',
-            fr: 'Discutons de votre projet et explorons comment nous pouvons donner vie à votre vision avec un artisanat exceptionnel.',
-            de: 'Lassen Sie uns Ihr Projekt besprechen und erkunden, wie wir Ihre Vision mit außergewöhnlicher Handwerkskunst zum Leben erwecken können.'
+            en: 'Contact us for questions about our furniture or for a custom-made order. We are ready to design and realize your dream furniture together with you.',
+            nl: 'Neem contact met ons op voor vragen over onze meubels of voor een op maat gemaakte opdracht. We staan klaar om samen met u uw droommeubel te ontwerpen en te realiseren.',
+            fr: 'Contactez-nous pour des questions sur nos meubles ou pour une commande sur mesure. Nous sommes prêts à concevoir et réaliser votre meuble de rêve avec vous.',
+            de: 'Kontaktieren Sie uns für Fragen zu unseren Möbeln oder für eine maßgeschneiderte Bestellung. Wir sind bereit, gemeinsam mit Ihnen Ihr Traummöbel zu entwerfen und zu realisieren.'
           },
           primaryButton: {
-            en: 'Start Your Project',
-            nl: 'Start Uw Project',
-            fr: 'Commencez Votre Projet',
-            de: 'Starten Sie Ihr Projekt'
+            en: 'Contact Us',
+            nl: 'Contact Opnemen',
+            fr: 'Nous Contacter',
+            de: 'Kontakt Aufnehmen'
           },
           secondaryButton: {
-            en: 'View Portfolio',
-            nl: 'Bekijk Portfolio',
-            fr: 'Voir le Portfolio',
-            de: 'Portfolio Ansehen'
+            en: 'View Projects',
+            nl: 'Bekijk Projecten',
+            fr: 'Voir les Projets',
+            de: 'Projekte Ansehen'
           },
           ctaButtonLink: '/contact',
           // No backgroundColor - will use default: light gradient in light mode, dark in dark mode

@@ -28,7 +28,7 @@ async function main() {
   const contentTypes = [
     {
       name: 'projects',
-      displayName: 'Projects',
+      displayName: 'Projecten',
       fields: {
         title: { type: 'string', required: true },
         description: { type: 'richtext', required: true },
@@ -39,7 +39,7 @@ async function main() {
     },
     {
       name: 'services',
-      displayName: 'Services',
+      displayName: 'Diensten',
       fields: {
         title: { type: 'string', required: true },
         description: { type: 'richtext', required: true },
@@ -49,7 +49,7 @@ async function main() {
     },
     {
       name: 'products',
-      displayName: 'Products',
+      displayName: 'Producten',
       fields: {
         title: { type: 'string', required: true },
         description: { type: 'richtext', required: true },
@@ -307,7 +307,7 @@ async function main() {
                   content: [
                     {
                       type: 'text',
-                      text: 'Neem contact met mij op voor vragen over mijn werk of voor opdrachten.'
+                      text: 'Neem contact met ons op voor vragen over onze meubels of voor een op maat gemaakte opdracht. We staan klaar om samen met u uw droommeubel te ontwerpen en te realiseren.'
                     }
                   ]
                 }
@@ -325,7 +325,7 @@ async function main() {
                   content: [
                     {
                       type: 'text',
-                      text: 'Contactez-moi pour des questions sur mon travail ou pour des commissions.'
+                      text: 'Contactez-nous pour des questions sur nos meubles ou pour une commande sur mesure. Nous sommes prêts à concevoir et réaliser votre meuble de rêve avec vous.'
                     }
                   ]
                 }
@@ -430,46 +430,46 @@ async function main() {
   console.log('📧 Creating sample contact messages...')
   const sampleMessages = [
     {
-      name: 'Marie Dubois',
-      email: 'marie.dubois@example.com',
-      projectType: 'Custom Jewelry',
-      message: 'Bonjour, je suis intéressée par une bague personnalisée pour mon mariage. Pourriez-vous me donner plus d\'informations sur vos créations et les prix?',
+      name: 'Jan Janssen',
+      email: 'jan.janssen@example.be',
+      projectType: 'Eettafel op maat',
+      message: 'Hallo, ik zou graag een offerte willen voor een op maat gemaakte eettafel voor mijn eetkamer. De ruimte is ongeveer 4x5 meter en ik ben geïnteresseerd in een combinatie van staal en eikenhout. Kunnen we een afspraak maken om de mogelijkheden te bespreken?',
       read: false,
       replied: false,
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
     },
     {
-      name: 'Jan Janssen',
-      email: 'jan.janssen@example.be',
-      projectType: 'Home Decoration',
-      message: 'Hallo, ik zou graag een offerte willen voor een handgemaakte wanddecoratie voor mijn woonkamer. De afmetingen zijn ongeveer 80x60cm.',
+      name: 'Marie Verstraeten',
+      email: 'marie.verstraeten@example.be',
+      projectType: 'Boekenkast',
+      message: 'Goedemiddag, ik ben op zoek naar een boekenkast die perfect past in mijn woonkamer. Ik heb een muur van 3 meter breed en zou graag een ontwerp willen dat zowel functioneel als esthetisch is. Kunt u me meer informatie geven over uw werkwijze en prijzen?',
       read: true,
       replied: false,
       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
     },
     {
-      name: 'Sophie Laurent',
-      email: 'sophie.laurent@example.fr',
-      projectType: 'Gift Item',
-      message: 'Hello, I saw your beautiful work on Instagram. I would like to commission a special gift for my mother\'s birthday. Could we discuss the possibilities?',
+      name: 'Tom De Vries',
+      email: 'tom.devries@example.be',
+      projectType: 'Wandmeubel',
+      message: 'Beste, ik heb jullie werk gezien op Instagram en ben erg onder de indruk. Ik zou graag een wandmeubel willen laten maken voor mijn woonkamer. Het moet een combinatie zijn van open en gesloten opbergruimte. Kunnen we een afspraak maken om dit te bespreken?',
       read: true,
       replied: true,
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 1 week ago
     },
     {
-      name: 'Pieter Van Der Berg',
-      email: 'pieter.vandenberg@example.nl',
-      projectType: 'Repair Service',
-      message: 'Goedemiddag, ik heb een oude sieraad die gerepareerd moet worden. Is dit iets wat u doet? Het gaat om een antieke broche van mijn grootmoeder.',
+      name: 'Sophie Peeters',
+      email: 'sophie.peeters@example.be',
+      projectType: 'Bureautafel',
+      message: 'Hallo, ik werk thuis en ben op zoek naar een bureautafel die op maat gemaakt is voor mijn thuiskantoor. De ruimte is beperkt (2x2 meter) dus ik heb iets nodig dat efficiënt gebruik maakt van de ruimte. Kunnen jullie me helpen?',
       read: false,
       replied: false,
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
     },
     {
-      name: 'Emma Thompson',
-      email: 'emma.thompson@example.co.uk',
-      projectType: 'Workshop Inquiry',
-      message: 'Hi there! I\'m visiting Belgium next month and I\'m wondering if you offer any workshops or classes? I\'d love to learn some of your techniques.',
+      name: 'Pieter Van Der Berg',
+      email: 'pieter.vandenberg@example.be',
+      projectType: 'Keukenmeubel',
+      message: 'Goedemiddag, ik ben bezig met een keukenrenovatie en ben op zoek naar een uniek keukenmeubel dat als eiland kan dienen. Ik ben geïnteresseerd in een combinatie van staal en terrazzo. Kunnen we een afspraak maken om de mogelijkheden te bespreken?',
       read: false,
       replied: false,
       createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
