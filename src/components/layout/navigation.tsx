@@ -15,6 +15,7 @@ export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
   const [showThemeToggle, setShowThemeToggle] = useState(true)
+  const [isScrolled, setIsScrolled] = useState(false)
   const { currentLanguage, languages, setLanguage, isLoading } = useLanguage()
   const languageButtonRef = useRef<HTMLButtonElement>(null)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
@@ -23,6 +24,20 @@ export function Navigation() {
   // Check if component is mounted (for portal)
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  // Track scroll position to show/hide border
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop
+      setIsScrolled(scrollTop > 0)
+    }
+
+    // Check initial scroll position
+    handleScroll()
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Check if theme toggle should be shown
@@ -74,36 +89,42 @@ export function Navigation() {
   ]
 
   return (
-    <nav className="main-nav bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-[60] transition-all duration-300 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className={`main-nav bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-[60] transition-all duration-300 ${
+      isScrolled 
+        ? 'border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm' 
+        : 'border-b-0 shadow-none'
+    }`}>
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+        <div className="flex justify-between items-center h-20 lg:h-24">
           {/* Logo */}
           <Link href={getLocalizedHref('/')} className="flex items-center group">
             <Image
               src="/logo.png"
               alt="Rein Art Design"
-              width={120}
-              height={40}
-              className="h-10 w-auto object-contain dark:brightness-0 dark:invert transition-opacity group-hover:opacity-80"
+              width={140}
+              height={50}
+              className="h-12 lg:h-14 w-auto object-contain dark:brightness-0 dark:invert transition-opacity group-hover:opacity-80"
               priority
               unoptimized
             />
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={getLocalizedHref(link.href)}
-                className="relative px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group"
+                className={`relative px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group ${
+                  isScrolled ? 'text-base' : 'text-lg lg:text-xl'
+                }`}
               >
                 {link.label}
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
               </Link>
             ))}
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 lg:gap-4 ml-2">
               {/* Theme Toggle - only show if enabled in settings */}
               {showThemeToggle && <ThemeToggle />}
               
@@ -191,12 +212,12 @@ export function Navigation() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700">
-            <div className="py-4 space-y-2">
+            <div className="py-6 space-y-3">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={getLocalizedHref(link.href)}
-                  className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                  className="block px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
@@ -205,7 +226,7 @@ export function Navigation() {
               
               {/* Mobile Theme Toggle - only show if enabled in settings */}
               {showThemeToggle && (
-                <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700 mt-2">
+                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 mt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('nav.theme')}</span>
                     <ThemeToggle />
@@ -215,7 +236,7 @@ export function Navigation() {
               
               {/* Mobile Language Selector */}
               {!isLoading && languages.length > 1 && (
-                <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700 mt-2">
+                <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 mt-3">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t('nav.language')}</div>
                   <div className="space-y-1">
                     {languages.map((language) => (
