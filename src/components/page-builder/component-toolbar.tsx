@@ -9,7 +9,8 @@ import {
   Megaphone, 
   Space, 
   Star,
-  Plus
+  Plus,
+  Film
 } from 'lucide-react'
 
 interface ComponentToolbarProps {
@@ -40,6 +41,12 @@ const componentTypes = [
     label: 'Gallery',
     icon: Grid,
     description: 'Grid of images from your media library'
+  },
+  {
+    type: 'gallery-showcase' as const,
+    label: 'Gallery Showcase',
+    icon: Film,
+    description: 'Auto-scrolling full-width image showcase'
   },
   {
     type: 'cta' as const,

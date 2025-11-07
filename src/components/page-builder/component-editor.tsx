@@ -108,6 +108,16 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
         caption: ''
       }))
       updateData('images', images)
+    } else if (mediaTarget === 'showcaseImages') {
+      const images = mediaList.map(media => ({
+        id: media.id,
+        url: media.originalUrl,
+        alt: media.alt || '',
+        caption: ''
+      }))
+      // If there are existing images, append; otherwise replace
+      const existingImages = component.data.showcaseImages || []
+      updateData('showcaseImages', [...existingImages, ...images])
     }
     setShowMediaLibrary(false)
   }
@@ -1132,6 +1142,111 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               </div>
             </div>
           )}
+        </>
+      )}
+
+      {/* Gallery Showcase Component Fields */}
+      {component.type === 'gallery-showcase' && (
+        <>
+          <div>
+            <Label>Showcase Images</Label>
+            <div className="mt-2">
+              {component.data.showcaseImages && component.data.showcaseImages.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {component.data.showcaseImages.map((image: any, index: number) => (
+                      <div key={image.id || index} className="relative">
+                        <img 
+                          src={image.url} 
+                          alt={image.alt || ''} 
+                          className="w-full h-16 object-cover rounded"
+                        />
+                        <button
+                          onClick={() => {
+                            const newImages = [...(component.data.showcaseImages || [])]
+                            newImages.splice(index, 1)
+                            updateData('showcaseImages', newImages)
+                          }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openMediaLibrary('showcaseImages', 'multiple')}
+                    >
+                      Add More Images
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateData('showcaseImages', [])}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => openMediaLibrary('showcaseImages', 'multiple')}
+                >
+                  Select Images
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <h5 className="font-medium text-gray-900 mb-3">Animation Settings</h5>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="autoScrollSpeed">Auto-scroll Speed (ms)</Label>
+                <Input
+                  id="autoScrollSpeed"
+                  type="number"
+                  value={component.data.autoScrollSpeed || 4000}
+                  onChange={(e) => updateData('autoScrollSpeed', parseInt(e.target.value) || 4000)}
+                  min="1000"
+                  max="10000"
+                  step="500"
+                />
+                <p className="text-xs text-gray-500 mt-1">Time between image transitions (1000-10000ms)</p>
+              </div>
+              
+              <div>
+                <Label htmlFor="transitionDuration">Transition Duration (ms)</Label>
+                <Input
+                  id="transitionDuration"
+                  type="number"
+                  value={component.data.transitionDuration || 1000}
+                  onChange={(e) => updateData('transitionDuration', parseInt(e.target.value) || 1000)}
+                  min="200"
+                  max="3000"
+                  step="100"
+                />
+                <p className="text-xs text-gray-500 mt-1">Duration of the transition animation (200-3000ms)</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <div>
+              <Label htmlFor="showcaseBackgroundColor">Background Color</Label>
+              <Input
+                id="showcaseBackgroundColor"
+                type="color"
+                value={component.data.backgroundColor || '#000000'}
+                onChange={(e) => updateData('backgroundColor', e.target.value)}
+                className="w-full h-10"
+              />
+            </div>
+          </div>
         </>
       )}
 

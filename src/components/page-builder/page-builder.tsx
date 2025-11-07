@@ -505,6 +505,7 @@ export function PageBuilder({
                         setSelectedComponent(component)
                         setIsEditing(true)
                       }}
+                      onUpdate={(data) => updateComponent(component.id, data)}
                       onDelete={() => deleteComponent(component.id)}
                       onDuplicate={() => duplicateComponent(component)}
                       onMoveUp={index > 0 ? () => moveComponent(index, index - 1) : undefined}
@@ -593,6 +594,13 @@ function getDefaultComponentData(type: PageComponent['type']): ComponentData {
       return {
         images: [],
         backgroundColor: '#ffffff'
+      }
+    case 'gallery-showcase':
+      return {
+        showcaseImages: [],
+        autoScrollSpeed: 4000,
+        transitionDuration: 1000,
+        backgroundColor: '#000000'
       }
     case 'cta':
       return {

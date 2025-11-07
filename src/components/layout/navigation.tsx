@@ -97,13 +97,17 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         <div className="flex justify-between items-center h-20 lg:h-24">
           {/* Logo */}
-          <Link href={getLocalizedHref('/')} className="flex items-center group">
+          <Link href={getLocalizedHref('/')} className="flex items-center group flex-shrink-0 min-w-0">
             <Image
               src="/logo.png"
               alt="Rein Art Design"
               width={140}
               height={50}
-              className="h-12 lg:h-14 w-auto object-contain dark:brightness-0 dark:invert transition-opacity group-hover:opacity-80"
+              className={`w-auto object-contain dark:brightness-0 dark:invert transition-all duration-300 group-hover:opacity-80 ${
+                isScrolled
+                  ? 'h-8 sm:h-9 md:h-10 max-w-[80px] sm:max-w-[90px] md:max-w-[100px]'
+                  : 'h-8 sm:h-10 md:h-12 lg:h-14 max-w-[100px] sm:max-w-[120px] md:max-w-[140px]'
+              }`}
               priority
               unoptimized
             />

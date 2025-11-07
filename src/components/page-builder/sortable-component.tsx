@@ -12,6 +12,7 @@ interface SortableComponentProps {
   onSelect: () => void
   onDelete: () => void
   onDuplicate: () => void
+  onUpdate?: (data: any) => void
   onMoveUp?: () => void
   onMoveDown?: () => void
 }
@@ -23,6 +24,7 @@ export function SortableComponent({
   onSelect,
   onDelete,
   onDuplicate,
+  onUpdate,
   onMoveUp,
   onMoveDown
 }: SortableComponentProps) {
@@ -31,18 +33,31 @@ export function SortableComponent({
     <div
       className={`relative group border-2 transition-colors ${
         isSelected 
-          ? 'border-blue-500 bg-blue-50' 
+          ? 'border-blue-500 shadow-lg shadow-blue-500/20' 
           : 'border-transparent hover:border-gray-300'
       }`}
-      onClick={onSelect}
+      onClick={(e) => {
+        // Don't select if clicking on editable elements
+        if ((e.target as HTMLElement).closest('[data-editable]')) {
+          return
+        }
+        onSelect()
+      }}
     >
       {/* Component Content */}
-      <ComponentRenderer component={component} isPreview={false} />
+      <ComponentRenderer 
+        component={component} 
+        isPreview={false}
+        isEditing={isSelected}
+        onUpdate={onUpdate}
+      />
       
-      {/* Overlay Controls */}
-      <div className={`absolute inset-0 bg-blue-500 bg-opacity-10 transition-opacity ${
-        isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-      }`}>
+      {/* Overlay Controls - No background overlay, just controls */}
+      <div className={`absolute inset-0 pointer-events-none ${
+        isSelected ? 'pointer-events-auto' : 'group-hover:pointer-events-auto'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+      >
         {/* Move Controls */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {onMoveUp && (

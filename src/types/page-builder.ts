@@ -1,6 +1,6 @@
 export interface PageComponent {
   id: string
-  type: 'hero' | 'text' | 'image' | 'gallery' | 'cta' | 'spacer' | 'features' | 'testimonials'
+  type: 'hero' | 'text' | 'image' | 'gallery' | 'gallery-showcase' | 'cta' | 'spacer' | 'features' | 'testimonials'
   order: number
   data: ComponentData
 }
@@ -45,6 +45,16 @@ export interface ComponentData {
   maxItems?: number
   layout?: 'grid' | 'masonry'
   columns?: number
+  
+  // Gallery Showcase component - auto-scrolling full-width gallery
+  showcaseImages?: Array<{
+    id: string
+    url: string
+    alt: string
+    caption?: string
+  }>
+  autoScrollSpeed?: number // milliseconds between transitions
+  transitionDuration?: number // milliseconds for transition animation
   
   // Features component
   features?: Array<{

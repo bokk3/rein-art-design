@@ -4,6 +4,7 @@ import { PageComponent } from '@/types/page-builder'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { 
   Award, 
   Users, 
@@ -19,20 +20,25 @@ import {
   Palette
 } from 'lucide-react'
 import { ProjectCard } from '@/components/gallery/project-card'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { Input } from '@/components/ui/input'
 
 interface ComponentRendererProps {
   component: PageComponent
   isPreview?: boolean
   currentLanguage?: string
   onProjectClick?: (project: any) => void
+  isEditing?: boolean
+  onUpdate?: (data: any) => void
 }
 
 export function ComponentRenderer({ 
   component, 
   isPreview = false, 
   currentLanguage = 'nl',
-  onProjectClick
+  onProjectClick,
+  isEditing = false,
+  onUpdate
 }: ComponentRendererProps) {
   const { type, data } = component
 
@@ -49,6 +55,144 @@ export function ComponentRenderer({
     if (!text) return ''
     if (typeof text === 'string') return text
     return text[currentLanguage] || text['nl'] || Object.values(text)[0] || ''
+  }
+
+  // Helper function to update multilingual text
+  const updateMultilingualText = (field: keyof typeof data, value: string) => {
+    if (!onUpdate) return
+    
+    const currentValue = data[field]
+    const newValue: { [key: string]: string } = typeof currentValue === 'string' 
+      ? { [currentLanguage]: value }
+      : { ...(currentValue as { [key: string]: string } || {}), [currentLanguage]: value }
+    
+    onUpdate({ ...data, [field]: newValue })
+  }
+
+  // Helper function to update nested array fields (like features, testimonials)
+  const updateNestedField = (arrayField: string, index: number, field: string, value: string) => {
+    if (!onUpdate) return
+    
+    const array = (data[arrayField as keyof typeof data] as any[]) || []
+    const updatedArray = [...array]
+    if (updatedArray[index]) {
+      const currentValue = updatedArray[index][field]
+      const newValue: { [key: string]: string } = typeof currentValue === 'string'
+        ? { [currentLanguage]: value }
+        : { ...(currentValue as { [key: string]: string } || {}), [currentLanguage]: value }
+      updatedArray[index] = { ...updatedArray[index], [field]: newValue }
+      onUpdate({ ...data, [arrayField]: updatedArray })
+    }
+  }
+
+  // Inline editable text component
+  const EditableText = ({ 
+    value, 
+    field, 
+    className, 
+    as: Component = 'span',
+    multiline = false,
+    onUpdate: customUpdate
+  }: { 
+    value: string
+    field: keyof typeof data | string
+    className?: string
+    as?: keyof JSX.IntrinsicElements
+    multiline?: boolean
+    onUpdate?: (value: string) => void
+  }) => {
+    const componentIsEditing = isEditing
+    const [isLocalEditing, setIsLocalEditing] = useState(false)
+    const [editValue, setEditValue] = useState(value)
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
+
+    useEffect(() => {
+      if (isLocalEditing && inputRef.current) {
+        inputRef.current.focus()
+        inputRef.current.select()
+      }
+    }, [isLocalEditing])
+
+    useEffect(() => {
+      setEditValue(value)
+    }, [value])
+
+    if (!isLocalEditing) {
+      return (
+        <Component
+          data-editable
+          className={`${className} ${componentIsEditing ? 'cursor-text hover:outline hover:outline-2 hover:outline-blue-400 hover:outline-dashed rounded px-1' : ''} transition-all inline-block`}
+          onClick={(e) => {
+            if (componentIsEditing) {
+              e.stopPropagation()
+              setIsLocalEditing(true)
+            }
+          }}
+          onDoubleClick={(e) => {
+            if (componentIsEditing) {
+              e.stopPropagation()
+              setIsLocalEditing(true)
+            }
+          }}
+        >
+          {value || (componentIsEditing ? <span className="text-gray-400 italic">Click to edit</span> : '')}
+        </Component>
+      )
+    }
+
+    const handleBlur = () => {
+      if (editValue !== value) {
+        if (customUpdate) {
+          customUpdate(editValue)
+        } else if (typeof field === 'string' && field.startsWith('feature-') || field.startsWith('testimonial-')) {
+          // Skip - handled by customUpdate
+        } else {
+          updateMultilingualText(field as keyof typeof data, editValue)
+        }
+      }
+      setIsLocalEditing(false)
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !multiline) {
+        e.preventDefault()
+        handleBlur()
+      }
+      if (e.key === 'Escape') {
+        setEditValue(value)
+        setIsLocalEditing(false)
+      }
+    }
+
+    if (multiline) {
+      return (
+        <textarea
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          data-editable
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className={`${className} w-full bg-white/90 dark:bg-gray-800/90 border-2 border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          onClick={(e) => e.stopPropagation()}
+          rows={3}
+        />
+      )
+    }
+
+    return (
+      <input
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        data-editable
+        type="text"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`${className} bg-white/90 dark:bg-gray-800/90 border-2 border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+        onClick={(e) => e.stopPropagation()}
+      />
+    )
   }
 
   switch (type) {
@@ -76,70 +220,276 @@ export function ComponentRenderer({
       if (data.padding) {
         heroStyle.padding = `${data.padding.top}px ${data.padding.right}px ${data.padding.bottom}px ${data.padding.left}px`
       }
+
+      // Animation variants for hero content
+      const heroContainerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: {
+            duration: 0.6,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+      }
+
+      const heroContentVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: {
+            staggerChildren: 0.15,
+            delayChildren: 0.3,
+          },
+        },
+      }
+
+      const heroItemVariants = {
+        hidden: { 
+          opacity: 0, 
+          y: 50,
+          filter: 'blur(10px)',
+        },
+        visible: {
+          opacity: 1,
+          y: 0,
+          filter: 'blur(0px)',
+          transition: {
+            duration: 0.8,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+      }
+
+      const heroTitleVariants = {
+        hidden: { 
+          opacity: 0, 
+          y: 60,
+          scale: 0.95,
+        },
+        visible: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: {
+            duration: 0.9,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+      }
+
+      const heroButtonVariants = {
+        hidden: { 
+          opacity: 0, 
+          y: 30,
+          scale: 0.9,
+        },
+        visible: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: {
+            duration: 0.6,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+        hover: {
+          scale: 1.05,
+          transition: {
+            duration: 0.2,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+      }
+
+      const backgroundImageVariants = {
+        hidden: { 
+          opacity: 0,
+          scale: 1.15,
+        },
+        visible: {
+          opacity: 1,
+          scale: 1,
+          transition: {
+            duration: 1.2,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        },
+      }
+      
+      // Calculate height accounting for navigation (h-20 = 80px on md, h-24 = 96px on lg)
+      const heroHeightStyle = data.height === 'screen' 
+        ? { minHeight: 'calc(100vh - 80px)' } 
+        : {}
+      
+      const combinedStyle = {
+        ...heroHeightStyle,
+        ...(Object.keys(heroStyle).length > 0 ? heroStyle : {})
+      }
       
       return (
-        <div 
-          className={`relative ${data.height === 'screen' ? 'min-h-screen' : 'py-20'} px-4 sm:px-6 lg:px-8 flex items-center justify-center ${gradientClass || defaultHeroBg}`}
-          style={Object.keys(heroStyle).length > 0 ? heroStyle : undefined}
+        <motion.div 
+          className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex items-center justify-center ${gradientClass || defaultHeroBg} overflow-hidden`}
+          style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
+          variants={heroContainerVariants}
+          initial="hidden"
+          animate="visible"
         >
           {data.backgroundImage && (
-            <div className="absolute inset-0">
+            <motion.div 
+              className="absolute inset-0"
+              variants={backgroundImageVariants}
+              initial="hidden"
+              animate="visible"
+            >
               <Image
                 src={data.backgroundImage}
                 alt=""
                 fill
                 className="object-cover"
+                priority
               />
-              <div className="absolute inset-0 bg-black bg-opacity-40" />
-            </div>
+              <motion.div 
+                className="absolute inset-0 bg-black"
+                initial={{ opacity: 0.6 }}
+                animate={{ opacity: 0.4 }}
+                transition={{ duration: 1 }}
+              />
+            </motion.div>
           )}
           
-          <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <motion.div 
+            className="relative z-10 max-w-5xl mx-auto text-center py-8"
+            variants={heroContentVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {data.title && (
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-                {getText(data.title)}
-              </h1>
+              <motion.h1 
+                className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 leading-tight"
+                variants={heroTitleVariants}
+              >
+                {isEditing ? (
+                  <EditableText
+                    value={getText(data.title)}
+                    field="title"
+                    className="text-4xl sm:text-5xl lg:text-7xl font-bold"
+                    as="span"
+                  />
+                ) : (
+                  getText(data.title)
+                )}
+              </motion.h1>
             )}
             
             {data.subtitle && (
-              <p className="text-xl sm:text-2xl lg:text-3xl mb-6 opacity-90 font-light">
-                {getText(data.subtitle)}
-              </p>
+              <motion.p 
+                className="text-xl sm:text-2xl lg:text-3xl mb-4 opacity-90 font-light"
+                variants={heroItemVariants}
+              >
+                {isEditing ? (
+                  <EditableText
+                    value={getText(data.subtitle)}
+                    field="subtitle"
+                    className="text-xl sm:text-2xl lg:text-3xl font-light opacity-90"
+                    as="span"
+                  />
+                ) : (
+                  getText(data.subtitle)
+                )}
+              </motion.p>
             )}
             
             {data.description && (
-              <p className="text-lg sm:text-xl mb-10 opacity-80 max-w-3xl mx-auto leading-relaxed">
-                {getText(data.description)}
-              </p>
+              <motion.p 
+                className="text-lg sm:text-xl mb-8 opacity-80 max-w-3xl mx-auto leading-relaxed"
+                variants={heroItemVariants}
+              >
+                {isEditing ? (
+                  <EditableText
+                    value={getText(data.description)}
+                    field="description"
+                    className="text-lg sm:text-xl opacity-80 max-w-3xl mx-auto leading-relaxed block"
+                    as="span"
+                    multiline
+                  />
+                ) : (
+                  getText(data.description)
+                )}
+              </motion.p>
             )}
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              variants={heroContentVariants}
+            >
               {(data.primaryButton || data.heroButtonText) && (
-                <Link href={data.primaryButtonLink || data.heroButtonLink || "/projects"}>
-                  <Button 
-                    size="lg"
-                    className="w-full sm:w-auto text-lg px-8 py-4 h-auto bg-white text-slate-900 hover:bg-gray-100 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-100 border-2 border-transparent"
-                  >
-                    {getText(data.primaryButton || data.heroButtonText)}
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
+                <motion.div 
+                  variants={heroButtonVariants}
+                  whileHover={!isEditing ? "hover" : undefined}
+                  whileTap={!isEditing ? { scale: 0.95 } : undefined}
+                >
+                  {isEditing ? (
+                    <div className="inline-block">
+                      <EditableText
+                        value={getText(data.primaryButton || data.heroButtonText)}
+                        field={data.primaryButton ? "primaryButton" : "heroButtonText"}
+                        className="text-lg px-8 py-4"
+                        as="span"
+                      />
+                    </div>
+                  ) : (
+                    <Link href={data.primaryButtonLink || data.heroButtonLink || "/projects"}>
+                      <Button 
+                        size="lg"
+                        className="w-full sm:w-auto text-lg px-8 py-4 h-auto bg-white text-slate-900 hover:bg-gray-100 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-100 border-2 border-transparent transition-all duration-300"
+                      >
+                        {getText(data.primaryButton || data.heroButtonText)}
+                        <motion.span
+                          initial={{ x: 0 }}
+                          whileHover={{ x: 5 }}
+                          transition={{ duration: 0.2 }}
+                          className="inline-block"
+                        >
+                          <ArrowRight className="w-5 h-5 ml-2" />
+                        </motion.span>
+                      </Button>
+                    </Link>
+                  )}
+                </motion.div>
               )}
               
               {data.secondaryButton && (
-                <Link href={data.secondaryButtonLink || "/contact"}>
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    className="w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-slate-900"
-                  >
-                    {getText(data.secondaryButton)}
-                  </Button>
-                </Link>
+                <motion.div 
+                  variants={heroButtonVariants}
+                  whileHover={!isEditing ? "hover" : undefined}
+                  whileTap={!isEditing ? { scale: 0.95 } : undefined}
+                >
+                  {isEditing ? (
+                    <div className="inline-block">
+                      <EditableText
+                        value={getText(data.secondaryButton)}
+                        field="secondaryButton"
+                        className="text-lg px-8 py-4"
+                        as="span"
+                      />
+                    </div>
+                  ) : (
+                    <Link href={data.secondaryButtonLink || "/contact"}>
+                      <Button 
+                        variant="outline"
+                        size="lg"
+                        className="w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-slate-900 transition-all duration-300"
+                      >
+                        {getText(data.secondaryButton)}
+                      </Button>
+                    </Link>
+                  )}
+                </motion.div>
               )}
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       )
 
     case 'features':
@@ -189,12 +539,30 @@ export function ComponentRenderer({
             <div className="text-center mb-16">
               {data.title && (
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 text-gray-900 dark:text-white">
-                  {getText(data.title)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.title)}
+                      field="title"
+                      className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.title)
+                  )}
                 </h2>
               )}
               {data.subtitle && (
                 <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                  {getText(data.subtitle)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.subtitle)}
+                      field="subtitle"
+                      className="text-xl text-gray-600 dark:text-gray-300"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.subtitle)
+                  )}
                 </p>
               )}
             </div>
@@ -209,10 +577,31 @@ export function ComponentRenderer({
                       </div>
                     </div>
                     <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-                      {getText(feature.title)}
+                      {isEditing ? (
+                        <EditableText
+                          value={getText(feature.title)}
+                          field={`feature-${index}-title` as any}
+                          className="text-xl font-semibold"
+                          as="span"
+                          onUpdate={(val) => updateNestedField('features', index, 'title', val)}
+                        />
+                      ) : (
+                        getText(feature.title)
+                      )}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                      {getText(feature.description)}
+                      {isEditing ? (
+                        <EditableText
+                          value={getText(feature.description)}
+                          field={`feature-${index}-description` as any}
+                          className="text-gray-600 dark:text-gray-300 leading-relaxed"
+                          as="span"
+                          multiline
+                          onUpdate={(val) => updateNestedField('features', index, 'description', val)}
+                        />
+                      ) : (
+                        getText(feature.description)
+                      )}
                     </p>
                   </div>
                 ))}
@@ -232,10 +621,20 @@ export function ComponentRenderer({
             data.alignment === 'center' ? 'text-center' : 
             data.alignment === 'right' ? 'text-right' : 'text-left'
           }`}>
-            <div 
-              dangerouslySetInnerHTML={{ __html: getText(data.content) }}
-              style={{ color: data.textColor }}
-            />
+            {isEditing ? (
+              <EditableText
+                value={getText(data.content)}
+                field="content"
+                className="prose prose-lg w-full"
+                as="span"
+                multiline
+              />
+            ) : (
+              <div 
+                dangerouslySetInnerHTML={{ __html: getText(data.content) }}
+                style={{ color: data.textColor }}
+              />
+            )}
           </div>
         </div>
       )
@@ -258,7 +657,16 @@ export function ComponentRenderer({
                 />
                 {data.caption && (
                   <p className="mt-4 text-sm text-gray-600 italic">
-                    {getText(data.caption)}
+                    {isEditing ? (
+                      <EditableText
+                        value={getText(data.caption)}
+                        field="caption"
+                        className="text-sm text-gray-600 italic"
+                        as="span"
+                      />
+                    ) : (
+                      getText(data.caption)
+                    )}
                   </p>
                 )}
               </div>
@@ -311,12 +719,30 @@ export function ComponentRenderer({
             <div className="text-center mb-16">
               {data.title && (
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-                  {getText(data.title)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.title)}
+                      field="title"
+                      className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.title)
+                  )}
                 </h2>
               )}
               {data.subtitle && (
                 <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                  {getText(data.subtitle)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.subtitle)}
+                      field="subtitle"
+                      className="text-xl text-gray-600 dark:text-gray-300"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.subtitle)
+                  )}
                 </p>
               )}
             </div>
@@ -371,6 +797,97 @@ export function ComponentRenderer({
         </div>
       )
 
+    case 'gallery-showcase':
+      const [currentImageIndex, setCurrentImageIndex] = useState(0)
+      const showcaseImages = data.showcaseImages || []
+      const autoScrollSpeed = data.autoScrollSpeed || 4000 // default 4 seconds
+      const transitionDuration = data.transitionDuration || 1000 // default 1 second
+
+      // Auto-scroll through images
+      useEffect(() => {
+        if (showcaseImages.length <= 1) return
+
+        const interval = setInterval(() => {
+          setCurrentImageIndex((prev) => (prev + 1) % showcaseImages.length)
+        }, autoScrollSpeed)
+
+        return () => clearInterval(interval)
+      }, [showcaseImages.length, autoScrollSpeed])
+
+      // Build style object
+      const showcaseStyle: React.CSSProperties = {}
+      if (data.backgroundColor) {
+        showcaseStyle.backgroundColor = data.backgroundColor
+      }
+      if (data.padding) {
+        showcaseStyle.padding = `${data.padding.top}px ${data.padding.right}px ${data.padding.bottom}px ${data.padding.left}px`
+      }
+
+      if (showcaseImages.length === 0) {
+        return (
+          <div 
+            className="w-full h-[50vh] bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
+            style={Object.keys(showcaseStyle).length > 0 ? showcaseStyle : undefined}
+          >
+            <p className="text-gray-500 dark:text-gray-400">No images selected for showcase</p>
+          </div>
+        )
+      }
+
+      return (
+        <div 
+          className="w-full h-[50vh] relative overflow-hidden"
+          style={Object.keys(showcaseStyle).length > 0 ? showcaseStyle : undefined}
+        >
+          {showcaseImages.map((image: any, index: number) => (
+            <motion.div
+              key={image.id || index}
+              className="absolute inset-0"
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{
+                opacity: currentImageIndex === index ? 1 : 0,
+                x: currentImageIndex === index ? '0%' : currentImageIndex > index ? '-100%' : '100%',
+              }}
+              transition={{
+                duration: transitionDuration / 1000,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              <Image
+                src={image.url}
+                alt={image.alt || ''}
+                fill
+                className="object-cover"
+                priority={index === 0}
+              />
+              {image.caption && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                  <p className="text-white text-lg font-medium">{image.caption}</p>
+                </div>
+              )}
+            </motion.div>
+          ))}
+          
+          {/* Progress indicators */}
+          {showcaseImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+              {showcaseImages.map((_: any, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`h-2 rounded-full transition-all ${
+                    currentImageIndex === index
+                      ? 'w-8 bg-white'
+                      : 'w-2 bg-white/50 hover:bg-white/75'
+                  }`}
+                  aria-label={`Go to image ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )
+
     case 'testimonials':
       // Use Tailwind classes only for specific string values, otherwise use inline style
       const testimonialsBgClass = data.backgroundColor === 'white' 
@@ -400,7 +917,16 @@ export function ComponentRenderer({
             <div className="text-center mb-16">
               {data.title && (
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-                  {getText(data.title)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.title)}
+                      field="title"
+                      className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.title)
+                  )}
                 </h2>
               )}
             </div>
@@ -415,11 +941,34 @@ export function ComponentRenderer({
                       ))}
                     </div>
                     <blockquote className="text-gray-700 dark:text-gray-300 mb-6 italic">
-                      "{getText(testimonial.content)}"
+                      {isEditing ? (
+                        <EditableText
+                          value={getText(testimonial.content)}
+                          field={`testimonial-${index}-content` as any}
+                          className="text-gray-700 dark:text-gray-300 italic"
+                          as="span"
+                          multiline
+                          onUpdate={(val) => updateNestedField('testimonials', index, 'content', val)}
+                        />
+                      ) : (
+                        `"${getText(testimonial.content)}"`
+                      )}
                     </blockquote>
                     <div>
                       <div className="font-semibold text-gray-900 dark:text-white">{testimonial.name}</div>
-                      <div className="text-gray-600 dark:text-gray-400 text-sm">{getText(testimonial.role)}</div>
+                      <div className="text-gray-600 dark:text-gray-400 text-sm">
+                        {isEditing ? (
+                          <EditableText
+                            value={getText(testimonial.role)}
+                            field={`testimonial-${index}-role` as any}
+                            className="text-gray-600 dark:text-gray-400 text-sm"
+                            as="span"
+                            onUpdate={(val) => updateNestedField('testimonials', index, 'role', val)}
+                          />
+                        ) : (
+                          getText(testimonial.role)
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -476,47 +1025,88 @@ export function ComponentRenderer({
             <div className="max-w-4xl mx-auto">
               {(data.title || data.heading) && (
                 <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 ${data.backgroundColor === 'slate-900' ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                  {getText(data.title || data.heading)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.title || data.heading)}
+                      field={data.title ? "title" : "heading"}
+                      className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.title || data.heading)
+                  )}
                 </h2>
               )}
               
               {data.description && (
                 <p className={`text-xl mb-10 leading-relaxed ${data.backgroundColor === 'slate-900' ? 'text-gray-300 opacity-90' : 'text-gray-700 dark:text-gray-400 opacity-90'}`}>
-                  {getText(data.description)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.description)}
+                      field="description"
+                      className="text-xl leading-relaxed"
+                      as="span"
+                      multiline
+                    />
+                  ) : (
+                    getText(data.description)
+                  )}
                 </p>
               )}
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {(data.primaryButton || data.ctaButtonText) && (
-                  <Link href={data.ctaButtonLink || "/contact"}>
-                    <Button 
-                      size="lg"
-                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
-                        data.backgroundColor === 'slate-900' 
-                          ? 'bg-white text-slate-900 hover:bg-gray-100' 
-                          : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
-                      }`}
-                    >
-                      {getText(data.primaryButton || data.ctaButtonText)}
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Button>
-                  </Link>
+                  isEditing ? (
+                    <div className="inline-block">
+                      <EditableText
+                        value={getText(data.primaryButton || data.ctaButtonText)}
+                        field={data.primaryButton ? "primaryButton" : "ctaButtonText"}
+                        className="text-lg px-8 py-4"
+                        as="span"
+                      />
+                    </div>
+                  ) : (
+                    <Link href={data.ctaButtonLink || "/contact"}>
+                      <Button 
+                        size="lg"
+                        className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
+                          data.backgroundColor === 'slate-900' 
+                            ? 'bg-white text-slate-900 hover:bg-gray-100' 
+                            : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
+                        }`}
+                      >
+                        {getText(data.primaryButton || data.ctaButtonText)}
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    </Link>
+                  )
                 )}
                 
                 {data.secondaryButton && (
-                  <Link href={data.secondaryButtonLink || "/projects"}>
-                    <Button 
-                      variant="outline"
-                      size="lg"
-                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 ${
-                        data.backgroundColor === 'slate-900'
-                          ? 'border-white text-white bg-white/5 hover:bg-white hover:text-slate-900'
-                          : 'border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-gray-900'
-                      }`}
-                    >
-                      {getText(data.secondaryButton)}
-                    </Button>
-                  </Link>
+                  isEditing ? (
+                    <div className="inline-block">
+                      <EditableText
+                        value={getText(data.secondaryButton)}
+                        field="secondaryButton"
+                        className="text-lg px-8 py-4"
+                        as="span"
+                      />
+                    </div>
+                  ) : (
+                    <Link href={data.secondaryButtonLink || "/projects"}>
+                      <Button 
+                        variant="outline"
+                        size="lg"
+                        className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 ${
+                          data.backgroundColor === 'slate-900'
+                            ? 'border-white text-white bg-white/5 hover:bg-white hover:text-slate-900'
+                            : 'border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-gray-900'
+                        }`}
+                      >
+                        {getText(data.secondaryButton)}
+                      </Button>
+                    </Link>
+                  )
                 )}
               </div>
             </div>
@@ -538,47 +1128,88 @@ export function ComponentRenderer({
             <div className="max-w-4xl mx-auto">
               {(data.title || data.heading) && (
                 <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 ${data.backgroundColor === 'slate-900' ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                  {getText(data.title || data.heading)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.title || data.heading)}
+                      field={data.title ? "title" : "heading"}
+                      className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+                      as="span"
+                    />
+                  ) : (
+                    getText(data.title || data.heading)
+                  )}
                 </h2>
               )}
               
               {data.description && (
                 <p className={`text-xl mb-10 leading-relaxed ${data.backgroundColor === 'slate-900' ? 'text-gray-300 opacity-90' : 'text-gray-700 dark:text-gray-400 opacity-90'}`}>
-                  {getText(data.description)}
+                  {isEditing ? (
+                    <EditableText
+                      value={getText(data.description)}
+                      field="description"
+                      className="text-xl leading-relaxed"
+                      as="span"
+                      multiline
+                    />
+                  ) : (
+                    getText(data.description)
+                  )}
                 </p>
               )}
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {(data.primaryButton || data.ctaButtonText) && (
-                  <Link href={data.ctaButtonLink || "/contact"}>
-                    <Button 
-                      size="lg"
-                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
-                        data.backgroundColor === 'slate-900' 
-                          ? 'bg-white text-slate-900 hover:bg-gray-100' 
-                          : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
-                      }`}
-                    >
-                      {getText(data.primaryButton || data.ctaButtonText)}
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </Button>
-                  </Link>
+                  isEditing ? (
+                    <div className="inline-block">
+                      <EditableText
+                        value={getText(data.primaryButton || data.ctaButtonText)}
+                        field={data.primaryButton ? "primaryButton" : "ctaButtonText"}
+                        className="text-lg px-8 py-4"
+                        as="span"
+                      />
+                    </div>
+                  ) : (
+                    <Link href={data.ctaButtonLink || "/contact"}>
+                      <Button 
+                        size="lg"
+                        className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
+                          data.backgroundColor === 'slate-900' 
+                            ? 'bg-white text-slate-900 hover:bg-gray-100' 
+                            : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
+                        }`}
+                      >
+                        {getText(data.primaryButton || data.ctaButtonText)}
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    </Link>
+                  )
                 )}
                 
                 {data.secondaryButton && (
-                  <Link href={data.secondaryButtonLink || "/projects"}>
-                    <Button 
-                      variant="outline"
-                      size="lg"
-                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 ${
-                        data.backgroundColor === 'slate-900'
-                          ? 'border-white text-white bg-white/5 hover:bg-white hover:text-slate-900'
-                          : 'border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-gray-900'
-                      }`}
-                    >
-                      {getText(data.secondaryButton)}
-                    </Button>
-                  </Link>
+                  isEditing ? (
+                    <div className="inline-block">
+                      <EditableText
+                        value={getText(data.secondaryButton)}
+                        field="secondaryButton"
+                        className="text-lg px-8 py-4"
+                        as="span"
+                      />
+                    </div>
+                  ) : (
+                    <Link href={data.secondaryButtonLink || "/projects"}>
+                      <Button 
+                        variant="outline"
+                        size="lg"
+                        className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 ${
+                          data.backgroundColor === 'slate-900'
+                            ? 'border-white text-white bg-white/5 hover:bg-white hover:text-slate-900'
+                            : 'border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-gray-900'
+                        }`}
+                      >
+                        {getText(data.secondaryButton)}
+                      </Button>
+                    </Link>
+                  )
                 )}
               </div>
             </div>
@@ -594,47 +1225,88 @@ export function ComponentRenderer({
           <div className="max-w-4xl mx-auto">
             {(data.title || data.heading) && (
               <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 ${data.backgroundColor === 'slate-900' ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                {getText(data.title || data.heading)}
+                {isEditing ? (
+                  <EditableText
+                    value={getText(data.title || data.heading)}
+                    field={data.title ? "title" : "heading"}
+                    className="text-3xl sm:text-4xl lg:text-5xl font-bold"
+                    as="span"
+                  />
+                ) : (
+                  getText(data.title || data.heading)
+                )}
               </h2>
             )}
             
             {data.description && (
               <p className={`text-xl mb-10 leading-relaxed ${data.backgroundColor === 'slate-900' ? 'text-gray-300 opacity-90' : 'text-gray-700 dark:text-gray-400 opacity-90'}`}>
-                {getText(data.description)}
+                {isEditing ? (
+                  <EditableText
+                    value={getText(data.description)}
+                    field="description"
+                    className="text-xl leading-relaxed"
+                    as="span"
+                    multiline
+                  />
+                ) : (
+                  getText(data.description)
+                )}
               </p>
             )}
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {(data.primaryButton || data.ctaButtonText) && (
-                <Link href={data.ctaButtonLink || "/contact"}>
-                  <Button 
-                    size="lg"
-                    className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
-                      data.backgroundColor === 'slate-900' 
-                        ? 'bg-white text-slate-900 hover:bg-gray-100' 
-                        : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
-                    }`}
-                  >
-                    {getText(data.primaryButton || data.ctaButtonText)}
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
+                isEditing ? (
+                  <div className="inline-block">
+                    <EditableText
+                      value={getText(data.primaryButton || data.ctaButtonText)}
+                      field={data.primaryButton ? "primaryButton" : "ctaButtonText"}
+                      className="text-lg px-8 py-4"
+                      as="span"
+                    />
+                  </div>
+                ) : (
+                  <Link href={data.ctaButtonLink || "/contact"}>
+                    <Button 
+                      size="lg"
+                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
+                        data.backgroundColor === 'slate-900' 
+                          ? 'bg-white text-slate-900 hover:bg-gray-100' 
+                          : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
+                      }`}
+                    >
+                      {getText(data.primaryButton || data.ctaButtonText)}
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                )
               )}
               
               {data.secondaryButton && (
-                <Link href={data.secondaryButtonLink || "/projects"}>
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 ${
-                      data.backgroundColor === 'slate-900'
-                        ? 'border-white text-white bg-white/5 hover:bg-white hover:text-slate-900'
-                        : 'border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-gray-900'
-                    }`}
-                  >
-                    {getText(data.secondaryButton)}
-                  </Button>
-                </Link>
+                isEditing ? (
+                  <div className="inline-block">
+                    <EditableText
+                      value={getText(data.secondaryButton)}
+                      field="secondaryButton"
+                      className="text-lg px-8 py-4"
+                      as="span"
+                    />
+                  </div>
+                ) : (
+                  <Link href={data.secondaryButtonLink || "/projects"}>
+                    <Button 
+                      variant="outline"
+                      size="lg"
+                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 ${
+                        data.backgroundColor === 'slate-900'
+                          ? 'border-white text-white bg-white/5 hover:bg-white hover:text-slate-900'
+                          : 'border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-gray-900'
+                      }`}
+                    >
+                      {getText(data.secondaryButton)}
+                    </Button>
+                  </Link>
+                )
               )}
             </div>
           </div>

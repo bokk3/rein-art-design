@@ -101,21 +101,21 @@ export function AdminNavigation() {
   return (
     <nav className="admin-nav bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-16 z-[70] shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-14 md:h-16">
           {/* Logo and Back to Site */}
-          <div className="flex items-center space-x-4">
-            <Link href={getLocalizedHref('/')} className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              <span className="text-sm font-medium">{t('nav.backToSite') || 'Terug naar site'}</span>
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0 flex-shrink-0">
+            <Link href={getLocalizedHref('/')} className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors whitespace-nowrap">
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">{t('nav.backToSite') || 'Terug naar site'}</span>
             </Link>
-            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-            <Link href={getLocalizedHref('/admin')} className="flex items-center">
-              <span className="text-xl font-bold text-black dark:text-white">Admin</span>
+            <div className="h-5 sm:h-6 w-px bg-gray-300 dark:bg-gray-600 flex-shrink-0"></div>
+            <Link href={getLocalizedHref('/admin')} className="flex items-center flex-shrink-0">
+              <span className="text-base sm:text-lg md:text-xl font-bold text-black dark:text-white">Admin</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center justify-center space-x-2 flex-1 mx-4">
             {/* Primary Navigation */}
             {primaryNavLinks.map((link) => {
               const Icon = link.icon
@@ -223,20 +223,20 @@ export function AdminNavigation() {
           </div>
 
           {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
             {session?.user && (
               <>
-                <span className="text-sm text-gray-700 dark:text-gray-300 max-w-32 truncate">
+                <span className="text-xs lg:text-sm text-gray-700 dark:text-gray-300 max-w-24 lg:max-w-32 truncate">
                   {session.user.email}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => signOut()}
-                  className="flex items-center"
+                  className="flex items-center text-xs lg:text-sm"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {t('auth.signOut')}
+                  <LogOut className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-1.5 lg:mr-2" />
+                  <span className="hidden lg:inline">{t('auth.signOut')}</span>
                 </Button>
               </>
             )}
