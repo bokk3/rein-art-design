@@ -302,8 +302,9 @@ async function main() {
   }
 
   // Check if admin user already exists
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@nextjs-cms.com' // Fallback for backwards compat
   const existingAdmin = await prisma.user.findUnique({
-    where: { email: 'admin@nextjs-cms.com' }
+    where: { email: adminEmail }
   })
 
   if (existingAdmin) {
@@ -333,8 +334,8 @@ async function main() {
   // Create admin user (password will be set through Better Auth signup)
   const adminUser = await prisma.user.create({
     data: {
-      name: 'Admin User',
-      email: 'admin@nextjs-cms.com',
+      name: process.env.ADMIN_NAME || 'Admin User',
+      email: adminEmail,
       emailVerified: true,
     }
   })
@@ -356,9 +357,8 @@ async function main() {
   })
 
   console.log('✅ Admin user created:', adminUser.email)
-  console.log('📧 Email: admin@nextjs-cms.com')
-  console.log('🔑 Use the signup form to set password: admin123')
-  console.log('ℹ️  The user record exists, now sign up with this email to set the password')
+  console.log(`📧 Email: ${adminEmail}`)
+  console.log('ℹ️  Use the signup form or create-admin script to set the password')
 
   // Create sample contact messages for testing
   console.log('📧 Creating sample contact messages...')

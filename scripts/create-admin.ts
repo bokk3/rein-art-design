@@ -1,21 +1,31 @@
 import { auth } from '../src/lib/auth'
+import * as dotenv from 'dotenv'
+
+dotenv.config({ path: '.env.local' })
 
 async function createAdmin() {
   try {
+    const adminEmail = process.env.ADMIN_EMAIL
+    const adminPassword = process.env.ADMIN_PASSWORD
+    const adminName = process.env.ADMIN_NAME || 'Admin User'
+
+    if (!adminEmail || !adminPassword) {
+      console.error('❌ Error: ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env.local')
+      process.exit(1)
+    }
+
     console.log('🔐 Creating admin account...')
     
-    // Use Better Auth to create the admin user properly
     const result = await auth.api.signUpEmail({
       body: {
-        email: 'admin@nextjs-cms.com',
-        password: 'admin123',
-        name: 'Admin User'
+        email: adminEmail,
+        password: adminPassword,
+        name: adminName
       }
     })
 
     console.log('✅ Admin account created successfully!')
-    console.log('📧 Email: admin@nextjs-cms.com')
-    console.log('🔑 Password: admin123')
+    console.log(`📧 Email: ${adminEmail}`)
     
   } catch (error: any) {
     if (error.message?.includes('already exists')) {
