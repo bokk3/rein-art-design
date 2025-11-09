@@ -38,6 +38,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   const [expandedHeroElement, setExpandedHeroElement] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [uploadingGallery, setUploadingGallery] = useState(false)
+  const [opacitySliderValues, setOpacitySliderValues] = useState<Record<string, number>>({})
   
   // Fetch featured projects count for carousel auto-enable logic
   useEffect(() => {
@@ -252,6 +253,23 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
     e.preventDefault()
     setDragOver(false)
   }
+
+  // Sync opacity slider values when elements change
+  useEffect(() => {
+    if (component.data.heroElements && Array.isArray(component.data.heroElements)) {
+      const newValues: Record<string, number> = {}
+      component.data.heroElements.forEach((el: HeroTextBlock) => {
+        if (el.opacity !== undefined) {
+          newValues[el.id] = el.opacity
+        }
+      })
+      setOpacitySliderValues(prev => {
+        // Only update if values actually changed to avoid unnecessary re-renders
+        const hasChanges = Object.keys(newValues).some(id => prev[id] !== newValues[id])
+        return hasChanges ? { ...prev, ...newValues } : prev
+      })
+    }
+  }, [component.data.heroElements])
 
   // Hero builder helpers
   const normalizeHeroElements = (): HeroTextBlock[] => {
@@ -884,14 +902,39 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                                   </div>
                                 </div>
                                 <div>
-                                  <Label>Opacity (0-100)</Label>
-                                  <Input
-                                    type="number"
+                                  <Label htmlFor={`opacity-${element.id}`}>
+                                    Opacity: {opacitySliderValues[element.id] ?? element.opacity ?? 100}%
+                                  </Label>
+                                  <input
+                                    id={`opacity-${element.id}`}
+                                    type="range"
                                     min="0"
                                     max="100"
-                                    value={element.opacity ?? 100}
-                                    onChange={(e) => updateHeroElement(element.id, { opacity: parseInt(e.target.value) || 100 })}
+                                    step="1"
+                                    value={opacitySliderValues[element.id] ?? element.opacity ?? 100}
+                                    onChange={(e) => {
+                                      // Update local state for visual feedback only
+                                      const newValue = parseInt(e.target.value) || 100
+                                      setOpacitySliderValues(prev => ({ ...prev, [element.id]: newValue }))
+                                    }}
+                                    onMouseUp={(e) => {
+                                      // Update component data when mouse is released
+                                      const newValue = parseInt(e.currentTarget.value) || 100
+                                      updateHeroElement(element.id, { opacity: newValue })
+                                    }}
+                                    onTouchEnd={(e) => {
+                                      // Update component data when touch ends
+                                      const newValue = parseInt(e.currentTarget.value) || 100
+                                      updateHeroElement(element.id, { opacity: newValue })
+                                    }}
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                    style={{
+                                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${opacitySliderValues[element.id] ?? element.opacity ?? 100}%, #e5e7eb ${opacitySliderValues[element.id] ?? element.opacity ?? 100}%, #e5e7eb 100%)`
+                                    }}
                                   />
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Adjust the text opacity from 0 (transparent) to 100 (opaque)
+                                  </div>
                                 </div>
                               </div>
                               <div>
@@ -1537,16 +1580,24 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                           step="1"
                           value={localOverlayOpacity}
                           onChange={(e) => {
+                            // Only update local state for visual feedback
                             const numVal = Number(e.target.value)
                             setLocalOverlayOpacity(numVal)
+                          }}
+                          onMouseUp={(e) => {
+                            // Update component data when mouse is released
+                            const numVal = Number(e.currentTarget.value)
                             updateData('backgroundOverlayOpacity', numVal)
                           }}
-                          onInput={(e) => {
-                            const numVal = Number((e.target as HTMLInputElement).value)
-                            setLocalOverlayOpacity(numVal)
+                          onTouchEnd={(e) => {
+                            // Update component data when touch ends
+                            const numVal = Number(e.currentTarget.value)
                             updateData('backgroundOverlayOpacity', numVal)
                           }}
-                          className="w-full slider"
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                          style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${localOverlayOpacity}%, #e5e7eb ${localOverlayOpacity}%, #e5e7eb 100%)`
+                          }}
                         />
                         <div className="flex items-center gap-2">
                           <Input
@@ -1558,6 +1609,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                               const val = parseInt(e.target.value, 10)
                               if (!isNaN(val) && val >= 0 && val <= 100) {
                                 setLocalOverlayOpacity(val)
+                                // Button/input updates immediately
                                 updateData('backgroundOverlayOpacity', val)
                               }
                             }}
