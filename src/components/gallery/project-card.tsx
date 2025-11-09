@@ -32,10 +32,10 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
 
   return (
     <div 
-      className="group cursor-pointer bg-white dark:bg-gray-800/90 backdrop-blur-sm border-2 border-gray-200/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl dark:hover:shadow-gray-900/40 transition-all duration-500 ease-out hover:-translate-y-2 hover:border-gray-300 dark:hover:border-gray-600 animate-fade-in h-full flex flex-col"
+      className="group cursor-pointer bg-white dark:bg-[#1a1a1a]/90 backdrop-blur-sm border-2 border-gray-200/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl dark:hover:shadow-[#181818]/40 transition-all duration-500 ease-out hover:-translate-y-2 hover:border-gray-300 dark:hover:border-gray-600 animate-fade-in h-full flex flex-col"
       onClick={onClick}
     >
-      <div className="relative aspect-[3/2] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+      <div className="relative aspect-[3/2] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#1a1a1a] dark:to-[#181818]">
         {thumbnailImage && !imageError ? (
           <>
             <Image

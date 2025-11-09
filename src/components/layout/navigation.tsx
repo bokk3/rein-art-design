@@ -95,9 +95,9 @@ export function Navigation() {
 
   // Determine nav background based on scroll state and homepage
   const getNavBackground = () => {
-    // If scrolled, always show background
+    // If scrolled, show background with consistent dark mode color
     if (isScrolled) {
-      return 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md'
+      return 'bg-white/95 dark:bg-[#181818]/95 backdrop-blur-md'
     }
     
     // If on homepage and not scrolled, make it transparent to blend with hero
@@ -105,14 +105,14 @@ export function Navigation() {
       return 'bg-transparent backdrop-blur-none'
     }
     
-    // Default background for other pages
-    return 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md'
+    // Default background for other pages - lighter when not scrolled
+    return 'bg-white/90 dark:bg-[#181818]/85 backdrop-blur-md'
   }
 
   return (
     <nav className={`main-nav sticky top-0 z-[60] transition-all duration-300 ${getNavBackground()} ${
       isScrolled 
-        ? 'border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm' 
+        ? 'border-b border-gray-200/50 dark:border-gray-700/30 shadow-sm' 
         : 'border-b-0 shadow-none'
     }`}>
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
@@ -142,7 +142,7 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={getLocalizedHref(link.href)}
-                className={`relative px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-800/50 group ${
+                className={`relative px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium rounded-lg hover:bg-gray-100/50 dark:hover:bg-[#1a1a1a]/50 group ${
                   isScrolled ? 'text-base' : 'text-lg lg:text-xl'
                 }`}
               >
@@ -181,7 +181,7 @@ export function Navigation() {
                       />
                       {/* Dropdown with fixed positioning */}
                       <div 
-                        className="fixed w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-[90] overflow-hidden animate-fade-in"
+                        className="fixed w-48 bg-white dark:bg-[#181818] border border-gray-200 dark:border-gray-700/50 rounded-xl shadow-2xl z-[90] overflow-hidden animate-fade-in"
                         style={{
                           top: `${dropdownPosition.top}px`,
                           right: `${dropdownPosition.right}px`
@@ -197,8 +197,8 @@ export function Navigation() {
                               }}
                               className={`w-full text-left px-4 py-2.5 text-sm transition-all duration-200 ${
                                 currentLanguage === language.code
-                                  ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-900/50 dark:to-blue-800/50 text-blue-700 dark:text-blue-300 font-semibold'
-                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                                  ? 'bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-gray-700/50 dark:to-gray-600/50 text-blue-700 dark:text-blue-300 font-semibold'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/30'
                               }`}
                             >
                               <div className="flex items-center justify-between">
@@ -244,7 +244,7 @@ export function Navigation() {
                 <Link
                   key={link.href}
                   href={getLocalizedHref(link.href)}
-                  className="block px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                  className="block px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
@@ -275,8 +275,8 @@ export function Navigation() {
                         }}
                         className={`w-full text-left px-2 py-1 text-sm rounded transition-colors ${
                           currentLanguage === language.code
-                            ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ? 'bg-blue-50 dark:bg-gray-700/50 text-blue-700 dark:text-blue-300 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
                         }`}
                       >
                         <div className="flex items-center justify-between">

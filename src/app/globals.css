@@ -12,13 +12,13 @@
 
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-background: #0a0a0a;
+    --color-background: #181818;
     --color-foreground: #ededed;
   }
 }
 
 .dark {
-  --color-background: #0a0a0a;
+  --color-background: #181818;
   --color-foreground: #ededed;
 }
 
@@ -73,9 +73,9 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
   display: none !important;
 }
 
-/* CTA dark mode override - ensure dark background overrides inline gradient styles */
+/* CTA dark mode override - use consistent dark background */
 .dark [data-cta-gradient] {
-  background: #030712 !important;
+  background: #181818 !important;
 }
 
 /* Hero custom colors dark mode support */

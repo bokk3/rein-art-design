@@ -8,7 +8,7 @@ export default function AdminLayout({
 }) {
   return (
     <AdminLayoutWrapper>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#181818]">
         <AdminNavigation />
         <main>{children}</main>
       </div>

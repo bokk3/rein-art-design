@@ -203,7 +203,7 @@ export function ComponentRenderer({
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className={`${className} w-full bg-white/90 dark:bg-gray-800/90 border-2 border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          className={`${className} w-full bg-white/90 dark:bg-[#1a1a1a]/90 border-2 border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500`}
           onClick={(e) => e.stopPropagation()}
           rows={3}
         />
@@ -219,7 +219,7 @@ export function ComponentRenderer({
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        className={`${className} bg-white/90 dark:bg-gray-800/90 border-2 border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+        className={`${className} bg-white/90 dark:bg-[#1a1a1a]/90 border-2 border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500`}
         onClick={(e) => e.stopPropagation()}
       />
     )
@@ -486,7 +486,7 @@ export function ComponentRenderer({
         heroBackgroundStyle.backgroundColor = bgColor
         backgroundClass = 'hero-solid-custom'
       } else if (!data.backgroundType || data.backgroundType === 'image') {
-        backgroundClass = !data.backgroundImage ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-gray-900' : ''
+        backgroundClass = !data.backgroundImage ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-[#181818]' : ''
       }
       
       // Build style object
@@ -874,9 +874,9 @@ export function ComponentRenderer({
 
       // Use Tailwind classes only for specific string values, otherwise use inline style
       const featuresBgClass = data.backgroundColor === 'white' 
-        ? 'bg-white dark:bg-gray-900' 
+        ? 'bg-white dark:bg-[#181818]' 
         : data.backgroundColor === 'gray-50' 
-        ? 'bg-gray-50 dark:bg-gray-800' 
+        ? 'bg-gray-50 dark:bg-[#1a1a1a]' 
         : ''
       
       // Build style object - only include properties that are explicitly set
@@ -1117,7 +1117,7 @@ export function ComponentRenderer({
       const galleryBgClass = data.backgroundColor === 'gray-50' 
         ? 'bg-gray-50 dark:bg-gray-800' 
         : data.backgroundColor === 'white' 
-        ? 'bg-white dark:bg-gray-900' 
+        ? 'bg-white dark:bg-[#181818]' 
         : ''
       
       // Build style object - only include properties that are explicitly set
@@ -1379,7 +1379,7 @@ export function ComponentRenderer({
       if (showcaseImages.length === 0) {
         return (
           <div 
-            className="w-full h-[50vh] bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
+            className="w-full h-[50vh] bg-gray-100 dark:bg-[#1a1a1a] flex items-center justify-center"
             style={Object.keys(showcaseStyle).length > 0 ? showcaseStyle : undefined}
           >
             <p className="text-gray-500 dark:text-gray-400">No images selected for showcase</p>
@@ -1449,7 +1449,7 @@ export function ComponentRenderer({
     case 'testimonials':
       // Use Tailwind classes only for specific string values, otherwise use inline style
       const testimonialsBgClass = data.backgroundColor === 'white' 
-        ? 'bg-white dark:bg-gray-900' 
+        ? 'bg-white dark:bg-[#181818]' 
         : data.backgroundColor === 'gray-50' 
         ? 'bg-gray-50 dark:bg-gray-800' 
         : ''
@@ -1492,7 +1492,7 @@ export function ComponentRenderer({
             {data.testimonials && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {data.testimonials.map((testimonial: any, index: number) => (
-                  <div key={index} className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+                  <div key={index} className="bg-white dark:bg-[#1a1a1a] p-8 rounded-xl shadow-lg">
                     <div className="flex mb-4">
                       {[...Array(testimonial.rating || 5)].map((_, i) => (
                         <Star key={i} className="w-5 h-5 text-gray-700 dark:text-gray-300 fill-current" />
@@ -1827,11 +1827,7 @@ export function ComponentRenderer({
                   <Link href={data.ctaButtonLink || "/contact"}>
                     <Button 
                       size="lg"
-                      className={`w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-transparent ${
-                        data.backgroundColor === 'slate-900' 
-                          ? 'bg-white text-slate-900 hover:bg-gray-100' 
-                          : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100'
-                      }`}
+                      className="w-full sm:w-auto text-lg px-8 py-4 h-auto"
                     >
                       {getText(data.primaryButton || data.ctaButtonText)}
                       <ArrowRight className="w-5 h-5 ml-2" />

@@ -55,7 +55,7 @@ export function HomepageClient({
   if (pageBuilderComponents && pageBuilderComponents.length > 0) {
     return (
       <>
-        <div className="min-h-screen bg-white dark:bg-gray-900 relative overflow-x-hidden">
+        <div className="min-h-screen bg-white dark:bg-[#181818] relative overflow-x-hidden">
           {pageBuilderComponents
             .sort((a, b) => a.order - b.order)
             .map((component) => (
@@ -85,9 +85,9 @@ export function HomepageClient({
   // Default homepage content
   return (
     <>
-      <div className="min-h-screen bg-white dark:bg-gray-900">
+      <div className="min-h-screen bg-white dark:bg-[#181818]">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-gray-900">
+        <section className="bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-[#181818]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
             <div className="text-center">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-black dark:text-white mb-6">
@@ -117,7 +117,7 @@ export function HomepageClient({
 
         {/* Featured Projects Section */}
         {featuredProjects.length > 0 && (
-          <section className="bg-gray-50 dark:bg-gray-800 py-16">
+          <section className="bg-gray-50 dark:bg-[#1a1a1a] py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12">
                 <h2 className="text-3xl sm:text-4xl font-bold text-black dark:text-white mb-4">
@@ -154,7 +154,7 @@ export function HomepageClient({
         )}
 
         {/* About Section */}
-        <section className="bg-white dark:bg-gray-900 py-16">
+        <section className="bg-white dark:bg-[#181818] py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>

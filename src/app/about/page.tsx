@@ -160,7 +160,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
       })
 
       return (
-        <div className="min-h-screen bg-white dark:bg-gray-900">
+        <div className="min-h-screen bg-white dark:bg-[#181818]">
           {/* Main content */}
           <main className="container mx-auto px-4 py-8 max-w-4xl">
             {/* Breadcrumbs */}

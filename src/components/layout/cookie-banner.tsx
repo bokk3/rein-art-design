@@ -37,7 +37,7 @@ export function CookieBanner() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#181818] border-t border-gray-200 dark:border-gray-700/50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {!showDetails ? (
           // Simple banner view
@@ -104,7 +104,7 @@ export function CookieBanner() {
 
             <div className="space-y-4">
               {/* Essential Cookies - Always enabled */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="border border-gray-200 dark:border-gray-700/50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white">Essential Cookies</h4>
@@ -126,7 +126,7 @@ export function CookieBanner() {
               </div>
 
               {/* Analytics Cookies */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="border border-gray-200 dark:border-gray-700/50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white">Analytics Cookies</h4>
@@ -154,7 +154,7 @@ export function CookieBanner() {
               </div>
 
               {/* Marketing Cookies */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="border border-gray-200 dark:border-gray-700/50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <h4 className="font-medium text-gray-900 dark:text-white">Marketing Cookies</h4>
@@ -182,7 +182,7 @@ export function CookieBanner() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-gray-200 dark:border-gray-700/50">
               <Button
                 variant="outline"
                 size="sm"

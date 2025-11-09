@@ -185,7 +185,7 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-4 right-4 z-10 glass hover:bg-white/90 dark:hover:bg-gray-800/90 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 border border-white/20 dark:border-gray-700/30"
+          className="absolute top-4 right-4 z-10 glass hover:bg-white/90 dark:hover:bg-[#1a1a1a]/90 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 border border-white/20 dark:border-gray-700/30"
           onClick={onClose}
         >
           <X className="h-5 w-5 text-gray-900 dark:text-white" />

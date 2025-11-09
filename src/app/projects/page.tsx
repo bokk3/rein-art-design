@@ -29,7 +29,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-[#181818]">
       {/* Header */}
       <ProjectsHeader />
 

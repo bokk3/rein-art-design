@@ -88,7 +88,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors font-sans"
+        className="antialiased bg-white dark:bg-[#181818] text-gray-900 dark:text-gray-100 transition-colors font-sans"
       >
         <ThemeProvider>
           <LanguageProvider>

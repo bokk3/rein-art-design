@@ -62,7 +62,7 @@ export default function ContactPage() {
               </h3>
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
                 <div className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0">
                     <Mail className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
@@ -73,7 +73,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0">
                     <Phone className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
@@ -84,7 +84,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 shrink-0">
+                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] shrink-0">
                     <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>

@@ -26,9 +26,9 @@ function getResolvedTheme(theme: Theme): 'light' | 'dark' {
 function applyTheme(resolvedTheme: 'light' | 'dark') {
   document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
   
-  // Set CSS variables
+  // Set CSS variables - use consistent dark mode color
   if (resolvedTheme === 'dark') {
-    document.documentElement.style.setProperty('--background', '#0a0a0a')
+    document.documentElement.style.setProperty('--background', '#181818')
     document.documentElement.style.setProperty('--foreground', '#ededed')
   } else {
     document.documentElement.style.setProperty('--background', '#ffffff')

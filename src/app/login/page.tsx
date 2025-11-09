@@ -5,9 +5,9 @@ import Link from "next/link";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#181818] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 p-8 sm:p-10">
+        <div className="bg-white dark:bg-[#1a1a1a] shadow-lg rounded-lg border border-gray-200 dark:border-gray-700/50 p-8 sm:p-10">
           <div className="mb-8 text-center">
             <Link 
               href="/" 
