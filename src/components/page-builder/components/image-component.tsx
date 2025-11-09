@@ -5,6 +5,7 @@ import { ComponentData } from '@/types/page-builder'
 import Image from 'next/image'
 import { getText } from '../utils/text-helpers'
 import { EditableText } from '../utils/editable-text'
+import { useImageParallax } from '../utils/use-image-parallax'
 
 interface ImageComponentProps {
   data: ComponentData
@@ -14,6 +15,12 @@ interface ImageComponentProps {
 }
 
 export function ImageComponent({ data, getText, isEditing = false, onUpdate }: ImageComponentProps) {
+  // Parallax effect for image
+  const imageParallax = useImageParallax({ 
+    enabled: !isEditing && !!data.imageUrl,
+    speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
+  })
+  
   const containerStyle = {
     backgroundColor: data.backgroundColor || '#ffffff',
     color: data.textColor || '#000000',
@@ -29,13 +36,18 @@ export function ImageComponent({ data, getText, isEditing = false, onUpdate }: I
     >
       <div className="max-w-4xl mx-auto text-center">
         {data.imageUrl ? (
-          <div className="relative inline-block">
+          <div 
+            ref={imageParallax.ref}
+            className="relative inline-block overflow-hidden rounded-lg"
+            style={imageParallax.style}
+          >
             <Image
               src={data.imageUrl}
               alt={getText(data.alt) || ''}
               width={800}
               height={600}
-              className="rounded-lg shadow-lg"
+              className="rounded-lg shadow-lg object-cover"
+              style={{ objectPosition: 'center bottom' }}
             />
             {data.caption && (
               <p className="mt-4 text-sm text-gray-600 italic">

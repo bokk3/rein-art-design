@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getText } from '../utils/text-helpers'
 import { isLightColor, darkenColor, adjustDarkColorForDarkMode, lightenColor } from '../utils/color-helpers'
+import { useImageParallax } from '../utils/use-image-parallax'
 
 interface SplitScreenComponentProps {
   data: ComponentData
@@ -15,6 +16,12 @@ interface SplitScreenComponentProps {
 }
 
 export function SplitScreenComponent({ data, getText }: SplitScreenComponentProps) {
+  // Parallax effect for split screen image
+  const imageParallax = useImageParallax({ 
+    enabled: !!data.splitImageUrl,
+    speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
+  })
+  
   const splitImageSide = data.splitImageSide || 'left'
   const splitRatio = data.splitImageRatio || '50-50'
   
@@ -94,12 +101,17 @@ export function SplitScreenComponent({ data, getText }: SplitScreenComponentProp
         >
           {data.splitImageUrl ? (
             <>
-              <div className="absolute inset-0">
+              <div 
+                ref={imageParallax.ref}
+                className="absolute inset-0 overflow-hidden"
+                style={imageParallax.style}
+              >
                 <Image
                   src={data.splitImageUrl}
                   alt={getText(data.splitImageAlt) || ''}
                   fill
                   className="object-cover"
+                  style={{ objectPosition: 'center bottom' }}
                   priority
                   unoptimized={data.splitImageUrl.startsWith('http://') || data.splitImageUrl.startsWith('https://')}
                 />

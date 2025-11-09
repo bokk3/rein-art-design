@@ -9,7 +9,7 @@ interface UseScrollParallaxOptions {
 
 export function useScrollParallax({ 
   enabled = true, 
-  speed = 1.25 // Text moves 1.5x faster than scroll (upward)
+  speed = 1.1 // Text moves 1.1x faster than scroll (upward)
 }: UseScrollParallaxOptions = {}) {
   const elementRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState('translateY(0px)')

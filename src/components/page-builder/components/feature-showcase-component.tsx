@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getText } from '../utils/text-helpers'
+import { useImageParallax } from '../utils/use-image-parallax'
 
 interface FeatureShowcaseComponentProps {
   data: ComponentData
@@ -32,6 +33,18 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
   const showcaseTitle = data.showcaseTitle ? getText(data.showcaseTitle) : showcaseProject?.title
   const showcaseDescription = data.showcaseDescription ? getText(data.showcaseDescription) : showcaseProject?.description
   
+  // Parallax effect for showcase images (full-image layout)
+  const fullImageParallax = useImageParallax({ 
+    enabled: showcaseLayout === 'full-image' && !!showcaseImage,
+    speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
+  })
+  
+  // Parallax effect for showcase images (side layouts)
+  const sideImageParallax = useImageParallax({ 
+    enabled: showcaseLayout !== 'full-image' && !!showcaseImage,
+    speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
+  })
+  
   const imageSizeClasses = {
     'medium': 'lg:w-1/2',
     'large': 'lg:w-3/5',
@@ -43,12 +56,17 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         {showcaseImage ? (
           <>
-            <div className="absolute inset-0">
+            <div 
+              ref={fullImageParallax.ref}
+              className="absolute inset-0 overflow-hidden"
+              style={fullImageParallax.style}
+            >
               <Image
                 src={showcaseImage}
                 alt={getText(data.showcaseImageAlt) || showcaseTitle || ''}
                 fill
                 className="object-cover"
+                style={{ objectPosition: 'center bottom' }}
                 priority
                 unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
               />
@@ -112,14 +130,21 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
         {/* Image */}
         {showcaseImage ? (
           <div className={`relative ${imageSizeClasses[showcaseImageSize]} ${showcaseLayout === 'image-top' ? 'w-full aspect-[16/10] lg:aspect-[16/9]' : 'w-full min-h-[400px] lg:min-h-[500px]'} bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-2xl`}>
-            <Image
-              src={showcaseImage}
-              alt={getText(data.showcaseImageAlt) || showcaseTitle || ''}
-              fill
-              className="object-cover"
-              priority
-              unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
-            />
+            <div 
+              ref={sideImageParallax.ref}
+              className="absolute inset-0"
+              style={sideImageParallax.style}
+            >
+              <Image
+                src={showcaseImage}
+                alt={getText(data.showcaseImageAlt) || showcaseTitle || ''}
+                fill
+                className="object-cover"
+                style={{ objectPosition: 'center bottom' }}
+                priority
+                unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
+              />
+            </div>
           </div>
         ) : (
           <div className={`relative ${imageSizeClasses[showcaseImageSize]} ${showcaseLayout === 'image-top' ? 'w-full aspect-[16/10] lg:aspect-[16/9]' : 'w-full min-h-[400px] lg:min-h-[500px]'} bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center shadow-2xl`}>

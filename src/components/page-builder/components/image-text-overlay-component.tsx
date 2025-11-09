@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getText } from '../utils/text-helpers'
+import { useImageParallax } from '../utils/use-image-parallax'
 
 interface ImageTextOverlayComponentProps {
   data: ComponentData
@@ -14,6 +15,12 @@ interface ImageTextOverlayComponentProps {
 }
 
 export function ImageTextOverlayComponent({ data, getText }: ImageTextOverlayComponentProps) {
+  // Parallax effect for overlay image
+  const imageParallax = useImageParallax({ 
+    enabled: !!data.overlayImageUrl,
+    speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
+  })
+  
   const overlayPosition = data.overlayPosition || 'center'
   const overlayBg = data.overlayBackground || 'dark'
   const overlayOpacity = data.overlayBackgroundOpacity !== undefined ? data.overlayBackgroundOpacity : 70
@@ -53,12 +60,17 @@ export function ImageTextOverlayComponent({ data, getText }: ImageTextOverlayCom
     >
       {data.overlayImageUrl ? (
         <>
-          <div className="absolute inset-0">
+          <div 
+            ref={imageParallax.ref}
+            className="absolute inset-0 overflow-hidden"
+            style={imageParallax.style}
+          >
             <Image
               src={data.overlayImageUrl}
               alt={getText(data.overlayImageAlt) || ''}
               fill
               className="object-cover"
+              style={{ objectPosition: 'center bottom' }}
               priority
               unoptimized={data.overlayImageUrl.startsWith('http://') || data.overlayImageUrl.startsWith('https://')}
             />
