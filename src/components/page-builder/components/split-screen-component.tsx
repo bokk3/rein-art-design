@@ -90,7 +90,7 @@ export function SplitScreenComponent({ data, getText }: SplitScreenComponentProp
       <div className={`flex flex-col ${splitImageSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'} min-h-[60vh]`}>
         {/* Image Side */}
         <div 
-          className={`relative w-full ${widthClasses.image} min-h-[50vh] bg-gray-100 dark:bg-gray-800`}
+          className={`relative w-full ${widthClasses.image} min-h-[50vh] bg-gray-100 dark:bg-gray-800 overflow-hidden`}
         >
           {data.splitImageUrl ? (
             <>

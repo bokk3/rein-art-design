@@ -9,6 +9,7 @@ import { ArrowRight } from 'lucide-react'
 import { getText } from '../utils/text-helpers'
 import { isLightColor, darkenColor, adjustDarkColorForDarkMode, isPureBlack, lightenColor } from '../utils/color-helpers'
 import { EditableText } from '../utils/editable-text'
+import { useScrollParallax } from '../utils/use-scroll-parallax'
 
 interface HeroComponentProps {
   data: ComponentData
@@ -18,6 +19,12 @@ interface HeroComponentProps {
 }
 
 export function HeroComponent({ data, currentLanguage, isEditing = false, getText }: HeroComponentProps) {
+  // Parallax effect for hero text - moves up faster than scroll speed
+  const textParallax = useScrollParallax({ 
+    enabled: !isEditing,
+    speed: 1.5 // Text moves 1.5x faster than scroll (upward)
+  })
+  
   // Helper to convert legacy hero data to new format (backwards compatibility)
   const normalizeHeroElements = useMemo((): HeroTextBlock[] => {
     // If new structure exists, use it
@@ -183,6 +190,7 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
     heroCSSVars['--hero-text-color'] = data.textColor
     
     // For dark mode: smart text color adaptation
+    // Check background type and color to determine dark mode text color
     if (data.backgroundType === 'solid' && data.backgroundColor) {
       const bgIsLight = isLightColor(data.backgroundColor)
       const textIsLight = isLightColor(data.textColor)
@@ -204,7 +212,19 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
         // Dark (but not pure black) background: keep text as is
         heroCSSVars['--hero-text-color-dark'] = data.textColor
       }
+    } else if (data.backgroundType === 'image' || data.backgroundImage) {
+      // For image backgrounds, text is usually light (white) on dark overlay
+      // In dark mode, keep it light or adjust based on text color
+      const textIsLight = isLightColor(data.textColor)
+      if (!textIsLight) {
+        // Dark text on image - lighten it in dark mode
+        heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.8)
+      } else {
+        // Light text - keep it light in dark mode
+        heroCSSVars['--hero-text-color-dark'] = data.textColor
+      }
     } else {
+      // Default gradient or no specific background
       heroCSSVars['--hero-text-color-dark'] = data.textColor
     }
     
@@ -466,7 +486,7 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
       style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
     >
       {data.backgroundType === 'image' && data.backgroundImage && (
-        <div className="absolute inset-0 hero-bg-fade-in">
+        <div className="absolute inset-0 hero-bg-fade-in overflow-hidden">
           <Image
             src={data.backgroundImage}
             alt=""
@@ -475,7 +495,7 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
             priority
           />
           <div 
-            className="absolute inset-0" 
+            className="absolute inset-0 z-[1]" 
             style={{ 
               backgroundColor: data.backgroundOverlayColor || '#000000',
               opacity: (data.backgroundOverlayOpacity !== undefined ? data.backgroundOverlayOpacity : 0) / 100
@@ -484,7 +504,20 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
         </div>
       )}
       
-      <div className={`relative z-10 ${getContentWidth()} ${textAlignClass} py-8 w-full`}>
+      <div 
+        ref={textParallax.ref}
+        className={`relative z-10 ${getContentWidth()} ${textAlignClass} py-8 w-full hero-text-custom`}
+        style={{
+          ...textParallax.style,
+          // Apply CSS variables for text color (dark mode handled by CSS)
+          ...(data.textColor ? {
+            '--hero-text-color': data.textColor,
+            ...(heroCSSVars['--hero-text-color-dark'] ? {
+              '--hero-text-color-dark': heroCSSVars['--hero-text-color-dark']
+            } : {})
+          } : {})
+        } as React.CSSProperties}
+      >
         {groupedElements.map((item, groupIndex) => {
           const isLastGroup = groupIndex === groupedElements.length - 1
           

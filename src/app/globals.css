@@ -101,7 +101,8 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
 
 /* Hero text color dark mode - use lighter version if available */
 .dark .hero-solid-custom,
-.dark .hero-gradient-custom {
+.dark .hero-gradient-custom,
+.dark .hero-text-custom {
   color: var(--hero-text-color-dark, var(--hero-text-color, inherit)) !important;
 }
 
