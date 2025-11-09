@@ -73,9 +73,20 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
   display: none !important;
 }
 
-/* CTA dark mode override - use consistent dark background */
-.dark [data-cta-gradient] {
-  background: #181818 !important;
+/* CTA dark mode support - EXACTLY like hero */
+/* Automatically darken light background colors in dark mode for better UX */
+.dark .cta-solid-custom {
+  background-color: var(--cta-bg-color-dark, var(--cta-bg-color)) !important;
+}
+
+.dark .cta-gradient-default {
+  background: var(--cta-gradient-dark, var(--cta-gradient-light)) !important;
+}
+
+/* CTA text color dark mode - use lighter version if available */
+.dark .cta-solid-custom,
+.dark .cta-gradient-default {
+  color: var(--cta-text-color-dark, var(--cta-text-color, inherit)) !important;
 }
 
 /* Hero custom colors dark mode support */
