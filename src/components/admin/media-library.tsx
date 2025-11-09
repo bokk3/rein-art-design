@@ -533,6 +533,18 @@ export function MediaLibrary({
   }) {
     const [imageLoaded, setImageLoaded] = useState(false)
     const [imageError, setImageError] = useState(false)
+    const [imageSrc, setImageSrc] = useState(item.thumbnailUrl || item.originalUrl)
+
+    // Fallback to originalUrl if thumbnail fails
+    const handleImageError = () => {
+      if (imageSrc === item.thumbnailUrl && item.originalUrl && item.originalUrl !== item.thumbnailUrl) {
+        setImageSrc(item.originalUrl)
+        setImageError(false)
+      } else {
+        console.error('Image failed to load:', imageSrc)
+        setImageError(true)
+      }
+    }
 
     return (
       <div
@@ -540,22 +552,20 @@ export function MediaLibrary({
           }`}
         onClick={onSelect}
       >
-        <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 overflow-hidden">
-          {item.thumbnailUrl && !imageError ? (
+        <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 overflow-hidden min-h-[160px] sm:min-h-[200px] md:min-h-[220px]">
+          {imageSrc && !imageError ? (
             <>
               <Image
-                src={item.thumbnailUrl}
+                src={imageSrc}
                 alt={item.alt || item.filename}
                 fill
                 className={`object-cover transition-all duration-300 ${
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
                 onLoad={() => setImageLoaded(true)}
-                onError={() => {
-                  console.error('Thumbnail failed to load:', item.thumbnailUrl)
-                  setImageError(true)
-                }}
+                onError={handleImageError}
+                unoptimized={imageSrc.startsWith('http://') || imageSrc.startsWith('https://')}
               />
               {!imageLoaded && (
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 animate-pulse" />
@@ -568,52 +578,52 @@ export function MediaLibrary({
           )}
         </div>
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 pointer-events-auto">
+        {/* Action buttons - positioned in top-right corner, only visible on hover */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex gap-1.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation()
+              onPreview()
+            }}
+            title="Preview"
+            className="h-8 w-8 p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          {showMetadataEditor && (
             <Button
               size="sm"
               variant="secondary"
               onClick={(e) => {
                 e.stopPropagation()
-                onPreview()
+                onEdit()
               }}
-              title="Preview"
+              title="Edit"
+              className="h-8 w-8 p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700"
             >
-              <Eye className="h-3 w-3" />
+              <Edit3 className="h-4 w-4" />
             </Button>
-            {showMetadataEditor && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit()
-                }}
-                title="Edit"
-              >
-                <Edit3 className="h-3 w-3" />
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete()
-              }}
-              title="Delete"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            title="Delete"
+            className="h-8 w-8 p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 shadow-lg border border-red-200 dark:border-red-800"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
 
-        {/* Selection indicator */}
+        {/* Selection indicator - positioned in top-left, larger and more visible */}
         {isSelected && (
-          <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-            <Check className="h-3 w-3 text-white" />
+          <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center z-30 shadow-lg border-2 border-white dark:border-gray-800">
+            <Check className="h-4 w-4 text-white" />
           </div>
         )}
       </div>
@@ -918,7 +928,7 @@ export function MediaLibrary({
             )}
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {filteredAndSortedMedia.map((item) => {
               const isSelected = selectedMedia.some(m => m.id === item.id)
               return (

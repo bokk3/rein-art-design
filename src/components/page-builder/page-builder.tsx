@@ -438,10 +438,10 @@ export function PageBuilder({
       <div className="flex-1 flex flex-col">
         {/* Toolbar */}
         <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <ComponentToolbar onAddComponent={addComponent} />
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {apiConfigured && components.length > 0 && (
                 <Button 
                   variant="outline" 
@@ -452,23 +452,23 @@ export function PageBuilder({
                   {isTranslating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{translationStatus || 'Translating...'}</span>
+                      <span className="hidden sm:inline">{translationStatus || 'Translating...'}</span>
                     </>
                   ) : (
                     <>
                       <Languages className="h-4 w-4" />
-                      <span>Translate All</span>
+                      <span className="hidden sm:inline">Translate All</span>
                     </>
                   )}
                 </Button>
               )}
-              <Button variant="outline" onClick={handlePreview}>
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
+              <Button variant="outline" onClick={handlePreview} className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span className="hidden sm:inline">Preview</span>
               </Button>
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save
+              <Button onClick={handleSave} className="flex items-center gap-2">
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">Save</span>
               </Button>
             </div>
           </div>
@@ -554,7 +554,7 @@ export function PageBuilder({
             
             <div className="flex-1 overflow-auto">
               <ComponentEditor
-                key={`${latestComponent.id}-${latestComponent.data.backgroundOverlayOpacity ?? 0}-${latestComponent.data.backgroundOverlayColor || ''}`}
+                key={`${latestComponent.id}-${latestComponent.data.splitImageUrl || ''}-${latestComponent.data.overlayImageUrl || ''}-${latestComponent.data.showcaseImageUrl || ''}-${latestComponent.data.backgroundImage || ''}-${latestComponent.data.imageUrl || ''}`}
                 component={latestComponent}
                 onChange={(data) => updateComponent(latestComponent.id, data)}
               />
@@ -694,6 +694,92 @@ function getDefaultComponentData(type: PageComponent['type']): ComponentData {
     case 'spacer':
       return {
         height: 60,
+        backgroundColor: '#ffffff'
+      }
+    case 'split-screen':
+      return {
+        splitImageUrl: '',
+        splitImageAlt: {
+          nl: 'Afbeelding beschrijving',
+          fr: 'Description de l\'image'
+        },
+        splitImageSide: 'left',
+        splitImageRatio: '50-50',
+        splitTitle: {
+          nl: 'Titel',
+          fr: 'Titre'
+        },
+        splitSubtitle: {
+          nl: 'Ondertitel',
+          fr: 'Sous-titre'
+        },
+        splitContent: {
+          nl: 'Voeg hier uw tekstinhoud toe...',
+          fr: 'Ajoutez votre contenu textuel ici...'
+        },
+        splitButtonText: {
+          nl: 'Meer Informatie',
+          fr: 'Plus d\'Informations'
+        },
+        splitButtonLink: '/projects',
+        splitImageOverlay: false,
+        backgroundColor: '#ffffff'
+      }
+    case 'image-text-overlay':
+      return {
+        overlayImageUrl: '',
+        overlayImageAlt: {
+          nl: 'Afbeelding beschrijving',
+          fr: 'Description de l\'image'
+        },
+        overlayTitle: {
+          nl: 'Titel',
+          fr: 'Titre'
+        },
+        overlaySubtitle: {
+          nl: 'Ondertitel',
+          fr: 'Sous-titre'
+        },
+        overlayContent: {
+          nl: 'Voeg hier uw tekstinhoud toe...',
+          fr: 'Ajoutez votre contenu textuel ici...'
+        },
+        overlayButtonText: {
+          nl: 'Meer Informatie',
+          fr: 'Plus d\'Informations'
+        },
+        overlayButtonLink: '/projects',
+        overlayPosition: 'center',
+        overlayBackground: 'dark',
+        overlayBackgroundOpacity: 70
+      }
+    case 'feature-showcase':
+      return {
+        showcaseProjectId: '',
+        showcaseImageUrl: '',
+        showcaseImageAlt: {
+          nl: 'Project afbeelding',
+          fr: 'Image du projet'
+        },
+        showcaseTitle: {
+          nl: 'Uitgelicht Project',
+          fr: 'Projet en Vedette'
+        },
+        showcaseSubtitle: {
+          nl: 'Onze Meest Recente Creatie',
+          fr: 'Notre Création la Plus Récente'
+        },
+        showcaseDescription: {
+          nl: 'Een prachtig voorbeeld van ons vakmanschap en aandacht voor detail.',
+          fr: 'Un bel exemple de notre savoir-faire et de notre attention aux détails.'
+        },
+        showcaseButtonText: {
+          nl: 'Bekijk Project',
+          fr: 'Voir le Projet'
+        },
+        showcaseButtonLink: '',
+        showcaseLayout: 'image-left',
+        showcaseImageSize: 'large',
         backgroundColor: '#ffffff'
       }
     default:

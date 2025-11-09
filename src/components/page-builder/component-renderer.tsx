@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { PageComponent, HeroTextBlock, HeroLayout } from '@/types/page-builder'
+import { PageComponent, HeroTextBlock, HeroLayout, ComponentData } from '@/types/page-builder'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -59,6 +59,160 @@ interface ComponentRendererProps {
   onUpdate?: (data: any) => void
 }
 
+// Feature Showcase Component - Separate component to use hooks
+function FeatureShowcaseComponent({ data, getText, currentLanguage }: { data: ComponentData, getText: (text: any) => string, currentLanguage: string }) {
+  const [showcaseProject, setShowcaseProject] = useState<any>(null)
+  
+  useEffect(() => {
+    if (data.showcaseProjectId) {
+      fetch(`/api/projects/${data.showcaseProjectId}`)
+        .then(res => res.json())
+        .then(project => setShowcaseProject(project))
+        .catch(() => setShowcaseProject(null))
+    }
+  }, [data.showcaseProjectId])
+  
+  const showcaseLayout = data.showcaseLayout || 'image-left'
+  const showcaseImageSize = data.showcaseImageSize || 'large'
+  const showcaseImage = data.showcaseImageUrl || (showcaseProject?.images?.[0]?.originalUrl)
+  const showcaseTitle = data.showcaseTitle ? getText(data.showcaseTitle) : showcaseProject?.title
+  const showcaseDescription = data.showcaseDescription ? getText(data.showcaseDescription) : showcaseProject?.description
+  
+  const imageSizeClasses = {
+    'medium': 'lg:w-1/2',
+    'large': 'lg:w-3/5',
+    'xlarge': 'lg:w-2/3'
+  }
+  
+  if (showcaseLayout === 'full-image') {
+    return (
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+        {showcaseImage ? (
+          <>
+            <div className="absolute inset-0">
+              <Image
+                src={showcaseImage}
+                alt={getText(data.showcaseImageAlt) || showcaseTitle || ''}
+                fill
+                className="object-cover"
+                priority
+                unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
+              />
+            </div>
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-8 lg:p-12 z-10">
+              <div className="text-center max-w-3xl text-white">
+                {data.showcaseSubtitle && (
+                  <p className="text-sm uppercase tracking-wider mb-4 text-gray-300">
+                    {getText(data.showcaseSubtitle)}
+                  </p>
+                )}
+                {showcaseTitle && (
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+                    {showcaseTitle}
+                  </h2>
+                )}
+                {showcaseDescription && (
+                  <p className="text-xl mb-8 text-gray-200">
+                    {showcaseDescription}
+                  </p>
+                )}
+                {data.showcaseButtonText && (
+                  <Link href={data.showcaseButtonLink || `/projects/${data.showcaseProjectId}`}>
+                    <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100">
+                      {getText(data.showcaseButtonText)}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <p className="text-gray-400 dark:text-gray-500">No image selected</p>
+          </div>
+        )}
+      </section>
+    )
+  }
+  
+  return (
+    <section 
+      className={`bg-white dark:bg-[#181818] overflow-hidden ${
+        data.padding 
+          ? '' 
+          : 'py-16 lg:py-24'
+      }`}
+      style={data.padding ? {
+        paddingTop: `${data.padding.top}px`,
+        paddingBottom: `${data.padding.bottom}px`,
+        paddingLeft: `${data.padding.left}px`,
+        paddingRight: `${data.padding.right}px`
+      } : {}}
+    >
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col ${
+        showcaseLayout === 'image-right' ? 'lg:flex-row-reverse' : 
+        showcaseLayout === 'image-top' ? 'lg:flex-col' : 
+        'lg:flex-row'
+      } gap-8 lg:gap-12 ${showcaseLayout === 'image-top' ? '' : 'lg:items-center'}`}>
+        {/* Image */}
+        {showcaseImage ? (
+          <div className={`relative ${imageSizeClasses[showcaseImageSize]} ${showcaseLayout === 'image-top' ? 'w-full aspect-[16/10] lg:aspect-[16/9]' : 'w-full min-h-[400px] lg:min-h-[500px]'} bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-2xl`}>
+            <Image
+              src={showcaseImage}
+              alt={getText(data.showcaseImageAlt) || showcaseTitle || ''}
+              fill
+              className="object-cover"
+              priority
+              unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
+            />
+          </div>
+        ) : (
+          <div className={`relative ${imageSizeClasses[showcaseImageSize]} ${showcaseLayout === 'image-top' ? 'w-full aspect-[16/10] lg:aspect-[16/9]' : 'w-full min-h-[400px] lg:min-h-[500px]'} bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center shadow-2xl`}>
+            <p className="text-gray-400 dark:text-gray-500">No image selected</p>
+          </div>
+        )}
+        
+        {/* Content */}
+        <div className={`flex-1 ${showcaseLayout === 'image-top' ? 'text-center' : ''}`}>
+          {data.showcaseSubtitle && (
+            <p className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+              {getText(data.showcaseSubtitle)}
+            </p>
+          )}
+          {showcaseTitle && (
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              {showcaseTitle}
+            </h2>
+          )}
+          {showcaseDescription && (
+            <div className="text-lg text-gray-600 dark:text-gray-300 mb-8 prose dark:prose-invert max-w-none">
+              <p>{showcaseDescription}</p>
+            </div>
+          )}
+          {data.showcaseButtonText && (
+            <Link href={data.showcaseButtonLink || `/projects/${data.showcaseProjectId || ''}`}>
+              <Button size="lg" variant="outline">
+                {getText(data.showcaseButtonText)}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Helper function to check if image URL is external and should use unoptimized
+// For external URLs, we use unoptimized to avoid Next.js optimization issues
+function isExternalImage(url: string): boolean {
+  if (!url) return false
+  // If it's a full URL (http:// or https://), use unoptimized
+  // Next.js remotePatterns should handle optimization, but unoptimized is safer for external domains
+  return url.startsWith('http://') || url.startsWith('https://')
+}
+
 export function ComponentRenderer({ 
   component, 
   isPreview = false, 
@@ -110,6 +264,81 @@ export function ComponentRenderer({
       updatedArray[index] = { ...updatedArray[index], [field]: newValue }
       onUpdate({ ...data, [arrayField]: updatedArray })
     }
+  }
+
+  // Helper functions for dark mode color handling (defined as function declarations for hoisting)
+  function isLightColor(color: string): boolean {
+    if (!color) return false
+    const hex = color.replace('#', '')
+    if (hex.length !== 6) return false
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5
+  }
+  
+  function darkenColor(color: string, factor: number = 0.4): string {
+    if (!color) return color
+    const hex = color.replace('#', '')
+    if (hex.length !== 6) return color
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    if (luminance > 0.9) {
+      const darkValue = Math.floor(30 + (luminance - 0.9) * 20)
+      return `#${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}`
+    }
+    const newR = Math.max(0, Math.floor(r * (1 - factor)))
+    const newG = Math.max(0, Math.floor(g * (1 - factor)))
+    const newB = Math.max(0, Math.floor(b * (1 - factor)))
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
+  }
+
+  function isPureBlack(color: string): boolean {
+    if (!color) return false
+    const hex = color.replace('#', '').toLowerCase().trim()
+    if (hex.length === 3) {
+      return hex === '000'
+    }
+    if (hex.length === 6) {
+      if (hex === '000000') return true
+      const num = parseInt(hex, 16)
+      if (isNaN(num)) return false
+      const r = (num >> 16) & 0xff
+      const g = (num >> 8) & 0xff
+      const b = num & 0xff
+      return r < 10 && g < 10 && b < 10
+    }
+    return false
+  }
+  
+  function adjustDarkColorForDarkMode(color: string): string {
+    if (!color) return color
+    if (isPureBlack(color)) {
+      return color
+    }
+    const hex = color.replace('#', '').toLowerCase()
+    if (hex.length !== 6) return color
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    if (luminance < 0.15) {
+      return color
+    }
+    return color
+  }
+  
+  function lightenColor(color: string, factor: number = 0.3): string {
+    if (!color) return color
+    const hex = color.replace('#', '')
+    if (hex.length !== 6) return color
+    const r = Math.min(255, Math.floor(parseInt(hex.substring(0, 2), 16) + (255 - parseInt(hex.substring(0, 2), 16)) * factor))
+    const g = Math.min(255, Math.floor(parseInt(hex.substring(2, 4), 16) + (255 - parseInt(hex.substring(2, 4), 16)) * factor))
+    const b = Math.min(255, Math.floor(parseInt(hex.substring(4, 6), 16) + (255 - parseInt(hex.substring(4, 6), 16)) * factor))
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
   }
 
   // Inline editable text component
@@ -317,114 +546,6 @@ export function ComponentRenderer({
         gap: 16
       }
       
-      // Helper to check if a color is light (for dark mode adaptation)
-      const isLightColor = (color: string): boolean => {
-        if (!color) return false
-        // Remove # if present
-        const hex = color.replace('#', '')
-        if (hex.length !== 6) return false
-        
-        // Convert to RGB
-        const r = parseInt(hex.substring(0, 2), 16)
-        const g = parseInt(hex.substring(2, 4), 16)
-        const b = parseInt(hex.substring(4, 6), 16)
-        
-        // Calculate luminance
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        return luminance > 0.5
-      }
-      
-      // Helper to darken a color for dark mode
-      // For very light colors (white), convert to a nice dark color instead of gray
-      const darkenColor = (color: string, factor: number = 0.3): string => {
-        if (!color) return color
-        const hex = color.replace('#', '')
-        if (hex.length !== 6) return color
-        
-        const r = parseInt(hex.substring(0, 2), 16)
-        const g = parseInt(hex.substring(2, 4), 16)
-        const b = parseInt(hex.substring(4, 6), 16)
-        
-        // Check if it's very light (almost white)
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        if (luminance > 0.9) {
-          // For very light colors, convert to a dark gray instead of just darkening
-          // This prevents white -> gray issue
-          const darkValue = Math.floor(30 + (luminance - 0.9) * 20) // Range: 30-50
-          return `#${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}`
-        }
-        
-        // For other colors, darken normally but ensure minimum contrast
-        const newR = Math.max(0, Math.floor(r * (1 - factor)))
-        const newG = Math.max(0, Math.floor(g * (1 - factor)))
-        const newB = Math.max(0, Math.floor(b * (1 - factor)))
-        
-        return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
-      }
-      
-      // Helper to check if a color is pure black (or very close to black)
-      const isPureBlack = (color: string): boolean => {
-        if (!color) return false
-        const hex = color.replace('#', '').toLowerCase().trim()
-        if (hex.length === 3) {
-          // Handle shorthand like '000'
-          return hex === '000'
-        }
-        if (hex.length === 6) {
-          // Check for pure black
-          if (hex === '000000') return true
-          // Check if it's very close to black (within 10 in each channel)
-          const num = parseInt(hex, 16)
-          if (isNaN(num)) return false
-          const r = (num >> 16) & 0xff
-          const g = (num >> 8) & 0xff
-          const b = num & 0xff
-          return r < 10 && g < 10 && b < 10
-        }
-        return false
-      }
-      
-      // Helper to adjust dark colors for dark mode
-      // For black backgrounds, keep them black in dark mode (don't lighten to gray)
-      const adjustDarkColorForDarkMode = (color: string): string => {
-        if (!color) return color
-        
-        // Keep pure black as black - don't change it to gray
-        if (isPureBlack(color)) {
-          return color
-        }
-        
-        const hex = color.replace('#', '').toLowerCase()
-        if (hex.length !== 6) return color
-        
-        const r = parseInt(hex.substring(0, 2), 16)
-        const g = parseInt(hex.substring(2, 4), 16)
-        const b = parseInt(hex.substring(4, 6), 16)
-        
-        // Check if it's very dark (almost black but not pure black)
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-        if (luminance < 0.15) {
-          // For very dark colors, keep them as is - don't lighten to gray
-          return color
-        }
-        
-        // For medium-dark colors, keep as is
-        return color
-      }
-      
-      // Helper to lighten a color (for text on dark backgrounds)
-      const lightenColor = (color: string, factor: number = 0.3): string => {
-        if (!color) return color
-        const hex = color.replace('#', '')
-        if (hex.length !== 6) return color
-        
-        const r = Math.min(255, Math.floor(parseInt(hex.substring(0, 2), 16) + (255 - parseInt(hex.substring(0, 2), 16)) * factor))
-        const g = Math.min(255, Math.floor(parseInt(hex.substring(2, 4), 16) + (255 - parseInt(hex.substring(2, 4), 16)) * factor))
-        const b = Math.min(255, Math.floor(parseInt(hex.substring(4, 6), 16) + (255 - parseInt(hex.substring(4, 6), 16)) * factor))
-        
-        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
-      }
-      
       // Build background style based on background type
       const heroBackgroundStyle: React.CSSProperties = {}
       let backgroundClass = ''
@@ -449,10 +570,39 @@ export function ComponentRenderer({
         
         const dir = gradientDirectionMap[direction] || 'to bottom right'
         
-        // Calculate dark mode colors
-        const fromDark = isLightColor(fromColor) ? darkenColor(fromColor, 0.4) : fromColor
-        const viaDark = viaColor ? (isLightColor(viaColor) ? darkenColor(viaColor, 0.4) : viaColor) : null
-        const toDark = isLightColor(toColor) ? darkenColor(toColor, 0.4) : toColor
+        // Calculate dark mode colors (inline to avoid TypeScript errors)
+        const calculateDarkColor = (color: string, factor: number = 0.4): string => {
+          if (!color) return color
+          const hex = color.replace('#', '')
+          if (hex.length !== 6) return color
+          const r = parseInt(hex.substring(0, 2), 16)
+          const g = parseInt(hex.substring(2, 4), 16)
+          const b = parseInt(hex.substring(4, 6), 16)
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+          if (luminance > 0.9) {
+            const darkValue = Math.floor(30 + (luminance - 0.9) * 20)
+            return `#${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}`
+          }
+          const newR = Math.max(0, Math.floor(r * (1 - factor)))
+          const newG = Math.max(0, Math.floor(g * (1 - factor)))
+          const newB = Math.max(0, Math.floor(b * (1 - factor)))
+          return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
+        }
+        
+        const isLight = (color: string): boolean => {
+          if (!color) return false
+          const hex = color.replace('#', '')
+          if (hex.length !== 6) return false
+          const r = parseInt(hex.substring(0, 2), 16)
+          const g = parseInt(hex.substring(2, 4), 16)
+          const b = parseInt(hex.substring(4, 6), 16)
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+          return luminance > 0.5
+        }
+        
+        const fromDark = isLight(fromColor) ? calculateDarkColor(fromColor, 0.4) : fromColor
+        const viaDark = viaColor ? (isLight(viaColor) ? calculateDarkColor(viaColor, 0.4) : viaColor) : null
+        const toDark = isLight(toColor) ? calculateDarkColor(toColor, 0.4) : toColor
         
         // Build gradients
         const lightGradient = viaColor 
@@ -474,13 +624,30 @@ export function ComponentRenderer({
         // Store in CSS variable
         heroCSSVars['--hero-bg-color'] = bgColor
         
-        // For dark mode: smart color adaptation
-        if (isLightColor(bgColor)) {
-          // Light colors: darken significantly to create contrast
-          heroCSSVars['--hero-bg-color-dark'] = darkenColor(bgColor, 0.6)
-        } else {
-          // Dark colors: adjust slightly for dark mode (lighten a bit for contrast)
-          heroCSSVars['--hero-bg-color-dark'] = adjustDarkColorForDarkMode(bgColor)
+        // For dark mode: smart color adaptation (inline to avoid TypeScript errors)
+        try {
+          const hex = bgColor.replace('#', '')
+          if (hex.length === 6) {
+            const r = parseInt(hex.substring(0, 2), 16)
+            const g = parseInt(hex.substring(2, 4), 16)
+            const b = parseInt(hex.substring(4, 6), 16)
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+            if (luminance > 0.5) {
+              // Light color - darken for dark mode
+              const factor = 0.6
+              const newR = Math.max(0, Math.floor(r * (1 - factor)))
+              const newG = Math.max(0, Math.floor(g * (1 - factor)))
+              const newB = Math.max(0, Math.floor(b * (1 - factor)))
+              heroCSSVars['--hero-bg-color-dark'] = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
+            } else {
+              // Dark color - keep as is
+              heroCSSVars['--hero-bg-color-dark'] = bgColor
+            }
+          } else {
+            heroCSSVars['--hero-bg-color-dark'] = bgColor
+          }
+        } catch (e) {
+          heroCSSVars['--hero-bg-color-dark'] = bgColor
         }
         
         heroBackgroundStyle.backgroundColor = bgColor
@@ -499,29 +666,49 @@ export function ComponentRenderer({
       if (data.textColor) {
         heroCSSVars['--hero-text-color'] = data.textColor
         
-        // For dark mode: smart text color adaptation
-        if (data.backgroundType === 'solid' && data.backgroundColor) {
-          const bgIsLight = isLightColor(data.backgroundColor)
-          const textIsLight = isLightColor(data.textColor)
-          const bgIsPureBlack = isPureBlack(data.backgroundColor)
-          
-          if (bgIsLight) {
-            // Light background: in dark mode it becomes dark, so dark text should become light
-            if (!textIsLight) {
-              heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.8)
+        // For dark mode: smart text color adaptation (inline to avoid TypeScript errors)
+        try {
+          if (data.backgroundType === 'solid' && data.backgroundColor) {
+            const bgHex = data.backgroundColor.replace('#', '')
+            const textHex = data.textColor.replace('#', '')
+            if (bgHex.length === 6 && textHex.length === 6) {
+              const bgR = parseInt(bgHex.substring(0, 2), 16)
+              const bgG = parseInt(bgHex.substring(2, 4), 16)
+              const bgB = parseInt(bgHex.substring(4, 6), 16)
+              const bgLuminance = (0.299 * bgR + 0.587 * bgG + 0.114 * bgB) / 255
+              const textR = parseInt(textHex.substring(0, 2), 16)
+              const textG = parseInt(textHex.substring(2, 4), 16)
+              const textB = parseInt(textHex.substring(4, 6), 16)
+              const textLuminance = (0.299 * textR + 0.587 * textG + 0.114 * textB) / 255
+              
+              const bgIsLight = bgLuminance > 0.5
+              const textIsLight = textLuminance > 0.5
+              const bgIsPureBlack = bgR < 10 && bgG < 10 && bgB < 10
+              
+              if (bgIsLight) {
+                // Light background: in dark mode it becomes dark, so dark text should become light
+                if (!textIsLight) {
+                  // Lighten the text color for dark mode
+                  const factor = 0.8
+                  const newR = Math.min(255, Math.floor(textR + (255 - textR) * factor))
+                  const newG = Math.min(255, Math.floor(textG + (255 - textG) * factor))
+                  const newB = Math.min(255, Math.floor(textB + (255 - textB) * factor))
+                  heroCSSVars['--hero-text-color-dark'] = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
+                } else {
+                  heroCSSVars['--hero-text-color-dark'] = data.textColor
+                }
+              } else if (bgIsPureBlack) {
+                heroCSSVars['--hero-text-color-dark'] = data.textColor
+              } else {
+                heroCSSVars['--hero-text-color-dark'] = data.textColor
+              }
             } else {
-              // Light text on light background - might need to darken in dark mode
               heroCSSVars['--hero-text-color-dark'] = data.textColor
             }
-          } else if (bgIsPureBlack) {
-            // Pure black background: keep text as is
-            // Black stays black in dark mode, so text color should stay the same
-            heroCSSVars['--hero-text-color-dark'] = data.textColor
           } else {
-            // Dark (but not pure black) background: keep text as is
             heroCSSVars['--hero-text-color-dark'] = data.textColor
           }
-        } else {
+        } catch (e) {
           heroCSSVars['--hero-text-color-dark'] = data.textColor
         }
         
@@ -1875,6 +2062,266 @@ export function ComponentRenderer({
           }}
         />
       )
+
+    case 'split-screen':
+      const splitImageSide = data.splitImageSide || 'left'
+      const splitRatio = data.splitImageRatio || '50-50'
+      
+      // Determine width classes based on ratio
+      const getWidthClasses = (ratio: string) => {
+        if (ratio === '60-40') {
+          return { image: 'lg:w-[60%]', text: 'lg:w-[40%]' }
+        } else if (ratio === '40-60') {
+          return { image: 'lg:w-[40%]', text: 'lg:w-[60%]' }
+        }
+        return { image: 'lg:w-1/2', text: 'lg:w-1/2' }
+      }
+      
+      const widthClasses = getWidthClasses(splitRatio)
+      
+      // Determine background classes for the section
+      let splitBgClass = 'bg-white dark:bg-[#181818]'
+      if (data.backgroundColor === 'white') {
+        splitBgClass = 'bg-white dark:bg-[#181818]'
+      } else if (data.backgroundColor === 'gray-50') {
+        splitBgClass = 'bg-gray-50 dark:bg-[#1a1a1a]'
+      } else if (data.backgroundColor) {
+        splitBgClass = 'split-screen-custom'
+      }
+      
+      const splitStyle: React.CSSProperties & Record<string, string> = {} as React.CSSProperties & Record<string, string>
+      
+      // Handle custom background colors with dark mode support
+      if (data.backgroundColor && data.backgroundColor !== 'white' && data.backgroundColor !== 'gray-50') {
+        splitStyle['--split-bg-color'] = data.backgroundColor
+        // For dark mode, darken light colors
+        try {
+          const hex = data.backgroundColor.replace('#', '')
+          if (hex.length === 6) {
+            const r = parseInt(hex.substring(0, 2), 16)
+            const g = parseInt(hex.substring(2, 4), 16)
+            const b = parseInt(hex.substring(4, 6), 16)
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+            if (luminance > 0.5) {
+              // Light color - darken for dark mode
+              const factor = 0.6
+              const newR = Math.max(0, Math.floor(r * (1 - factor)))
+              const newG = Math.max(0, Math.floor(g * (1 - factor)))
+              const newB = Math.max(0, Math.floor(b * (1 - factor)))
+              splitStyle['--split-bg-dark'] = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
+            } else {
+              splitStyle['--split-bg-dark'] = data.backgroundColor
+            }
+          } else {
+            splitStyle['--split-bg-dark'] = data.backgroundColor
+          }
+        } catch (e) {
+          splitStyle['--split-bg-dark'] = data.backgroundColor
+        }
+        splitStyle.backgroundColor = data.backgroundColor
+      }
+      
+      if (data.padding) {
+        splitStyle.padding = `${data.padding.top}px ${data.padding.right}px ${data.padding.bottom}px ${data.padding.left}px`
+      }
+      
+      // Handle text color with dark mode
+      if (data.textColor) {
+        splitStyle['--split-text-color'] = data.textColor
+        try {
+          if (data.backgroundColor && data.backgroundColor !== 'white' && data.backgroundColor !== 'gray-50') {
+            const hex = data.backgroundColor.replace('#', '')
+            if (hex.length === 6) {
+              const r = parseInt(hex.substring(0, 2), 16)
+              const g = parseInt(hex.substring(2, 4), 16)
+              const b = parseInt(hex.substring(4, 6), 16)
+              const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+              if (luminance > 0.5) {
+                splitStyle['--split-text-dark'] = '#ffffff'
+              } else {
+                splitStyle['--split-text-dark'] = data.textColor
+              }
+            } else {
+              splitStyle['--split-text-dark'] = data.textColor
+            }
+          } else {
+            splitStyle['--split-text-dark'] = data.textColor
+          }
+        } catch (e) {
+          splitStyle['--split-text-dark'] = data.textColor
+        }
+        splitStyle.color = data.textColor
+      }
+      
+      // Determine text side background
+      let textSideBgClass = 'bg-white dark:bg-[#181818]'
+      if (data.backgroundColor && data.backgroundColor !== 'white' && data.backgroundColor !== 'gray-50') {
+        textSideBgClass = 'split-text-custom'
+      }
+      
+      return (
+        <section 
+          className={`${splitBgClass} overflow-hidden`}
+          style={Object.keys(splitStyle).length > 0 ? splitStyle : undefined}
+        >
+          <div className={`flex flex-col ${splitImageSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'} min-h-[60vh]`}>
+            {/* Image Side */}
+            <div 
+              className={`relative w-full ${widthClasses.image} min-h-[50vh] bg-gray-100 dark:bg-gray-800`}
+            >
+              {data.splitImageUrl ? (
+                <>
+                  <div className="absolute inset-0">
+                    <Image
+                      src={data.splitImageUrl}
+                      alt={getText(data.splitImageAlt) || ''}
+                      fill
+                      className="object-cover"
+                      priority
+                      unoptimized={data.splitImageUrl.startsWith('http://') || data.splitImageUrl.startsWith('https://')}
+                    />
+                  </div>
+                  {data.splitImageOverlay && (
+                    <div className={`absolute inset-0 z-10 pointer-events-none ${splitImageSide === 'left' ? 'bg-gradient-to-r from-black/20 to-transparent' : 'bg-gradient-to-l from-black/20 to-transparent'}`} />
+                  )}
+                </>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <p className="text-gray-400 dark:text-gray-500">No image selected</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Text Side */}
+            <div 
+              className={`flex items-center justify-center p-8 lg:p-12 xl:p-16 w-full ${widthClasses.text} ${textSideBgClass}`}
+            >
+              <div className="max-w-2xl">
+                {data.splitSubtitle && (
+                  <p className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+                    {getText(data.splitSubtitle)}
+                  </p>
+                )}
+                {data.splitTitle && (
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+                    {getText(data.splitTitle)}
+                  </h2>
+                )}
+                {data.splitContent && (
+                  <div className="text-lg text-gray-600 dark:text-gray-300 mb-8 prose dark:prose-invert max-w-none">
+                    <p>{getText(data.splitContent)}</p>
+                  </div>
+                )}
+                {data.splitButtonText && (
+                  <Link href={data.splitButtonLink || '/projects'}>
+                    <Button size="lg" variant="outline">
+                      {getText(data.splitButtonText)}
+                      <ArrowRight className="w-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )
+
+    case 'image-text-overlay':
+      const overlayPosition = data.overlayPosition || 'center'
+      const overlayBg = data.overlayBackground || 'dark'
+      const overlayOpacity = data.overlayBackgroundOpacity !== undefined ? data.overlayBackgroundOpacity : 70
+      
+      // Position classes
+      const positionClasses = {
+        'top-left': 'items-start justify-start',
+        'top-center': 'items-start justify-center',
+        'top-right': 'items-start justify-end',
+        'center-left': 'items-center justify-start',
+        'center': 'items-center justify-center',
+        'center-right': 'items-center justify-end',
+        'bottom-left': 'items-end justify-start',
+        'bottom-center': 'items-end justify-center',
+        'bottom-right': 'items-end justify-end'
+      }
+      
+      // Background classes for text overlay
+      const overlayBgClasses = {
+        'none': '',
+        'dark': 'bg-black/70 dark:bg-black/80',
+        'light': 'bg-white/90 dark:bg-gray-900/90',
+        'gradient': 'bg-gradient-to-r from-black/70 via-black/60 to-transparent dark:from-black/80 dark:via-black/70 dark:to-transparent'
+      }
+      
+      return (
+        <section 
+          className="relative min-h-[70vh] flex items-center justify-center overflow-hidden"
+          style={{
+            ...(data.padding ? {
+              paddingTop: `${data.padding.top}px`,
+              paddingBottom: `${data.padding.bottom}px`,
+              paddingLeft: `${data.padding.left}px`,
+              paddingRight: `${data.padding.right}px`
+            } : {})
+          }}
+        >
+          {data.overlayImageUrl ? (
+            <>
+              <div className="absolute inset-0">
+                <Image
+                  src={data.overlayImageUrl}
+                  alt={getText(data.overlayImageAlt) || ''}
+                  fill
+                  className="object-cover"
+                  priority
+                  unoptimized={data.overlayImageUrl.startsWith('http://') || data.overlayImageUrl.startsWith('https://')}
+                />
+              </div>
+              <div className={`absolute inset-0 flex ${positionClasses[overlayPosition]} p-8 lg:p-12 xl:p-16 z-10`}>
+                <div className={`${overlayBg !== 'none' ? overlayBgClasses[overlayBg] : ''} rounded-lg p-8 lg:p-12 max-w-2xl ${overlayBg === 'none' ? 'text-white' : ''}`}
+                     style={overlayBg !== 'none' ? { opacity: overlayOpacity / 100 } : {}}
+                >
+                  {data.overlaySubtitle && (
+                    <p className={`text-sm uppercase tracking-wider mb-4 ${overlayBg === 'light' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-300 dark:text-gray-400'}`}>
+                      {getText(data.overlaySubtitle)}
+                    </p>
+                  )}
+                  {data.overlayTitle && (
+                    <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 ${overlayBg === 'light' ? 'text-gray-900 dark:text-white' : 'text-white'}`}>
+                      {getText(data.overlayTitle)}
+                    </h2>
+                  )}
+                  {data.overlayContent && (
+                    <div className={`text-lg mb-8 prose dark:prose-invert max-w-none ${overlayBg === 'light' ? 'text-gray-700 dark:text-gray-300' : 'text-gray-200 dark:text-gray-300'}`}>
+                      <p>{getText(data.overlayContent)}</p>
+                    </div>
+                  )}
+                  {data.overlayButtonText && (
+                    <Link href={data.overlayButtonLink || '/projects'}>
+                      <Button 
+                        size="lg" 
+                        className={overlayBg === 'light' 
+                          ? 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100' 
+                          : 'bg-white text-gray-900 hover:bg-gray-100'}
+                      >
+                        {getText(data.overlayButtonText)}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-gray-400 dark:text-gray-500">No image selected</p>
+            </div>
+          )}
+        </section>
+      )
+
+    case 'feature-showcase':
+      // Render a component that can use hooks
+      return <FeatureShowcaseComponent data={data} getText={getText} currentLanguage={currentLanguage} />
 
     default:
       return (

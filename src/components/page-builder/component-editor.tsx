@@ -89,6 +89,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
       ...component.data,
       [key]: value
     }
+    console.log('updateData called:', key, value, 'Full data:', updatedData)
     onChange(updatedData)
   }
   
@@ -116,15 +117,18 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   }
 
   const handleMediaSelect = (media: any) => {
-    if (mediaTarget === 'backgroundImage' || mediaTarget === 'imageUrl') {
-      updateData(mediaTarget, media.originalUrl)
+    console.log('Media selected:', media, 'Target:', mediaTarget)
+    if (mediaTarget === 'backgroundImage' || mediaTarget === 'imageUrl' || mediaTarget === 'splitImageUrl' || mediaTarget === 'overlayImageUrl' || mediaTarget === 'showcaseImageUrl') {
+      const imageUrl = media.originalUrl || media.url || media.thumbnailUrl
+      console.log('Setting image URL:', imageUrl, 'for field:', mediaTarget)
+      updateData(mediaTarget, imageUrl)
     } else if (mediaTarget && mediaTarget.startsWith('logo-')) {
       // Handle logo selection for hero elements
       const elementId = mediaTarget.replace('logo-', '')
       const elements = normalizeHeroElements()
       const element = elements.find(el => el.id === elementId)
       if (element) {
-        updateHeroElement(elementId, { logoUrl: media.originalUrl })
+        updateHeroElement(elementId, { logoUrl: media.originalUrl || media.url })
       }
     }
     setShowMediaLibrary(false)
@@ -422,22 +426,30 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
 
   if (showMediaLibrary) {
     return (
-      <div className="p-4">
-        <div className="mb-4">
+      <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Select Image</h2>
           <Button
             variant="outline"
             onClick={() => setShowMediaLibrary(false)}
+            className="flex items-center gap-2"
           >
-            ← Back to Editor
+            <X className="h-4 w-4" />
+            Close
           </Button>
         </div>
         
-        <MediaLibrary
-          selectionMode={mediaSelectionMode}
-          onSelect={mediaSelectionMode === 'single' ? handleMediaSelect : undefined}
-          onSelectMultiple={mediaSelectionMode === 'multiple' ? handleMediaSelectMultiple : undefined}
-          allowUpload={true}
-        />
+        {/* Media Library - Full height with large thumbnails */}
+        <div className="flex-1 overflow-auto p-6">
+          <MediaLibrary
+            selectionMode={mediaSelectionMode}
+            onSelect={mediaSelectionMode === 'single' ? handleMediaSelect : undefined}
+            onSelectMultiple={mediaSelectionMode === 'multiple' ? handleMediaSelectMultiple : undefined}
+            allowUpload={true}
+            className="max-w-7xl mx-auto"
+          />
+        </div>
       </div>
     )
   }
@@ -2588,6 +2600,463 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
             max="500"
           />
         </div>
+      )}
+
+      {/* Split Screen Component Fields */}
+      {component.type === 'split-screen' && (
+        <>
+          <div>
+            <Label htmlFor="splitImageUrl">Image</Label>
+            <div className="flex gap-2">
+              <Input
+                id="splitImageUrl"
+                value={component.data.splitImageUrl || ''}
+                onChange={(e) => updateData('splitImageUrl', e.target.value)}
+                placeholder="Image URL or select from library"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setMediaTarget('splitImageUrl')
+                  setMediaSelectionMode('single')
+                  setShowMediaLibrary(true)
+                }}
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            {component.data.splitImageUrl && (
+              <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs text-green-700 dark:text-green-300">
+                ✅ Image URL set: {component.data.splitImageUrl.substring(0, 60)}...
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="splitImageSide">Image Side</Label>
+            <Select
+              id="splitImageSide"
+              value={component.data.splitImageSide || 'left'}
+              onChange={(e) => updateData('splitImageSide', e.target.value)}
+            >
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="splitImageRatio">Image/Text Ratio</Label>
+            <Select
+              id="splitImageRatio"
+              value={component.data.splitImageRatio || '50-50'}
+              onChange={(e) => updateData('splitImageRatio', e.target.value)}
+            >
+              <option value="50-50">50% / 50%</option>
+              <option value="60-40">60% / 40%</option>
+              <option value="40-60">40% / 60%</option>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="splitSubtitle" className="flex items-center gap-2">
+              <span>Subtitle</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="splitSubtitle"
+              value={component.data.splitSubtitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.splitSubtitle, [activeLanguage]: e.target.value }
+                updateData('splitSubtitle', updated)
+              }}
+              placeholder="Enter subtitle"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="splitTitle" className="flex items-center gap-2">
+              <span>Title</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="splitTitle"
+              value={component.data.splitTitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.splitTitle, [activeLanguage]: e.target.value }
+                updateData('splitTitle', updated)
+              }}
+              placeholder="Enter title"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="splitContent" className="flex items-center gap-2">
+              <span>Content</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <textarea
+              id="splitContent"
+              value={component.data.splitContent?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.splitContent, [activeLanguage]: e.target.value }
+                updateData('splitContent', updated)
+              }}
+              placeholder="Enter content"
+              className="w-full min-h-[100px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="splitButtonText" className="flex items-center gap-2">
+              <span>Button Text</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="splitButtonText"
+              value={component.data.splitButtonText?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.splitButtonText, [activeLanguage]: e.target.value }
+                updateData('splitButtonText', updated)
+              }}
+              placeholder="Enter button text"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="splitButtonLink">Button Link</Label>
+            <Input
+              id="splitButtonLink"
+              value={component.data.splitButtonLink || ''}
+              onChange={(e) => updateData('splitButtonLink', e.target.value)}
+              placeholder="/projects"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="splitImageOverlay"
+              checked={component.data.splitImageOverlay || false}
+              onChange={(e) => updateData('splitImageOverlay', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="splitImageOverlay">Add gradient overlay on image</Label>
+          </div>
+        </>
+      )}
+
+      {/* Image Text Overlay Component Fields */}
+      {component.type === 'image-text-overlay' && (
+        <>
+          <div>
+            <Label htmlFor="overlayImageUrl">Image</Label>
+            <div className="flex gap-2">
+              <Input
+                id="overlayImageUrl"
+                value={component.data.overlayImageUrl || ''}
+                onChange={(e) => updateData('overlayImageUrl', e.target.value)}
+                placeholder="Image URL or select from library"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setMediaTarget('overlayImageUrl')
+                  setMediaSelectionMode('single')
+                  setShowMediaLibrary(true)
+                }}
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayPosition">Text Position</Label>
+            <Select
+              id="overlayPosition"
+              value={component.data.overlayPosition || 'center'}
+              onChange={(e) => updateData('overlayPosition', e.target.value)}
+            >
+              <option value="top-left">Top Left</option>
+              <option value="top-center">Top Center</option>
+              <option value="top-right">Top Right</option>
+              <option value="center-left">Center Left</option>
+              <option value="center">Center</option>
+              <option value="center-right">Center Right</option>
+              <option value="bottom-left">Bottom Left</option>
+              <option value="bottom-center">Bottom Center</option>
+              <option value="bottom-right">Bottom Right</option>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayBackground">Text Background</Label>
+            <Select
+              id="overlayBackground"
+              value={component.data.overlayBackground || 'dark'}
+              onChange={(e) => updateData('overlayBackground', e.target.value)}
+            >
+              <option value="none">None</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="gradient">Gradient</option>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayBackgroundOpacity">Background Opacity: {component.data.overlayBackgroundOpacity !== undefined ? component.data.overlayBackgroundOpacity : 70}%</Label>
+            <input
+              type="range"
+              id="overlayBackgroundOpacity"
+              min="0"
+              max="100"
+              value={component.data.overlayBackgroundOpacity !== undefined ? component.data.overlayBackgroundOpacity : 70}
+              onChange={(e) => updateData('overlayBackgroundOpacity', parseInt(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="overlaySubtitle" className="flex items-center gap-2">
+              <span>Subtitle</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="overlaySubtitle"
+              value={component.data.overlaySubtitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.overlaySubtitle, [activeLanguage]: e.target.value }
+                updateData('overlaySubtitle', updated)
+              }}
+              placeholder="Enter subtitle"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayTitle" className="flex items-center gap-2">
+              <span>Title</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="overlayTitle"
+              value={component.data.overlayTitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.overlayTitle, [activeLanguage]: e.target.value }
+                updateData('overlayTitle', updated)
+              }}
+              placeholder="Enter title"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayContent" className="flex items-center gap-2">
+              <span>Content</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <textarea
+              id="overlayContent"
+              value={component.data.overlayContent?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.overlayContent, [activeLanguage]: e.target.value }
+                updateData('overlayContent', updated)
+              }}
+              placeholder="Enter content"
+              className="w-full min-h-[100px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayButtonText" className="flex items-center gap-2">
+              <span>Button Text</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="overlayButtonText"
+              value={component.data.overlayButtonText?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.overlayButtonText, [activeLanguage]: e.target.value }
+                updateData('overlayButtonText', updated)
+              }}
+              placeholder="Enter button text"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="overlayButtonLink">Button Link</Label>
+            <Input
+              id="overlayButtonLink"
+              value={component.data.overlayButtonLink || ''}
+              onChange={(e) => updateData('overlayButtonLink', e.target.value)}
+              placeholder="/projects"
+            />
+          </div>
+        </>
+      )}
+
+      {/* Feature Showcase Component Fields */}
+      {component.type === 'feature-showcase' && (
+        <>
+          <div>
+            <Label htmlFor="showcaseProjectId">Project ID (optional - leave empty to use image directly)</Label>
+            <Input
+              id="showcaseProjectId"
+              value={component.data.showcaseProjectId || ''}
+              onChange={(e) => updateData('showcaseProjectId', e.target.value)}
+              placeholder="Project ID"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseImageUrl">Image</Label>
+            <div className="flex gap-2">
+              <Input
+                id="showcaseImageUrl"
+                value={component.data.showcaseImageUrl || ''}
+                onChange={(e) => updateData('showcaseImageUrl', e.target.value)}
+                placeholder="Image URL or select from library"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setMediaTarget('showcaseImageUrl')
+                  setMediaSelectionMode('single')
+                  setShowMediaLibrary(true)
+                }}
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseLayout">Layout</Label>
+            <Select
+              id="showcaseLayout"
+              value={component.data.showcaseLayout || 'image-left'}
+              onChange={(e) => updateData('showcaseLayout', e.target.value)}
+            >
+              <option value="image-left">Image Left</option>
+              <option value="image-right">Image Right</option>
+              <option value="image-top">Image Top</option>
+              <option value="full-image">Full Image Background</option>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseImageSize">Image Size</Label>
+            <Select
+              id="showcaseImageSize"
+              value={component.data.showcaseImageSize || 'large'}
+              onChange={(e) => updateData('showcaseImageSize', e.target.value)}
+            >
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+              <option value="xlarge">Extra Large</option>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseSubtitle" className="flex items-center gap-2">
+              <span>Subtitle</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="showcaseSubtitle"
+              value={component.data.showcaseSubtitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.showcaseSubtitle, [activeLanguage]: e.target.value }
+                updateData('showcaseSubtitle', updated)
+              }}
+              placeholder="Enter subtitle"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseTitle" className="flex items-center gap-2">
+              <span>Title</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="showcaseTitle"
+              value={component.data.showcaseTitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.showcaseTitle, [activeLanguage]: e.target.value }
+                updateData('showcaseTitle', updated)
+              }}
+              placeholder="Enter title (or leave empty to use project title)"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseDescription" className="flex items-center gap-2">
+              <span>Description</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <textarea
+              id="showcaseDescription"
+              value={component.data.showcaseDescription?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.showcaseDescription, [activeLanguage]: e.target.value }
+                updateData('showcaseDescription', updated)
+              }}
+              placeholder="Enter description (or leave empty to use project description)"
+              className="w-full min-h-[100px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseButtonText" className="flex items-center gap-2">
+              <span>Button Text</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="showcaseButtonText"
+              value={component.data.showcaseButtonText?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.showcaseButtonText, [activeLanguage]: e.target.value }
+                updateData('showcaseButtonText', updated)
+              }}
+              placeholder="Enter button text"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="showcaseButtonLink">Button Link</Label>
+            <Input
+              id="showcaseButtonLink"
+              value={component.data.showcaseButtonLink || ''}
+              onChange={(e) => updateData('showcaseButtonLink', e.target.value)}
+              placeholder="/projects/{id} or leave empty to use project ID"
+            />
+          </div>
+        </>
       )}
 
       {/* Common Style Fields */}

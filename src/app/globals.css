@@ -94,6 +94,15 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
   color: var(--hero-text-color-dark, var(--hero-text-color, inherit)) !important;
 }
 
+/* Split-screen dark mode support */
+.dark .split-screen-custom {
+  background-color: var(--split-bg-dark, var(--split-bg-color, #181818)) !important;
+}
+
+.dark .split-text-custom {
+  color: var(--split-text-dark, var(--split-text-color, #ededed)) !important;
+}
+
 /* Hero logo dark mode - automatically invert black/transparent PNGs to white/transparent */
 /* This filter chain: 
    1. brightness(0) - makes everything black (including colored areas)

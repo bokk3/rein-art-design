@@ -1,6 +1,6 @@
 export interface PageComponent {
   id: string
-  type: 'hero' | 'text' | 'image' | 'gallery' | 'gallery-showcase' | 'cta' | 'spacer' | 'features' | 'testimonials'
+  type: 'hero' | 'text' | 'image' | 'gallery' | 'gallery-showcase' | 'cta' | 'spacer' | 'features' | 'testimonials' | 'split-screen' | 'image-text-overlay' | 'feature-showcase'
   order: number
   data: ComponentData
 }
@@ -136,6 +136,42 @@ export interface ComponentData {
   ctaButtonLink?: string
   
   // Spacer component
+  
+  // Split-screen component - Image on one side, text on the other
+  splitImageUrl?: string
+  splitImageAlt?: MultilingualText
+  splitImageSide?: 'left' | 'right' // Which side the image is on
+  splitImageRatio?: '50-50' | '60-40' | '40-60' // Image-text ratio
+  splitContent?: MultilingualText // Text content for the text side
+  splitTitle?: MultilingualText
+  splitSubtitle?: MultilingualText
+  splitButtonText?: MultilingualText
+  splitButtonLink?: string
+  splitImageOverlay?: boolean // Add subtle overlay on image for text readability
+  
+  // Image-text-overlay component - Text overlaid on large image
+  overlayImageUrl?: string
+  overlayImageAlt?: MultilingualText
+  overlayTitle?: MultilingualText
+  overlaySubtitle?: MultilingualText
+  overlayContent?: MultilingualText
+  overlayButtonText?: MultilingualText
+  overlayButtonLink?: string
+  overlayPosition?: 'top-left' | 'top-center' | 'top-right' | 'center-left' | 'center' | 'center-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  overlayBackground?: 'none' | 'dark' | 'light' | 'gradient' // Background for text area
+  overlayBackgroundOpacity?: number // 0-100
+  
+  // Feature-showcase component - Large, prominent single project/item showcase
+  showcaseProjectId?: string // ID of project to showcase
+  showcaseImageUrl?: string // Or use image directly
+  showcaseImageAlt?: MultilingualText
+  showcaseTitle?: MultilingualText
+  showcaseSubtitle?: MultilingualText
+  showcaseDescription?: MultilingualText
+  showcaseButtonText?: MultilingualText
+  showcaseButtonLink?: string
+  showcaseLayout?: 'image-left' | 'image-right' | 'image-top' | 'full-image' // Layout options
+  showcaseImageSize?: 'medium' | 'large' | 'xlarge' // Image prominence
   
   // Common properties
   backgroundColor?: string

@@ -54,14 +54,9 @@ export function SortableComponent({
         onUpdate={onUpdate}
       />
       
-      {/* Overlay Controls - No background overlay, just controls */}
-      <div className={`absolute inset-0 pointer-events-none z-50 ${
-        isSelected ? 'pointer-events-auto' : 'group-hover:pointer-events-auto'
-      }`}
-      onClick={(e) => e.stopPropagation()}
-      >
-        {/* Move Controls */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1 z-[60]">
+      {/* Overlay Controls - Only show controls, don't block content */}
+      {/* Move Controls */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-[100] pointer-events-auto">
           {onMoveUp && (
             <Button
               size="sm"
@@ -93,7 +88,9 @@ export function SortableComponent({
         </div>
         
         {/* Action Buttons */}
-        <div className="absolute top-2 right-2 flex gap-1 z-[60]">
+        <div className={`absolute top-2 right-2 flex gap-1 z-[100] transition-opacity ${
+          isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}>
           <Button
             size="sm"
             variant="secondary"
@@ -102,7 +99,7 @@ export function SortableComponent({
               e.preventDefault()
               onSelect()
             }}
-            className="pointer-events-auto bg-white dark:bg-gray-800 shadow-lg"
+            className="bg-white dark:bg-gray-800 shadow-lg"
           >
             <Edit className="h-3 w-3" />
           </Button>
@@ -114,7 +111,7 @@ export function SortableComponent({
               e.preventDefault()
               onDuplicate()
             }}
-            className="pointer-events-auto bg-white dark:bg-gray-800 shadow-lg"
+            className="bg-white dark:bg-gray-800 shadow-lg"
           >
             <Copy className="h-3 w-3" />
           </Button>
@@ -126,17 +123,18 @@ export function SortableComponent({
               e.preventDefault()
               onDelete()
             }}
-            className="pointer-events-auto bg-white dark:bg-gray-800 shadow-lg"
+            className="bg-white dark:bg-gray-800 shadow-lg"
           >
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
         
         {/* Component Type Label */}
-        <div className="absolute bottom-2 left-2 px-2 py-1 bg-black bg-opacity-75 text-white text-xs rounded z-[60] pointer-events-auto">
+        <div className={`absolute bottom-2 left-2 px-2 py-1 bg-black bg-opacity-75 text-white text-xs rounded z-[100] transition-opacity ${
+          isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}>
           {component.type.charAt(0).toUpperCase() + component.type.slice(1)} (#{index + 1})
         </div>
-      </div>
     </div>
   )
 }
