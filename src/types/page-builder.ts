@@ -90,6 +90,7 @@ export interface ComponentData {
   imageUrl?: string
   alt?: MultilingualText
   caption?: MultilingualText
+  imageParallax?: boolean // Enable/disable parallax effect on image
   
   // Gallery component
   images?: Array<{
@@ -148,6 +149,7 @@ export interface ComponentData {
   splitButtonText?: MultilingualText
   splitButtonLink?: string
   splitImageOverlay?: boolean // Add subtle overlay on image for text readability
+  splitImageParallax?: boolean // Enable/disable parallax effect on image
   
   // Image-text-overlay component - Text overlaid on large image
   overlayImageUrl?: string
@@ -160,6 +162,7 @@ export interface ComponentData {
   overlayPosition?: 'top-left' | 'top-center' | 'top-right' | 'center-left' | 'center' | 'center-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
   overlayBackground?: 'none' | 'dark' | 'light' | 'gradient' // Background for text area
   overlayBackgroundOpacity?: number // 0-100
+  overlayImageParallax?: boolean // Enable/disable parallax effect on image
   
   // Feature-showcase component - Large, prominent single project/item showcase
   showcaseProjectId?: string // ID of project to showcase
@@ -172,6 +175,7 @@ export interface ComponentData {
   showcaseButtonLink?: string
   showcaseLayout?: 'image-left' | 'image-right' | 'image-top' | 'full-image' // Layout options
   showcaseImageSize?: 'medium' | 'large' | 'xlarge' // Image prominence
+  showcaseImageParallax?: boolean // Enable/disable parallax effect on image
   
   // Common properties
   backgroundColor?: string

@@ -28,12 +28,42 @@ export function useImageParallax({
     const element = elementRef.current
     if (!element) return
 
-    // Find parent container (section or div with relative positioning)
+    // Find parent container - prioritize data-parallax-container, then section, then relative container
+    // For feature-showcase side layouts, we need to go up to the section, not the inner relative div
     let parent: HTMLElement | null = element.parentElement
-    while (parent && !parent.classList.contains('relative') && parent.tagName !== 'SECTION') {
+    let container: HTMLElement | null = null
+    
+    // First, look for data-parallax-container attribute (most reliable)
+    while (parent) {
+      if (parent.hasAttribute('data-parallax-container')) {
+        container = parent
+        break
+      }
       parent = parent.parentElement
     }
-    containerRef.current = parent || element.parentElement
+    
+    // If not found, look for section tag
+    if (!container) {
+      parent = element.parentElement
+      while (parent) {
+        if (parent.tagName === 'SECTION') {
+          container = parent
+          break
+        }
+        parent = parent.parentElement
+      }
+    }
+    
+    // If still not found, find the nearest relative container
+    if (!container) {
+      parent = element.parentElement
+      while (parent && !parent.classList.contains('relative') && parent.tagName !== 'SECTION') {
+        parent = parent.parentElement
+      }
+      container = parent || element.parentElement
+    }
+    
+    containerRef.current = container
 
     let ticking = false
     let rafId: number | null = null

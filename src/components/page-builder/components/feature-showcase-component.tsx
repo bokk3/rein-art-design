@@ -35,13 +35,13 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
   
   // Parallax effect for showcase images (full-image layout)
   const fullImageParallax = useImageParallax({ 
-    enabled: showcaseLayout === 'full-image' && !!showcaseImage,
+    enabled: (data.showcaseImageParallax !== false) && showcaseLayout === 'full-image' && !!showcaseImage, // Default to true if not set
     speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
   })
   
   // Parallax effect for showcase images (side layouts)
   const sideImageParallax = useImageParallax({ 
-    enabled: showcaseLayout !== 'full-image' && !!showcaseImage,
+    enabled: (data.showcaseImageParallax !== false) && showcaseLayout !== 'full-image' && !!showcaseImage, // Default to true if not set
     speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
   })
   
@@ -53,7 +53,7 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
   
   if (showcaseLayout === 'full-image') {
     return (
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" data-parallax-container>
         {showcaseImage ? (
           <>
             <div 
@@ -121,6 +121,7 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
         paddingLeft: `${data.padding.left}px`,
         paddingRight: `${data.padding.right}px`
       } : {}}
+      data-parallax-container
     >
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col ${
         showcaseLayout === 'image-right' ? 'lg:flex-row-reverse' : 

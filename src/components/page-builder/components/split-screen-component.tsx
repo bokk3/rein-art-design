@@ -18,7 +18,7 @@ interface SplitScreenComponentProps {
 export function SplitScreenComponent({ data, getText }: SplitScreenComponentProps) {
   // Parallax effect for split screen image
   const imageParallax = useImageParallax({ 
-    enabled: !!data.splitImageUrl,
+    enabled: (data.splitImageParallax !== false) && !!data.splitImageUrl, // Default to true if not set
     speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
   })
   
@@ -93,6 +93,7 @@ export function SplitScreenComponent({ data, getText }: SplitScreenComponentProp
     <section 
       className={`${splitBgClass} overflow-hidden`}
       style={Object.keys(splitStyle).length > 0 ? splitStyle : undefined}
+      data-parallax-container
     >
       <div className={`flex flex-col ${splitImageSide === 'right' ? 'lg:flex-row-reverse' : 'lg:flex-row'} min-h-[60vh]`}>
         {/* Image Side */}

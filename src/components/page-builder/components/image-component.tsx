@@ -17,7 +17,7 @@ interface ImageComponentProps {
 export function ImageComponent({ data, getText, isEditing = false, onUpdate }: ImageComponentProps) {
   // Parallax effect for image
   const imageParallax = useImageParallax({ 
-    enabled: !isEditing && !!data.imageUrl,
+    enabled: !isEditing && (data.imageParallax !== false) && !!data.imageUrl, // Default to true if not set
     speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
   })
   
@@ -33,6 +33,7 @@ export function ImageComponent({ data, getText, isEditing = false, onUpdate }: I
     <div 
       className="py-8 px-8"
       style={containerStyle}
+      data-parallax-container
     >
       <div className="max-w-4xl mx-auto text-center">
         {data.imageUrl ? (

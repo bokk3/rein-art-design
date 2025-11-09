@@ -2099,6 +2099,17 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               placeholder="Optional image caption"
             />
           </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="imageParallax"
+              checked={component.data.imageParallax !== false}
+              onChange={(e) => updateData('imageParallax', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="imageParallax">Enable image parallax effect</Label>
+          </div>
         </>
       )}
 
@@ -2751,6 +2762,17 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
             />
             <Label htmlFor="splitImageOverlay">Add gradient overlay on image</Label>
           </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="splitImageParallax"
+              checked={component.data.splitImageParallax !== false}
+              onChange={(e) => updateData('splitImageParallax', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="splitImageParallax">Enable image parallax effect</Label>
+          </div>
         </>
       )}
 
@@ -2824,6 +2846,17 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               onChange={(e) => updateData('overlayBackgroundOpacity', parseInt(e.target.value))}
               className="w-full"
             />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="overlayImageParallax"
+              checked={component.data.overlayImageParallax !== false}
+              onChange={(e) => updateData('overlayImageParallax', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="overlayImageParallax">Enable image parallax effect</Label>
           </div>
           
           <div>
@@ -2972,6 +3005,17 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               <option value="large">Large</option>
               <option value="xlarge">Extra Large</option>
             </Select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showcaseImageParallax"
+              checked={component.data.showcaseImageParallax !== false}
+              onChange={(e) => updateData('showcaseImageParallax', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="showcaseImageParallax">Enable image parallax effect</Label>
           </div>
           
           <div>

@@ -17,7 +17,7 @@ interface ImageTextOverlayComponentProps {
 export function ImageTextOverlayComponent({ data, getText }: ImageTextOverlayComponentProps) {
   // Parallax effect for overlay image
   const imageParallax = useImageParallax({ 
-    enabled: !!data.overlayImageUrl,
+    enabled: (data.overlayImageParallax !== false) && !!data.overlayImageUrl, // Default to true if not set
     speed: 0.15 // Subtle parallax - image moves at 15% of scroll speed
   })
   
@@ -57,6 +57,7 @@ export function ImageTextOverlayComponent({ data, getText }: ImageTextOverlayCom
           paddingRight: `${data.padding.right}px`
         } : {})
       }}
+      data-parallax-container
     >
       {data.overlayImageUrl ? (
         <>
