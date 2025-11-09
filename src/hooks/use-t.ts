@@ -230,13 +230,25 @@ export function useT(options: UseTOptions = {}) {
         }
       }
       
-      // If we just changed languages and don't have the translation yet,
-      // return the key to force a re-render (component will update when translation loads)
-      // This ensures the component shows something different, triggering React to re-render
-
-      // Return key or defaultValue - this will trigger a re-render when language changes
-      // The translation will update once it's fetched
-      return defaultValue || key
+      // Last resort: try to use any cached translation from any language to prevent showing keys
+      // This prevents the flash of untranslated content (FOUC)
+      for (const [cacheKey, cached] of translationCache.entries()) {
+        if (cacheKey.startsWith(`${key}:`) && Date.now() - cached.timestamp < CACHE_TTL * 2) {
+          // Use cached value from any language as fallback (better than showing key)
+          return cached.value
+        }
+      }
+      
+      // If we absolutely can't find anything, return defaultValue or empty string
+      // Only return the key as absolute last resort (should rarely happen)
+      // Returning empty string or defaultValue prevents the key from flashing
+      if (defaultValue) {
+        return defaultValue
+      }
+      
+      // Return empty string instead of key to prevent flash
+      // The component will update once translation is fetched
+      return ''
     },
     [currentLanguage, translations, loadingKeys, languageLoading, defaultValue, fetchTranslation, languageVersion]
   )

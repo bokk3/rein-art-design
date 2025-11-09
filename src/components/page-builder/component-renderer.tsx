@@ -317,9 +317,53 @@ export function ComponentRenderer({
         gap: 16
       }
       
+      // Helper to check if a color is light (for dark mode adaptation)
+      const isLightColor = (color: string): boolean => {
+        if (!color) return false
+        // Remove # if present
+        const hex = color.replace('#', '')
+        if (hex.length !== 6) return false
+        
+        // Convert to RGB
+        const r = parseInt(hex.substring(0, 2), 16)
+        const g = parseInt(hex.substring(2, 4), 16)
+        const b = parseInt(hex.substring(4, 6), 16)
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance > 0.5
+      }
+      
+      // Helper to darken a color for dark mode
+      const darkenColor = (color: string, factor: number = 0.3): string => {
+        if (!color) return color
+        const hex = color.replace('#', '')
+        if (hex.length !== 6) return color
+        
+        const r = Math.max(0, Math.floor(parseInt(hex.substring(0, 2), 16) * (1 - factor)))
+        const g = Math.max(0, Math.floor(parseInt(hex.substring(2, 4), 16) * (1 - factor)))
+        const b = Math.max(0, Math.floor(parseInt(hex.substring(4, 6), 16) * (1 - factor)))
+        
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+      }
+      
+      // Helper to lighten a color (for text on dark backgrounds)
+      const lightenColor = (color: string, factor: number = 0.3): string => {
+        if (!color) return color
+        const hex = color.replace('#', '')
+        if (hex.length !== 6) return color
+        
+        const r = Math.min(255, Math.floor(parseInt(hex.substring(0, 2), 16) + (255 - parseInt(hex.substring(0, 2), 16)) * factor))
+        const g = Math.min(255, Math.floor(parseInt(hex.substring(2, 4), 16) + (255 - parseInt(hex.substring(2, 4), 16)) * factor))
+        const b = Math.min(255, Math.floor(parseInt(hex.substring(4, 6), 16) + (255 - parseInt(hex.substring(4, 6), 16)) * factor))
+        
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+      }
+      
       // Build background style based on background type
       const heroBackgroundStyle: React.CSSProperties = {}
       let backgroundClass = ''
+      const heroCSSVars: React.CSSProperties & Record<string, string> = {} as React.CSSProperties & Record<string, string>
       
       if (data.backgroundType === 'gradient') {
         const direction = data.gradientDirection || 'to-br'
@@ -340,23 +384,70 @@ export function ComponentRenderer({
         
         const dir = gradientDirectionMap[direction] || 'to bottom right'
         
-        if (viaColor) {
-          heroBackgroundStyle.background = `linear-gradient(${dir}, ${fromColor}, ${viaColor}, ${toColor})`
-        } else {
-          heroBackgroundStyle.background = `linear-gradient(${dir}, ${fromColor}, ${toColor})`
-        }
+        // Calculate dark mode colors
+        const fromDark = isLightColor(fromColor) ? darkenColor(fromColor, 0.4) : fromColor
+        const viaDark = viaColor ? (isLightColor(viaColor) ? darkenColor(viaColor, 0.4) : viaColor) : null
+        const toDark = isLightColor(toColor) ? darkenColor(toColor, 0.4) : toColor
+        
+        // Build gradients
+        const lightGradient = viaColor 
+          ? `linear-gradient(${dir}, ${fromColor}, ${viaColor}, ${toColor})`
+          : `linear-gradient(${dir}, ${fromColor}, ${toColor})`
+        
+        const darkGradient = viaDark
+          ? `linear-gradient(${dir}, ${fromDark}, ${viaDark}, ${toDark})`
+          : `linear-gradient(${dir}, ${fromDark}, ${toDark})`
+        
+        // Store in CSS variables for dark mode override
+        heroCSSVars['--hero-gradient-light'] = lightGradient
+        heroCSSVars['--hero-gradient-dark'] = darkGradient
+        
+        heroBackgroundStyle.background = lightGradient
+        backgroundClass = 'hero-gradient-custom'
       } else if (data.backgroundType === 'solid') {
-        heroBackgroundStyle.backgroundColor = data.backgroundColor || '#ffffff'
+        const bgColor = data.backgroundColor || '#ffffff'
+        // Store in CSS variable
+        heroCSSVars['--hero-bg-color'] = bgColor
+        
+        // For dark mode: if color is light, darken it automatically
+        if (isLightColor(bgColor)) {
+          heroCSSVars['--hero-bg-color-dark'] = darkenColor(bgColor, 0.5)
+        } else {
+          heroCSSVars['--hero-bg-color-dark'] = bgColor
+        }
+        
+        heroBackgroundStyle.backgroundColor = bgColor
+        backgroundClass = 'hero-solid-custom'
       } else if (!data.backgroundType || data.backgroundType === 'image') {
         backgroundClass = !data.backgroundImage ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-gray-900' : ''
       }
       
       // Build style object
       const heroStyle: React.CSSProperties = {
-        ...heroBackgroundStyle
+        ...heroBackgroundStyle,
+        ...heroCSSVars
       }
       
+      // Handle text color with dark mode support
       if (data.textColor) {
+        heroCSSVars['--hero-text-color'] = data.textColor
+        
+        // For dark mode: if background is light and text is dark, lighten text
+        // If background becomes dark, ensure text is light enough
+        if (data.backgroundType === 'solid' && data.backgroundColor) {
+          const bgIsLight = isLightColor(data.backgroundColor)
+          const textIsDark = !isLightColor(data.textColor)
+          
+          if (bgIsLight && textIsDark) {
+            // In dark mode, background will be darker, so text might need to be lighter
+            heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.2)
+          } else {
+            heroCSSVars['--hero-text-color-dark'] = data.textColor
+          }
+        } else {
+          heroCSSVars['--hero-text-color-dark'] = data.textColor
+        }
+        
         heroStyle.color = data.textColor
       }
       
@@ -608,6 +699,7 @@ export function ComponentRenderer({
       return (
         <div 
           data-hero-section
+          data-hero-bg-type={data.backgroundType || 'image'}
           className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex ${verticalAlignClass} ${horizontalAlignClass} ${backgroundClass} overflow-hidden hero-fade-in`}
           style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
         >

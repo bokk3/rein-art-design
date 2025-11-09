@@ -39,22 +39,69 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform the data to match MediaItem interface
-    const transformedMedia = media.map(item => ({
-      id: item.id,
-      filename: item.originalUrl.split('/').pop() || 'unknown',
-      originalUrl: item.originalUrl,
-      thumbnailUrl: item.thumbnailUrl,
-      alt: item.alt,
-      size: 0, // We don't store file size currently
-      width: 0, // We don't store dimensions currently
-      height: 0,
-      mimeType: 'image/jpeg', // Default, we don't store mime type currently
-      createdAt: item.createdAt.toISOString(),
-      projectId: item.projectId,
-      projectTitle: item.project?.translations[0]?.title,
-      order: item.order,
-      tags: [], // We'll add this to the schema later
-      category: 'portfolio' // Default category
+    // Read actual file dimensions and size from filesystem
+    const transformedMedia = await Promise.all(media.map(async (item) => {
+      let size = 0
+      let width = 0
+      let height = 0
+      let mimeType = 'image/jpeg'
+
+      try {
+        // Read file stats and image metadata
+        const fs = await import('fs')
+        const pathModule = await import('path')
+        const sharp = (await import('sharp')).default
+
+        // Get file paths - handle both absolute and relative URLs
+        const originalUrl = item.originalUrl.startsWith('/') ? item.originalUrl : `/${item.originalUrl}`
+        const thumbnailUrl = item.thumbnailUrl.startsWith('/') ? item.thumbnailUrl : `/${item.thumbnailUrl}`
+        const originalPath = pathModule.join(process.cwd(), 'public', originalUrl)
+        const thumbnailPath = pathModule.join(process.cwd(), 'public', thumbnailUrl)
+
+        // Check if original file exists and get file size
+        if (fs.existsSync(originalPath)) {
+          const stats = fs.statSync(originalPath)
+          size = stats.size
+
+          // Get image dimensions and mime type from the actual file
+          try {
+            const metadata = await sharp(originalPath).metadata()
+            width = metadata.width || 0
+            height = metadata.height || 0
+            mimeType = metadata.format ? `image/${metadata.format}` : 'image/jpeg'
+          } catch (error) {
+            console.error(`Error reading image metadata for ${item.originalUrl}:`, error)
+          }
+        } else {
+          console.warn(`Original file not found: ${originalPath}`)
+        }
+
+        // Verify thumbnail exists
+        if (!fs.existsSync(thumbnailPath)) {
+          console.warn(`Thumbnail file not found: ${thumbnailPath}`)
+        }
+      } catch (error) {
+        console.error(`Error reading file info for ${item.originalUrl}:`, error)
+        // Continue with default values if file read fails
+      }
+
+      return {
+        id: item.id,
+        filename: item.originalUrl.split('/').pop() || 'unknown',
+        originalUrl: item.originalUrl,
+        thumbnailUrl: item.thumbnailUrl,
+        alt: item.alt,
+        size,
+        width,
+        height,
+        mimeType,
+        createdAt: item.createdAt.toISOString(),
+        projectId: item.projectId,
+        projectTitle: item.project?.translations[0]?.title,
+        order: item.order,
+        tags: [], // We'll add this to the schema later
+        category: 'portfolio' // Default category
+      }
     }))
 
     return NextResponse.json(transformedMedia)
@@ -110,7 +157,12 @@ export async function POST(request: NextRequest) {
         // Convert file to buffer
         const buffer = await ImageProcessor.fileToBuffer(file)
 
-        // Process image
+        // Detect format from file type and process image
+        // Preserve PNG format for PNG files, convert others to JPEG
+        const fileFormat = file.type.includes('png') ? 'png' : 
+                          file.type.includes('webp') ? 'webp' : 
+                          'jpeg'
+        
         const processedImage = await ImageProcessor.processImage(
           buffer,
           file.name,
@@ -118,7 +170,7 @@ export async function POST(request: NextRequest) {
             maxWidth: 1920,
             maxHeight: 1080,
             quality: 85,
-            format: 'jpeg'
+            format: fileFormat
           }
         )
         
@@ -137,6 +189,11 @@ export async function POST(request: NextRequest) {
         
         console.log('Created project image:', projectImage)
 
+        // Determine mimeType based on processed format
+        const processedMimeType = fileFormat === 'png' ? 'image/png' : 
+                                  fileFormat === 'webp' ? 'image/webp' : 
+                                  'image/jpeg'
+
         uploadedItems.push({
           id: projectImage.id,
           filename: processedImage.filename,
@@ -146,7 +203,7 @@ export async function POST(request: NextRequest) {
           size: processedImage.size,
           width: processedImage.width,
           height: processedImage.height,
-          mimeType: file.type,
+          mimeType: processedMimeType,
           createdAt: projectImage.createdAt.toISOString(),
           projectId: projectImage.projectId,
           order: projectImage.order,

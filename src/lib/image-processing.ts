@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 import { writeFile, mkdir, unlink } from 'fs/promises'
-import { existsSync } from 'fs'
+import { existsSync, statSync } from 'fs'
 import path from 'path'
 
 export interface ImageProcessingOptions {
@@ -50,50 +50,120 @@ export class ImageProcessor {
       maxWidth = 1920,
       maxHeight = 1080,
       quality = 85,
-      format = 'jpeg'
+      format: requestedFormat
     } = options
 
-    // Generate unique filename
+    // Detect image format from buffer (create a new sharp instance for metadata)
+    const metadata = await sharp(buffer).metadata()
+    const detectedFormat = metadata.format || 'jpeg'
+    
+    // Use detected format if no format is requested
+    // For PNG files, preserve PNG format to maintain transparency
+    const hasAlpha = metadata.hasAlpha || false
+    const finalFormat = requestedFormat || (
+      detectedFormat === 'png' ? 'png' : 
+      detectedFormat === 'webp' ? 'webp' : 
+      'jpeg'
+    )
+
+    // Generate unique filename with correct extension
     const timestamp = Date.now()
-    const ext = format === 'jpeg' ? 'jpg' : format
+    const ext = finalFormat === 'jpeg' ? 'jpg' : finalFormat
     const uniqueFilename = `${timestamp}-${filename.replace(/\.[^/.]+$/, '')}.${ext}`
-    const thumbnailFilename = `thumb-${uniqueFilename}`
+    const thumbnailFilename = `thumb-${uniqueFilename.replace(/\.(jpg|jpeg|png|webp)$/i, '.jpg')}`
 
-    // Process original image
-    const processedBuffer = await sharp(buffer)
-      .resize(maxWidth, maxHeight, {
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .jpeg({ quality })
-      .toBuffer()
+    // Process original image with format-specific options
+    // Create a new sharp instance for processing
+    let processedBuffer: Buffer
+    const imageProcessor = sharp(buffer).resize(maxWidth, maxHeight, {
+      fit: 'inside',
+      withoutEnlargement: true
+    })
 
-    // Process thumbnail (300x300 max)
-    const thumbnailBuffer = await sharp(buffer)
-      .resize(300, 300, {
-        fit: 'cover',
-        position: 'center'
-      })
-      .jpeg({ quality: 80 })
-      .toBuffer()
+    if (finalFormat === 'png') {
+      // For PNG, preserve transparency and use PNG compression
+      processedBuffer = await imageProcessor
+        .png({ 
+          quality: Math.min(100, quality + 15), 
+          compressionLevel: 9,
+          adaptiveFiltering: true
+        })
+        .toBuffer()
+    } else if (finalFormat === 'webp') {
+      processedBuffer = await imageProcessor
+        .webp({ quality, effort: 4 })
+        .toBuffer()
+    } else {
+      // Default to JPEG
+      processedBuffer = await imageProcessor
+        .jpeg({ quality, mozjpeg: true })
+        .toBuffer()
+    }
+
+    // Process thumbnail (always JPEG for thumbnails for consistency and smaller size)
+    // For PNGs with transparency, flatten onto white background before converting to JPEG
+    let thumbnailBuffer: Buffer
+    try {
+      const thumbnailProcessor = sharp(buffer)
+        .resize(300, 300, {
+          fit: 'cover',
+          position: 'center'
+        })
+      
+      // If PNG has transparency, flatten onto white background
+      if (finalFormat === 'png' && hasAlpha) {
+        thumbnailBuffer = await thumbnailProcessor
+          .flatten({ background: { r: 255, g: 255, b: 255 } })
+          .jpeg({ quality: 80 })
+          .toBuffer()
+      } else {
+        // Regular thumbnail processing
+        thumbnailBuffer = await thumbnailProcessor
+          .jpeg({ quality: 80 })
+          .toBuffer()
+      }
+    } catch (error) {
+      console.error('Error generating thumbnail:', error)
+      // Fallback: try simple JPEG conversion with flatten for safety
+      thumbnailBuffer = await sharp(buffer)
+        .resize(300, 300, {
+          fit: 'cover',
+          position: 'center'
+        })
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .jpeg({ quality: 80 })
+        .toBuffer()
+    }
 
     // Save files
     const originalPath = path.join(this.UPLOAD_DIR, uniqueFilename)
     const thumbnailPath = path.join(this.THUMBNAIL_DIR, thumbnailFilename)
 
-    await writeFile(originalPath, processedBuffer)
-    await writeFile(thumbnailPath, thumbnailBuffer)
+    try {
+      await writeFile(originalPath, processedBuffer)
+      await writeFile(thumbnailPath, thumbnailBuffer)
+      
+      // Verify files were written
+      const originalStats = statSync(originalPath)
+      const thumbnailStats = statSync(thumbnailPath)
+      
+      console.log(`✅ Saved image: ${uniqueFilename} (${originalStats.size} bytes, format: ${finalFormat})`)
+      console.log(`✅ Saved thumbnail: ${thumbnailFilename} (${thumbnailStats.size} bytes)`)
+    } catch (error) {
+      console.error('Error saving image files:', error)
+      throw new Error(`Failed to save image files: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
 
-    // Get image metadata
-    const metadata = await sharp(processedBuffer).metadata()
+    // Get final image metadata
+    const finalMetadata = await sharp(processedBuffer).metadata()
 
     return {
       originalUrl: `/uploads/${uniqueFilename}`,
       thumbnailUrl: `/uploads/thumbnails/${thumbnailFilename}`,
       filename: uniqueFilename,
       size: processedBuffer.length,
-      width: metadata.width || 0,
-      height: metadata.height || 0
+      width: finalMetadata.width || 0,
+      height: finalMetadata.height || 0
     }
   }
 

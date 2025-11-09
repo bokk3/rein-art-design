@@ -8,7 +8,7 @@ import { MediaLibrary } from '@/components/admin/media-library'
 import { RichTextEditor } from '@/components/admin/rich-text-editor'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { Globe, CheckCircle, AlertCircle, Copy, Star, Languages, Loader2, Plus, Trash2, GripVertical, MoveUp, MoveDown, Image as ImageIcon, Type, MousePointerClick } from 'lucide-react'
+import { Globe, CheckCircle, AlertCircle, Copy, Star, Languages, Loader2, Plus, Trash2, GripVertical, MoveUp, MoveDown, Image as ImageIcon, Type, MousePointerClick, Upload, X } from 'lucide-react'
 import { useT } from '@/hooks/use-t'
 
 interface Language {
@@ -36,6 +36,8 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   const [apiConfigured, setApiConfigured] = useState(false)
   const [featuredProjects, setFeaturedProjects] = useState<any[]>([])
   const [expandedHeroElement, setExpandedHeroElement] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState(false)
+  const [uploadingGallery, setUploadingGallery] = useState(false)
   
   // Fetch featured projects count for carousel auto-enable logic
   useEffect(() => {
@@ -154,6 +156,101 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
     setMediaTarget(target)
     setMediaSelectionMode(mode)
     setShowMediaLibrary(true)
+  }
+
+  // Handle file upload for gallery and other components
+  const handleFileUpload = async (files: FileList | null, target: 'gallery' | 'showcase' | 'background' | 'logo') => {
+    if (!files || files.length === 0) return
+
+    if (target === 'gallery') {
+      setUploadingGallery(true)
+    }
+
+    try {
+      const uploadedImages: Array<{ id: string; url: string; alt: string; caption?: string }> = []
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+          alert(`${file.name} is not an image file`)
+          continue
+        }
+
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+          alert(`${file.name} is too large (max 10MB)`)
+          continue
+        }
+
+        // Create form data
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // Upload image
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || `Failed to upload ${file.name}: ${response.status}`)
+        }
+
+        const result = await response.json()
+        
+        if (!result.originalUrl || !result.thumbnailUrl) {
+          throw new Error(`Invalid response from server for ${file.name}`)
+        }
+        
+        uploadedImages.push({
+          id: result.id || `uploaded-${Date.now()}-${i}`,
+          url: result.originalUrl,
+          alt: file.name.replace(/\.[^/.]+$/, ''),
+          caption: ''
+        })
+      }
+
+      if (uploadedImages.length > 0) {
+        if (target === 'gallery') {
+          const existingImages = component.data.images || []
+          updateData('images', [...existingImages, ...uploadedImages])
+        } else if (target === 'showcase') {
+          const existingImages = component.data.showcaseImages || []
+          updateData('showcaseImages', [...existingImages, ...uploadedImages])
+        } else if (target === 'background') {
+          updateData('backgroundImage', uploadedImages[0].url)
+        } else if (target === 'logo') {
+          // Logo upload is handled separately for hero elements
+        }
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload images. Please try again.'
+      alert(errorMessage)
+    } finally {
+      if (target === 'gallery') {
+        setUploadingGallery(false)
+      }
+    }
+  }
+
+  // Drag and drop handlers for gallery
+  const handleGalleryDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    handleFileUpload(e.dataTransfer.files, 'gallery')
+  }
+
+  const handleGalleryDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleGalleryDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
   }
 
   // Hero builder helpers
@@ -830,34 +927,111 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                                   {element.logoUrl ? (
                                     <div className="flex items-center gap-2">
                                       <img src={element.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+                                      <div className="flex gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            const input = document.createElement('input')
+                                            input.type = 'file'
+                                            input.accept = 'image/*'
+                                            input.onchange = async (e) => {
+                                              const target = e.target as HTMLInputElement
+                                              if (target.files && target.files[0]) {
+                                                const file = target.files[0]
+                                                try {
+                                                  const formData = new FormData()
+                                                  formData.append('file', file)
+                                                  const response = await fetch('/api/upload', {
+                                                    method: 'POST',
+                                                    body: formData
+                                                  })
+                                                  if (response.ok) {
+                                                    const result = await response.json()
+                                                    if (result.originalUrl) {
+                                                      updateHeroElement(element.id, { logoUrl: result.originalUrl })
+                                                    }
+                                                  }
+                                                } catch (error) {
+                                                  console.error('Upload error:', error)
+                                                  alert('Failed to upload logo')
+                                                }
+                                              }
+                                            }
+                                            input.click()
+                                          }}
+                                        >
+                                          <Upload className="h-4 w-4 mr-2" />
+                                          Change
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setMediaTarget(`logo-${element.id}`)
+                                            openMediaLibrary(`logo-${element.id}`, 'single')
+                                          }}
+                                        >
+                                          <ImageIcon className="h-4 w-4 mr-2" />
+                                          Browse
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => updateHeroElement(element.id, { logoUrl: '' })}
+                                        >
+                                          Remove
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex gap-2">
                                       <Button
                                         variant="outline"
-                                        size="sm"
+                                        onClick={() => {
+                                          const input = document.createElement('input')
+                                          input.type = 'file'
+                                          input.accept = 'image/*'
+                                          input.onchange = async (e) => {
+                                            const target = e.target as HTMLInputElement
+                                            if (target.files && target.files[0]) {
+                                              const file = target.files[0]
+                                              try {
+                                                const formData = new FormData()
+                                                formData.append('file', file)
+                                                const response = await fetch('/api/upload', {
+                                                  method: 'POST',
+                                                  body: formData
+                                                })
+                                                if (response.ok) {
+                                                  const result = await response.json()
+                                                  if (result.originalUrl) {
+                                                    updateHeroElement(element.id, { logoUrl: result.originalUrl })
+                                                  }
+                                                }
+                                              } catch (error) {
+                                                console.error('Upload error:', error)
+                                                alert('Failed to upload logo')
+                                              }
+                                            }
+                                          }
+                                          input.click()
+                                        }}
+                                      >
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        Upload Logo
+                                      </Button>
+                                      <Button
+                                        variant="outline"
                                         onClick={() => {
                                           setMediaTarget(`logo-${element.id}`)
                                           openMediaLibrary(`logo-${element.id}`, 'single')
                                         }}
                                       >
-                                        Change Logo
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => updateHeroElement(element.id, { logoUrl: '' })}
-                                      >
-                                        Remove
+                                        <ImageIcon className="h-4 w-4 mr-2" />
+                                        Browse Media Library
                                       </Button>
                                     </div>
-                                  ) : (
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setMediaTarget(`logo-${element.id}`)
-                                        openMediaLibrary(`logo-${element.id}`, 'single')
-                                      }}
-                                    >
-                                      Select Logo
-                                    </Button>
                                   )}
                                 </div>
                               </div>
@@ -1254,21 +1428,71 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                             alt="Background" 
                             className="w-16 h-16 object-cover rounded"
                           />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateData('backgroundImage', '')}
-                          >
-                            Remove
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const input = document.createElement('input')
+                                input.type = 'file'
+                                input.accept = 'image/*'
+                                input.onchange = (e) => {
+                                  const target = e.target as HTMLInputElement
+                                  if (target.files) {
+                                    handleFileUpload(target.files, 'background')
+                                  }
+                                }
+                                input.click()
+                              }}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Change
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openMediaLibrary('backgroundImage')}
+                            >
+                              <ImageIcon className="h-4 w-4 mr-2" />
+                              Browse
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateData('backgroundImage', '')}
+                            >
+                              Remove
+                            </Button>
+                          </div>
                         </div>
                       ) : (
-                        <Button
-                          variant="outline"
-                          onClick={() => openMediaLibrary('backgroundImage')}
-                        >
-                          Select Image
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const input = document.createElement('input')
+                              input.type = 'file'
+                              input.accept = 'image/*'
+                              input.onchange = (e) => {
+                                const target = e.target as HTMLInputElement
+                                if (target.files) {
+                                  handleFileUpload(target.files, 'background')
+                                }
+                              }
+                              input.click()
+                            }}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Image
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => openMediaLibrary('backgroundImage')}
+                          >
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Browse Media Library
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1826,43 +2050,120 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               {!component.data.showFeatured && (
                 <div>
                   <Label>Gallery Images</Label>
-                  <div className="mt-2">
-                    {component.data.images && component.data.images.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2">
-                          {component.data.images.map((image, index) => (
-                            <img 
-                              key={image.id || index}
-                              src={image.url} 
-                              alt={image.alt} 
-                              className="w-full h-16 object-cover rounded"
-                            />
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openMediaLibrary('images', 'multiple')}
-                          >
-                            Change Images
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateData('images', [])}
-                          >
-                            Clear All
-                          </Button>
+                  <div className="mt-2 space-y-4">
+                    {/* Drag and Drop Upload Area */}
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        dragOver 
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                      } ${uploadingGallery ? 'opacity-50 pointer-events-none' : ''}`}
+                      onDrop={handleGalleryDrop}
+                      onDragOver={handleGalleryDragOver}
+                      onDragLeave={handleGalleryDragLeave}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex flex-col items-center justify-center">
+                          {uploadingGallery ? (
+                            <>
+                              <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
+                              <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                Uploading images...
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                              <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                Drop images here or click to select
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                Supports JPEG, PNG, WebP (max 10MB each)
+                              </p>
+                              <div className="flex gap-2 mt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const input = document.createElement('input')
+                                    input.type = 'file'
+                                    input.multiple = true
+                                    input.accept = 'image/*'
+                                    input.onchange = (e) => {
+                                      const target = e.target as HTMLInputElement
+                                      if (target.files) {
+                                        handleFileUpload(target.files, 'gallery')
+                                      }
+                                    }
+                                    input.click()
+                                  }}
+                                  disabled={uploadingGallery}
+                                >
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Select Images
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => openMediaLibrary('images', 'multiple')}
+                                  disabled={uploadingGallery}
+                                >
+                                  <ImageIcon className="h-4 w-4 mr-2" />
+                                  Browse Media Library
+                                </Button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        onClick={() => openMediaLibrary('images', 'multiple')}
-                      >
-                        Select Images
-                      </Button>
+                    </div>
+
+                    {/* Image Grid */}
+                    {component.data.images && component.data.images.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {component.data.images.length} image{component.data.images.length !== 1 ? 's' : ''}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openMediaLibrary('images', 'multiple')}
+                            >
+                              Add More
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateData('images', [])}
+                            >
+                              Clear All
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                          {component.data.images.map((image, index) => (
+                            <div key={image.id || index} className="relative group">
+                              <img 
+                                src={image.url} 
+                                alt={image.alt} 
+                                className="w-full h-20 object-cover rounded border border-gray-200 dark:border-gray-700"
+                              />
+                              <button
+                                onClick={() => {
+                                  const images = component.data.images || []
+                                  updateData('images', images.filter((_, i) => i !== index))
+                                }}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remove image"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

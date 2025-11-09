@@ -16,7 +16,8 @@ import {
   Move,
   Grid,
   List,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react'
 
 interface GalleryStats {
@@ -29,6 +30,8 @@ interface GalleryStats {
 export function GalleryManagement() {
   const [activeTab, setActiveTab] = useState<'library' | 'bulk-upload' | 'settings' | 'stats'>('library')
   const [bulkUploadFiles, setBulkUploadFiles] = useState<FileList | null>(null)
+  const [bulkUploadDragOver, setBulkUploadDragOver] = useState(false)
+  const [uploadingBulk, setUploadingBulk] = useState(false)
   const [bulkUploadSettings, setBulkUploadSettings] = useState({
     projectId: '',
     category: 'portfolio',
@@ -41,6 +44,7 @@ export function GalleryManagement() {
   const handleBulkUpload = async () => {
     if (!bulkUploadFiles) return
 
+    setUploadingBulk(true)
     const formData = new FormData()
     
     Array.from(bulkUploadFiles).forEach(file => {
@@ -77,7 +81,28 @@ export function GalleryManagement() {
       console.error('Error uploading:', error)
       const errorMessage = error instanceof Error ? error.message : 'Error uploading images. Please try again.'
       alert(errorMessage)
+    } finally {
+      setUploadingBulk(false)
     }
+  }
+
+  // Drag and drop handlers for bulk upload
+  const handleBulkDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setBulkUploadDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setBulkUploadFiles(e.dataTransfer.files)
+    }
+  }
+
+  const handleBulkDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setBulkUploadDragOver(true)
+  }
+
+  const handleBulkDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setBulkUploadDragOver(false)
   }
 
   const tabs = [
@@ -134,7 +159,16 @@ export function GalleryManagement() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="bulk-files">Select Images</Label>
-                  <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <div
+                    className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      bulkUploadDragOver 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400' 
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                    } ${uploadingBulk ? 'opacity-50 pointer-events-none' : ''}`}
+                    onDrop={handleBulkDrop}
+                    onDragOver={handleBulkDragOver}
+                    onDragLeave={handleBulkDragLeave}
+                  >
                     <input
                       id="bulk-files"
                       type="file"
@@ -142,16 +176,27 @@ export function GalleryManagement() {
                       accept="image/*"
                       onChange={(e) => setBulkUploadFiles(e.target.files)}
                       className="hidden"
+                      disabled={uploadingBulk}
                     />
                     <label htmlFor="bulk-files" className="cursor-pointer">
-                      <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-lg font-medium text-gray-900">
-                        Click to select images
-                      </p>
-                      <p className="text-gray-500">or drag and drop</p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        PNG, JPG, WebP up to 10MB each
-                      </p>
+                      {uploadingBulk ? (
+                        <>
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                            Uploading images...
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                            Drop images here or click to select
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                            Supports JPEG, PNG, WebP (max 10MB each)
+                          </p>
+                        </>
+                      )}
                     </label>
                   </div>
                   
@@ -252,14 +297,23 @@ export function GalleryManagement() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleBulkUpload}
-                  disabled={!bulkUploadFiles}
-                  className="w-full"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload {bulkUploadFiles?.length || 0} Images
-                </Button>
+                  <Button
+                    onClick={handleBulkUpload}
+                    disabled={!bulkUploadFiles || uploadingBulk}
+                    className="w-full"
+                  >
+                    {uploadingBulk ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload {bulkUploadFiles?.length || 0} Images
+                      </>
+                    )}
+                  </Button>
               </div>
             </div>
           </div>

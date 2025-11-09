@@ -88,6 +88,8 @@ export function MediaLibrary({
   const [media, setMedia] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [showUploadArea, setShowUploadArea] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>(selectedItems)
@@ -185,6 +187,7 @@ export function MediaLibrary({
         const uploadedCount = result.uploaded || result.items?.length || 0
         if (uploadedCount > 0) {
           console.log(`✅ Successfully uploaded ${uploadedCount} image(s)`)
+          setShowUploadArea(false) // Hide upload area after successful upload
           // Show success message
           alert(`Successfully uploaded ${uploadedCount} image(s)`)
         } else {
@@ -205,6 +208,26 @@ export function MediaLibrary({
     }
   }
 
+  // Drag and drop handlers
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files)
+      setShowUploadArea(false) // Hide after drop
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+  }
+
   const handleSelect = (item: MediaItem) => {
     if (selectionMode === 'none') return
 
@@ -223,7 +246,12 @@ export function MediaLibrary({
   }
 
   const handleDelete = async (item: MediaItem) => {
-    if (!confirm('Are you sure you want to delete this media item?')) return
+    // Better confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${item.filename}"?\n\nThis action cannot be undone.`
+    )
+    
+    if (!confirmed) return
 
     try {
       const response = await fetch(`/api/media/${item.id}`, {
@@ -233,27 +261,59 @@ export function MediaLibrary({
       if (response.ok) {
         setMedia(prev => prev.filter(m => m.id !== item.id))
         setSelectedMedia(prev => prev.filter(m => m.id !== item.id))
+        // Close preview/edit if the deleted item was open
+        if (previewItem?.id === item.id) {
+          setPreviewItem(null)
+        }
+        if (editingItem?.id === item.id) {
+          setEditingItem(null)
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        alert(`Failed to delete media: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error deleting media:', error)
+      alert('Failed to delete media. Please try again.')
     }
   }
 
   const handleBulkDelete = async (items: MediaItem[]) => {
-    if (!confirm(`Are you sure you want to delete ${items.length} items?`)) return
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${items.length} item${items.length > 1 ? 's' : ''}?\n\nThis action cannot be undone.`
+    )
+    
+    if (!confirmed) return
 
     try {
-      const deletePromises = items.map(item =>
-        fetch(`/api/media/${item.id}`, { method: 'DELETE' })
-      )
+      const deletePromises = items.map(async item => {
+        const response = await fetch(`/api/media/${item.id}`, { method: 'DELETE' })
+        return { item, success: response.ok }
+      })
       
-      await Promise.all(deletePromises)
+      const results = await Promise.all(deletePromises)
+      const successfulDeletes = results.filter(r => r.success)
+      const failedDeletes = results.filter(r => !r.success)
       
-      const deletedIds = items.map(item => item.id)
-      setMedia(prev => prev.filter(m => !deletedIds.includes(m.id)))
-      setSelectedMedia([])
+      if (successfulDeletes.length > 0) {
+        const deletedIds = successfulDeletes.map(r => r.item.id)
+        setMedia(prev => prev.filter(m => !deletedIds.includes(m.id)))
+        setSelectedMedia([])
+        // Close preview/edit if any deleted items were open
+        if (previewItem && successfulDeletes.some(r => r.item.id === previewItem.id)) {
+          setPreviewItem(null)
+        }
+        if (editingItem && successfulDeletes.some(r => r.item.id === editingItem.id)) {
+          setEditingItem(null)
+        }
+      }
+      
+      if (failedDeletes.length > 0) {
+        alert(`Failed to delete ${failedDeletes.length} of ${items.length} item${failedDeletes.length > 1 ? 's' : ''}. Please try again.`)
+      }
     } catch (error) {
       console.error('Error bulk deleting media:', error)
+      alert('Failed to delete media. Please try again.')
     }
   }
 
@@ -460,6 +520,7 @@ export function MediaLibrary({
     onSelect, 
     onPreview, 
     onEdit,
+    onDelete,
     showMetadataEditor 
   }: { 
     item: MediaItem
@@ -467,6 +528,7 @@ export function MediaLibrary({
     onSelect: () => void
     onPreview: () => void
     onEdit: () => void
+    onDelete: () => void
     showMetadataEditor: boolean
   }) {
     const [imageLoaded, setImageLoaded] = useState(false)
@@ -516,6 +578,7 @@ export function MediaLibrary({
                 e.stopPropagation()
                 onPreview()
               }}
+              title="Preview"
             >
               <Eye className="h-3 w-3" />
             </Button>
@@ -527,10 +590,23 @@ export function MediaLibrary({
                   e.stopPropagation()
                   onEdit()
                 }}
+                title="Edit"
               >
                 <Edit3 className="h-3 w-3" />
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete()
+              }}
+              title="Delete"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
           </div>
         </div>
 
@@ -588,32 +664,85 @@ export function MediaLibrary({
               </Button>
             </div>
 
-            {/* Upload Button */}
+            {/* Upload Button (Toggle Upload Area) */}
             {allowUpload && (
-              <div className="relative">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  disabled={uploading}
-                />
-                <Button disabled={uploading}>
-                  {uploading ? (
+              <Button 
+                onClick={() => setShowUploadArea(!showUploadArea)} 
+                variant="outline" 
+                size="sm"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
+                    Uploading...
+                  </>
+                ) : (
+                  <>
                     <Upload className="h-4 w-4 mr-2" />
-                  )}
-                  Upload
-                </Button>
-              </div>
+                    {showUploadArea ? 'Hide Upload' : 'Upload Images'}
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </div>
 
+        {/* Large Upload Area with Drag and Drop (Toggleable) */}
+        {allowUpload && showUploadArea && (
+          <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files) {
+                  handleFileUpload(e.target.files)
+                  setShowUploadArea(false) // Hide after selection
+                }
+              }}
+              className="hidden"
+              id="media-upload-input"
+              disabled={uploading}
+            />
+            <label
+              htmlFor="media-upload-input"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`
+                flex flex-col items-center justify-center gap-3 px-6 py-12 rounded-lg border-2 border-dashed transition-all cursor-pointer
+                ${dragOver 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400' 
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-gray-50/50 dark:bg-gray-800/50'
+                }
+                ${uploading ? 'opacity-50 pointer-events-none' : ''}
+              `}
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+                  <span className="text-xl font-medium text-gray-900 dark:text-gray-100">Uploading images...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+                  <div className="text-center">
+                    <p className="text-xl font-medium text-gray-900 dark:text-gray-100">
+                      Drop images here or click to select
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      Supports JPEG, PNG, WebP (max 10MB each)
+                    </p>
+                  </div>
+                </>
+              )}
+            </label>
+          </div>
+        )}
+
         {/* Search and Filters */}
-        <div className="space-y-3 mt-4">
+        <div className="space-y-3 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -800,6 +929,7 @@ export function MediaLibrary({
                   onSelect={() => handleSelect(item)}
                   onPreview={() => setPreviewItem(item)}
                   onEdit={() => setEditingItem(item)}
+                  onDelete={() => handleDelete(item)}
                   showMetadataEditor={showMetadataEditor}
                 />
               )
@@ -900,6 +1030,8 @@ export function MediaLibrary({
                         e.stopPropagation()
                         handleDelete(item)
                       }}
+                      title="Delete"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

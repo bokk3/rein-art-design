@@ -78,6 +78,22 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
   background: #030712 !important;
 }
 
+/* Hero custom colors dark mode support */
+/* Automatically darken light background colors in dark mode for better UX */
+.dark .hero-solid-custom {
+  background-color: var(--hero-bg-color-dark, var(--hero-bg-color)) !important;
+}
+
+.dark .hero-gradient-custom {
+  background: var(--hero-gradient-dark, var(--hero-gradient-light)) !important;
+}
+
+/* Hero text color dark mode - use lighter version if available */
+.dark .hero-solid-custom,
+.dark .hero-gradient-custom {
+  color: var(--hero-text-color-dark, var(--hero-text-color, inherit)) !important;
+}
+
 /* Hero fade-in animations - simple CSS approach */
 .hero-fade-in {
   animation: heroFadeIn 0.6s ease-out forwards;
