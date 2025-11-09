@@ -94,6 +94,27 @@ body[data-admin="true"] nav:not(.admin-nav):not(.main-nav) {
   color: var(--hero-text-color-dark, var(--hero-text-color, inherit)) !important;
 }
 
+/* Hero logo dark mode - automatically invert black/transparent PNGs to white/transparent */
+/* This filter chain: 
+   1. brightness(0) - makes everything black (including colored areas)
+   2. invert(1) - inverts black to white, white to black
+   3. This effectively converts black logos to white, while preserving transparency
+*/
+.dark .hero-logo-image {
+  filter: brightness(0) invert(1);
+}
+
+/* For logos that should not be inverted (already light colored or have specific styling) */
+.dark .hero-logo-image[data-invert="false"] {
+  filter: none;
+}
+
+/* Alternative: Use a more subtle approach for logos that are mostly dark but have some color */
+.dark .hero-logo-image[data-invert="auto"] {
+  /* Only invert if the logo is detected as dark - this would need JS to set the attribute */
+  filter: brightness(0) invert(1);
+}
+
 /* Smooth range input styling */
 input[type="range"] {
   -webkit-appearance: none;

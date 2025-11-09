@@ -335,16 +335,81 @@ export function ComponentRenderer({
       }
       
       // Helper to darken a color for dark mode
+      // For very light colors (white), convert to a nice dark color instead of gray
       const darkenColor = (color: string, factor: number = 0.3): string => {
         if (!color) return color
         const hex = color.replace('#', '')
         if (hex.length !== 6) return color
         
-        const r = Math.max(0, Math.floor(parseInt(hex.substring(0, 2), 16) * (1 - factor)))
-        const g = Math.max(0, Math.floor(parseInt(hex.substring(2, 4), 16) * (1 - factor)))
-        const b = Math.max(0, Math.floor(parseInt(hex.substring(4, 6), 16) * (1 - factor)))
+        const r = parseInt(hex.substring(0, 2), 16)
+        const g = parseInt(hex.substring(2, 4), 16)
+        const b = parseInt(hex.substring(4, 6), 16)
         
-        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+        // Check if it's very light (almost white)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        if (luminance > 0.9) {
+          // For very light colors, convert to a dark gray instead of just darkening
+          // This prevents white -> gray issue
+          const darkValue = Math.floor(30 + (luminance - 0.9) * 20) // Range: 30-50
+          return `#${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}`
+        }
+        
+        // For other colors, darken normally but ensure minimum contrast
+        const newR = Math.max(0, Math.floor(r * (1 - factor)))
+        const newG = Math.max(0, Math.floor(g * (1 - factor)))
+        const newB = Math.max(0, Math.floor(b * (1 - factor)))
+        
+        return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
+      }
+      
+      // Helper to check if a color is pure black (or very close to black)
+      const isPureBlack = (color: string): boolean => {
+        if (!color) return false
+        const hex = color.replace('#', '').toLowerCase().trim()
+        if (hex.length === 3) {
+          // Handle shorthand like '000'
+          return hex === '000'
+        }
+        if (hex.length === 6) {
+          // Check for pure black
+          if (hex === '000000') return true
+          // Check if it's very close to black (within 10 in each channel)
+          const num = parseInt(hex, 16)
+          if (isNaN(num)) return false
+          const r = (num >> 16) & 0xff
+          const g = (num >> 8) & 0xff
+          const b = num & 0xff
+          return r < 10 && g < 10 && b < 10
+        }
+        return false
+      }
+      
+      // Helper to adjust dark colors for dark mode
+      // For black backgrounds, keep them black in dark mode (don't lighten to gray)
+      const adjustDarkColorForDarkMode = (color: string): string => {
+        if (!color) return color
+        
+        // Keep pure black as black - don't change it to gray
+        if (isPureBlack(color)) {
+          return color
+        }
+        
+        const hex = color.replace('#', '').toLowerCase()
+        if (hex.length !== 6) return color
+        
+        const r = parseInt(hex.substring(0, 2), 16)
+        const g = parseInt(hex.substring(2, 4), 16)
+        const b = parseInt(hex.substring(4, 6), 16)
+        
+        // Check if it's very dark (almost black but not pure black)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        if (luminance < 0.15) {
+          // For very dark colors, keep them as is - don't lighten to gray
+          return color
+        }
+        
+        // For medium-dark colors, keep as is
+        return color
       }
       
       // Helper to lighten a color (for text on dark backgrounds)
@@ -409,11 +474,13 @@ export function ComponentRenderer({
         // Store in CSS variable
         heroCSSVars['--hero-bg-color'] = bgColor
         
-        // For dark mode: if color is light, darken it automatically
+        // For dark mode: smart color adaptation
         if (isLightColor(bgColor)) {
-          heroCSSVars['--hero-bg-color-dark'] = darkenColor(bgColor, 0.5)
+          // Light colors: darken significantly to create contrast
+          heroCSSVars['--hero-bg-color-dark'] = darkenColor(bgColor, 0.6)
         } else {
-          heroCSSVars['--hero-bg-color-dark'] = bgColor
+          // Dark colors: adjust slightly for dark mode (lighten a bit for contrast)
+          heroCSSVars['--hero-bg-color-dark'] = adjustDarkColorForDarkMode(bgColor)
         }
         
         heroBackgroundStyle.backgroundColor = bgColor
@@ -432,16 +499,26 @@ export function ComponentRenderer({
       if (data.textColor) {
         heroCSSVars['--hero-text-color'] = data.textColor
         
-        // For dark mode: if background is light and text is dark, lighten text
-        // If background becomes dark, ensure text is light enough
+        // For dark mode: smart text color adaptation
         if (data.backgroundType === 'solid' && data.backgroundColor) {
           const bgIsLight = isLightColor(data.backgroundColor)
-          const textIsDark = !isLightColor(data.textColor)
+          const textIsLight = isLightColor(data.textColor)
+          const bgIsPureBlack = isPureBlack(data.backgroundColor)
           
-          if (bgIsLight && textIsDark) {
-            // In dark mode, background will be darker, so text might need to be lighter
-            heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.2)
+          if (bgIsLight) {
+            // Light background: in dark mode it becomes dark, so dark text should become light
+            if (!textIsLight) {
+              heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.8)
+            } else {
+              // Light text on light background - might need to darken in dark mode
+              heroCSSVars['--hero-text-color-dark'] = data.textColor
+            }
+          } else if (bgIsPureBlack) {
+            // Pure black background: keep text as is
+            // Black stays black in dark mode, so text color should stay the same
+            heroCSSVars['--hero-text-color-dark'] = data.textColor
           } else {
+            // Dark (but not pure black) background: keep text as is
             heroCSSVars['--hero-text-color-dark'] = data.textColor
           }
         } else {
@@ -629,7 +706,7 @@ export function ComponentRenderer({
             return (
               <div
                 key={element.id}
-                className="hero-text-fade-in mx-auto"
+                className="hero-text-fade-in mx-auto hero-logo-container"
                 style={{ marginBottom, width: element.logoWidth ? `${element.logoWidth}px` : 'auto' }}
               >
                 <Image
@@ -637,7 +714,7 @@ export function ComponentRenderer({
                   alt={getText(element.logoAlt) || ''}
                   width={element.logoWidth || 200}
                   height={element.logoHeight || element.logoWidth || 200}
-                  className="object-contain"
+                  className="object-contain hero-logo-image"
                   priority
                 />
               </div>
