@@ -1,3 +1,4 @@
+import { SocialSettings } from '@/components/admin/social-settings';
 import { SettingsSidebar } from '@/components/admin/settings-sidebar';
 import { Breadcrumb } from '@/components/admin/breadcrumb';
 import { AuthGuard } from '@/components/admin/auth-guard';
@@ -25,11 +26,7 @@ export default function AdminSocialSettingsPage() {
             </p>
           </div>
 
-          <div className="glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-xl p-8">
-            <p className="text-gray-600 dark:text-gray-400">
-              Social media settings coming soon. This will include social profile links, sharing buttons, and social media integration.
-            </p>
-          </div>
+          <SocialSettings />
           </div>
         </div>
       </div>

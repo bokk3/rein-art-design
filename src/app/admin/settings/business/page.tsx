@@ -1,3 +1,4 @@
+import { BusinessSettings } from '@/components/admin/business-settings';
 import { SettingsSidebar } from '@/components/admin/settings-sidebar';
 import { Breadcrumb } from '@/components/admin/breadcrumb';
 import { AuthGuard } from '@/components/admin/auth-guard';
@@ -25,11 +26,7 @@ export default function AdminBusinessSettingsPage() {
             </p>
           </div>
 
-          <div className="glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-xl p-8">
-            <p className="text-gray-600 dark:text-gray-400">
-              Business information settings coming soon. This will include company details, contact information, business hours, VAT number, and more.
-            </p>
-          </div>
+          <BusinessSettings />
           </div>
         </div>
       </div>

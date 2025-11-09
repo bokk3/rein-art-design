@@ -1,3 +1,4 @@
+import { SEOSettings } from '@/components/admin/seo-settings';
 import { SettingsSidebar } from '@/components/admin/settings-sidebar';
 import { Breadcrumb } from '@/components/admin/breadcrumb';
 import { AuthGuard } from '@/components/admin/auth-guard';
@@ -25,11 +26,7 @@ export default function AdminSEOSettingsPage() {
             </p>
           </div>
 
-          <div className="glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-xl p-8">
-            <p className="text-gray-600 dark:text-gray-400">
-              SEO settings coming soon. This will include meta tags, Open Graph settings, Twitter cards, sitemap configuration, and more.
-            </p>
-          </div>
+          <SEOSettings />
           </div>
         </div>
       </div>
