@@ -1317,16 +1317,15 @@ export function ComponentRenderer({
                   )
                 )}
                 
-                {featuredProjects.length > (data.maxItems || 8) && (
-                  <div className="text-center mt-12">
-                    <Link href="/projects">
-                      <Button variant="outline" size="lg">
-                        View All Projects
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                  </div>
-                )}
+                {/* Always show button to view all projects */}
+                <div className="text-center mt-12 mb-4">
+                  <Link href="/projects">
+                    <Button variant="outline" size="lg">
+                      View All Projects
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
               </>
             ) : data.images && data.images.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
