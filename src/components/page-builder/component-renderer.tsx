@@ -780,7 +780,7 @@ export function ComponentRenderer({
           className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex ${verticalAlignClass} ${horizontalAlignClass} ${backgroundClass} overflow-hidden hero-fade-in`}
           style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
         >
-          {data.backgroundImage && (
+          {data.backgroundType === 'image' && data.backgroundImage && (
             <div className="absolute inset-0 hero-bg-fade-in">
               <Image
                 src={data.backgroundImage}
@@ -793,7 +793,7 @@ export function ComponentRenderer({
                 className="absolute inset-0" 
                 style={{ 
                   backgroundColor: data.backgroundOverlayColor || '#000000',
-                  opacity: (data.backgroundOverlayOpacity !== undefined ? data.backgroundOverlayOpacity : 0) / 100 
+                  opacity: (data.backgroundOverlayOpacity !== undefined ? data.backgroundOverlayOpacity : 0) / 100
                 }}
               />
             </div>

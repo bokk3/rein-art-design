@@ -1318,7 +1318,36 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                 <Select
                   id="backgroundType"
                   value={component.data.backgroundType || 'solid'}
-                  onChange={(e) => updateData('backgroundType', e.target.value)}
+                  onChange={(e) => {
+                    const newType = e.target.value
+                    // Clear fields that are not relevant to the new background type
+                    const updatedData: any = {
+                      ...component.data,
+                      backgroundType: newType
+                    }
+                    
+                    // When switching to solid, clear image and gradient fields
+                    if (newType === 'solid') {
+                      updatedData.backgroundImage = ''
+                      updatedData.gradientFrom = undefined
+                      updatedData.gradientTo = undefined
+                      updatedData.gradientDirection = undefined
+                    }
+                    // When switching to gradient, clear image and ensure solid color defaults
+                    else if (newType === 'gradient') {
+                      updatedData.backgroundImage = ''
+                      updatedData.backgroundColor = undefined
+                    }
+                    // When switching to image, clear gradient and solid color fields
+                    else if (newType === 'image') {
+                      updatedData.gradientFrom = undefined
+                      updatedData.gradientTo = undefined
+                      updatedData.gradientDirection = undefined
+                      updatedData.backgroundColor = undefined
+                    }
+                    
+                    onChange(updatedData)
+                  }}
                 >
                   <option value="solid">Solid Color</option>
                   <option value="gradient">Gradient</option>
