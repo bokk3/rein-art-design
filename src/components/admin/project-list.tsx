@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { ProjectWithRelations } from '@/types/project'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
 import { Languages, Loader2, Eye } from 'lucide-react'
 import { useT } from '@/hooks/use-t'
 
@@ -288,36 +287,41 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
       )}
 
       {/* Filters */}
-      <div className="flex gap-4 items-center flex-wrap">
-        <Input
-          placeholder={t('admin.searchProjects')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
-        <Select
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px] max-w-md">
+          <Input
+            placeholder={t('admin.searchProjects')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <select
           value={publishedFilter}
           onChange={(e) => setPublishedFilter(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-[#181818] text-gray-900 dark:text-white min-w-[140px]"
         >
           <option value="all">{t('admin.allStatus')}</option>
           <option value="true">{t('admin.published')}</option>
           <option value="false">{t('admin.draft')}</option>
-        </Select>
-        <Select
+        </select>
+        <select
           value={featuredFilter}
           onChange={(e) => setFeaturedFilter(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-[#181818] text-gray-900 dark:text-white min-w-[140px]"
         >
           <option value="all">{t('admin.allProjects')}</option>
           <option value="true">{t('admin.featured')}</option>
           <option value="false">{t('admin.notFeatured')}</option>
-        </Select>
-        <Select
+        </select>
+        <select
           value={`${sortBy}-${sortOrder}`}
           onChange={(e) => {
             const [newSortBy, newSortOrder] = e.target.value.split('-') as ['name' | 'views' | 'created', 'asc' | 'desc']
             setSortBy(newSortBy)
             setSortOrder(newSortOrder)
           }}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-[#181818] text-gray-900 dark:text-white min-w-[160px]"
         >
           <option value="views-desc">Most Views</option>
           <option value="views-asc">Least Views</option>
@@ -325,7 +329,7 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
           <option value="name-desc">Name (Z-A)</option>
           <option value="created-desc">Newest First</option>
           <option value="created-asc">Oldest First</option>
-        </Select>
+        </select>
       </div>
 
       {/* Projects Table */}
