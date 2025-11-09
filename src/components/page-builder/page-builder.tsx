@@ -570,6 +570,60 @@ function getDefaultComponentData(type: PageComponent['type']): ComponentData {
   switch (type) {
     case 'hero':
       return {
+        // New flexible structure with backwards compatibility
+        heroElements: [
+          {
+            id: 'hero-title-1',
+            type: 'text',
+            textType: 'heading',
+            content: {
+              nl: 'Welkom bij Ons Portfolio',
+              fr: 'Bienvenue dans Notre Portfolio'
+            },
+            fontSize: '7xl',
+            fontWeight: 'bold',
+            order: 0,
+            visible: true
+          },
+          {
+            id: 'hero-subtitle-1',
+            type: 'text',
+            textType: 'subtitle',
+            content: {
+              nl: 'Ontdek unieke handgemaakte stukken gemaakt met kwaliteitsmaterialen en aandacht voor detail.',
+              fr: 'Découvrez des pièces artisanales uniques fabriquées avec des matériaux de qualité et une attention aux détails.'
+            },
+            fontSize: '3xl',
+            fontWeight: 'light',
+            opacity: 90,
+            order: 1,
+            visible: true
+          },
+          {
+            id: 'hero-button-1',
+            type: 'button',
+            buttonText: {
+              nl: 'Bekijk Projecten',
+              fr: 'Voir les Projets'
+            },
+            buttonLink: '/projects',
+            buttonVariant: 'primary',
+            buttonSize: 'lg',
+            order: 2,
+            visible: true
+          }
+        ],
+        heroLayout: {
+          textAlignment: 'center',
+          verticalAlignment: 'center',
+          horizontalAlignment: 'center',
+          contentWidth: 'wide',
+          gap: 16
+        },
+        backgroundColor: '#ffffff',
+        textColor: '#000000',
+        backgroundOverlayOpacity: 0,
+        // Legacy fields for backwards compatibility
         title: {
           nl: 'Welkom bij Ons Portfolio',
           fr: 'Bienvenue dans Notre Portfolio'
@@ -582,10 +636,7 @@ function getDefaultComponentData(type: PageComponent['type']): ComponentData {
           nl: 'Bekijk Projecten',
           fr: 'Voir les Projets'
         },
-        heroButtonLink: '/projects',
-        backgroundColor: '#ffffff',
-        textColor: '#000000',
-        backgroundOverlayOpacity: 0 // Default: no overlay
+        heroButtonLink: '/projects'
       }
     case 'text':
       return {

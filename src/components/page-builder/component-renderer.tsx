@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { PageComponent } from '@/types/page-builder'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { PageComponent, HeroTextBlock, HeroLayout } from '@/types/page-builder'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -227,12 +227,101 @@ export function ComponentRenderer({
 
   switch (type) {
     case 'hero':
+      // Helper to convert legacy hero data to new format (backwards compatibility)
+      const normalizeHeroElements = useMemo((): HeroTextBlock[] => {
+        // If new structure exists, use it
+        if (data.heroElements && Array.isArray(data.heroElements) && data.heroElements.length > 0) {
+          return data.heroElements.filter(el => el.visible !== false).sort((a, b) => a.order - b.order)
+        }
+        
+        // Otherwise, convert legacy structure
+        const elements: HeroTextBlock[] = []
+        let order = 0
+        
+        if (data.title) {
+          elements.push({
+            id: 'legacy-title',
+            type: 'text',
+            textType: 'heading',
+            content: data.title,
+            fontSize: '7xl',
+            fontWeight: 'bold',
+            order: order++,
+            visible: true
+          })
+        }
+        
+        if (data.subtitle) {
+          elements.push({
+            id: 'legacy-subtitle',
+            type: 'text',
+            textType: 'subtitle',
+            content: data.subtitle,
+            fontSize: '3xl',
+            fontWeight: 'light',
+            opacity: 90,
+            order: order++,
+            visible: true
+          })
+        }
+        
+        if (data.description) {
+          elements.push({
+            id: 'legacy-description',
+            type: 'text',
+            textType: 'body',
+            content: data.description,
+            fontSize: 'xl',
+            opacity: 80,
+            maxWidth: 768, // 3xl = 768px
+            order: order++,
+            visible: true
+          })
+        }
+        
+        if (data.primaryButton || data.heroButtonText) {
+          elements.push({
+            id: 'legacy-primary-button',
+            type: 'button',
+            buttonText: data.primaryButton || data.heroButtonText,
+            buttonLink: data.primaryButtonLink || data.heroButtonLink || '/projects',
+            buttonVariant: 'primary',
+            buttonSize: 'lg',
+            order: order++,
+            visible: true
+          })
+        }
+        
+        if (data.secondaryButton) {
+          elements.push({
+            id: 'legacy-secondary-button',
+            type: 'button',
+            buttonText: data.secondaryButton,
+            buttonLink: data.secondaryButtonLink || '/contact',
+            buttonVariant: 'secondary',
+            buttonSize: 'lg',
+            order: order++,
+            visible: true
+          })
+        }
+        
+        return elements
+      }, [data])
+      
+      // Get layout configuration or use defaults
+      const layout: HeroLayout = data.heroLayout || {
+        textAlignment: 'center',
+        verticalAlignment: 'center',
+        horizontalAlignment: 'center',
+        contentWidth: 'wide',
+        gap: 16
+      }
+      
       // Build background style based on background type
       const heroBackgroundStyle: React.CSSProperties = {}
       let backgroundClass = ''
       
       if (data.backgroundType === 'gradient') {
-        // Build gradient from color pickers
         const direction = data.gradientDirection || 'to-br'
         const fromColor = data.gradientFrom || '#ffffff'
         const viaColor = data.gradientVia
@@ -259,7 +348,6 @@ export function ComponentRenderer({
       } else if (data.backgroundType === 'solid') {
         heroBackgroundStyle.backgroundColor = data.backgroundColor || '#ffffff'
       } else if (!data.backgroundType || data.backgroundType === 'image') {
-        // Default background for image or when not set
         backgroundClass = !data.backgroundImage ? 'bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:bg-gray-900' : ''
       }
       
@@ -271,13 +359,19 @@ export function ComponentRenderer({
       if (data.textColor) {
         heroStyle.color = data.textColor
       }
-      if (data.padding) {
+      
+      // Apply padding from layout or legacy padding
+      if (layout.contentPadding) {
+        heroStyle.padding = `${layout.contentPadding.top || 0}px ${layout.contentPadding.right || 0}px ${layout.contentPadding.bottom || 0}px ${layout.contentPadding.left || 0}px`
+      } else if (data.padding) {
         heroStyle.padding = `${data.padding.top}px ${data.padding.right}px ${data.padding.bottom}px ${data.padding.left}px`
       }
 
-      // Calculate height accounting for navigation (h-20 = 80px on md, h-24 = 96px on lg)
+      // Calculate height
       const heroHeightStyle = data.height === 'screen' 
         ? { minHeight: 'calc(100vh - 80px)' } 
+        : data.height && typeof data.height === 'number'
+        ? { minHeight: `${data.height}px` }
         : {}
       
       const combinedStyle = {
@@ -285,10 +379,236 @@ export function ComponentRenderer({
         ...heroStyle
       }
       
+      // Determine vertical alignment classes
+      const verticalAlignClass = layout.verticalAlignment === 'top' 
+        ? 'items-start' 
+        : layout.verticalAlignment === 'bottom' 
+        ? 'items-end' 
+        : 'items-center'
+      
+      // Determine horizontal alignment classes
+      const horizontalAlignClass = layout.horizontalAlignment === 'left'
+        ? 'justify-start'
+        : layout.horizontalAlignment === 'right'
+        ? 'justify-end'
+        : 'justify-center'
+      
+      // Determine text alignment
+      const textAlignClass = layout.textAlignment === 'left'
+        ? 'text-left'
+        : layout.textAlignment === 'right'
+        ? 'text-right'
+        : layout.textAlignment === 'justify'
+        ? 'text-justify'
+        : 'text-center'
+      
+      // Determine content width
+      const getContentWidth = (): string => {
+        if (typeof layout.contentWidth === 'number') {
+          return `max-w-[${layout.contentWidth}px]`
+        }
+        switch (layout.contentWidth) {
+          case 'narrow': return 'max-w-2xl'
+          case 'medium': return 'max-w-4xl'
+          case 'wide': return 'max-w-5xl'
+          case 'full': return 'max-w-full'
+          default: return 'max-w-5xl'
+        }
+      }
+      
+      // Group consecutive buttons together for horizontal layout
+      const groupElements = (elements: HeroTextBlock[]): Array<HeroTextBlock | HeroTextBlock[]> => {
+        const grouped: Array<HeroTextBlock | HeroTextBlock[]> = []
+        let buttonGroup: HeroTextBlock[] = []
+        
+        elements.forEach((element, index) => {
+          if (element.type === 'button' && element.visible) {
+            buttonGroup.push(element)
+          } else {
+            // If we have a button group, add it first
+            if (buttonGroup.length > 0) {
+              grouped.push(buttonGroup)
+              buttonGroup = []
+            }
+            // Add the non-button element
+            if (element.visible) {
+              grouped.push(element)
+            }
+          }
+        })
+        
+        // Add any remaining button group
+        if (buttonGroup.length > 0) {
+          grouped.push(buttonGroup)
+        }
+        
+        return grouped
+      }
+      
+      // Render a single hero element
+      const renderSingleElement = (element: HeroTextBlock, index: number, isLastInGroup: boolean = false) => {
+        const elementStyle: React.CSSProperties = {}
+        if (element.textColor) elementStyle.color = element.textColor
+        if (element.opacity !== undefined) elementStyle.opacity = element.opacity / 100
+        if (element.maxWidth && typeof element.maxWidth === 'number') {
+          elementStyle.maxWidth = `${element.maxWidth}px`
+        }
+        
+        const gap = layout.gap || 16
+        const marginBottom = isLastInGroup ? `${gap}px` : '0'
+        
+        switch (element.type) {
+          case 'text':
+            if (!element.content) return null
+            
+            const fontSizeClasses: Record<string, string> = {
+              'xs': 'text-xs',
+              'sm': 'text-sm',
+              'base': 'text-base',
+              'lg': 'text-lg',
+              'xl': 'text-xl',
+              '2xl': 'text-2xl',
+              '3xl': 'text-3xl',
+              '4xl': 'text-4xl',
+              '5xl': 'text-5xl',
+              '6xl': 'text-6xl',
+              '7xl': 'text-7xl',
+              '8xl': 'text-8xl',
+              '9xl': 'text-9xl'
+            }
+            
+            const fontWeightClasses: Record<string, string> = {
+              'light': 'font-light',
+              'normal': 'font-normal',
+              'medium': 'font-medium',
+              'semibold': 'font-semibold',
+              'bold': 'font-bold',
+              'extrabold': 'font-extrabold',
+              'black': 'font-black'
+            }
+            
+            const textTypeClasses: Record<string, string> = {
+              'heading': 'leading-tight',
+              'subtitle': 'leading-relaxed',
+              'body': 'leading-relaxed',
+              'small': 'leading-normal'
+            }
+            
+            const fontSize = element.fontSize || (element.textType === 'heading' ? '7xl' : element.textType === 'subtitle' ? '3xl' : element.textType === 'body' ? 'xl' : 'base')
+            const fontWeight = element.fontWeight || (element.textType === 'heading' ? 'bold' : element.textType === 'subtitle' ? 'light' : 'normal')
+            const textTypeClass = textTypeClasses[element.textType || 'body'] || ''
+            
+            const Tag = element.textType === 'heading' ? 'h1' : element.textType === 'subtitle' ? 'h2' : 'p'
+            
+            // Handle maxWidth for text elements
+            let maxWidthStyle: React.CSSProperties = {}
+            let maxWidthClass = 'mx-auto'
+            if (element.maxWidth === 'none') {
+              maxWidthClass = ''
+              maxWidthStyle.width = 'auto'
+            } else if (element.maxWidth === 'full') {
+              maxWidthClass = ''
+              maxWidthStyle.width = '100%'
+            } else if (typeof element.maxWidth === 'number') {
+              maxWidthStyle.maxWidth = `${element.maxWidth}px`
+            }
+            
+            return (
+              <Tag
+                key={element.id}
+                className={`${fontSizeClasses[fontSize]} ${fontWeightClasses[fontWeight]} ${textTypeClass} ${maxWidthClass} hero-text-fade-in`}
+                style={{ ...elementStyle, marginBottom, ...maxWidthStyle, width: maxWidthStyle.width || '100%' }}
+              >
+                {isEditing ? (
+                  <EditableText
+                    value={getText(element.content)}
+                    field={`hero-element-${element.id}` as any}
+                    className=""
+                    as="span"
+                    multiline={element.textType === 'body'}
+                  />
+                ) : (
+                  getText(element.content)
+                )}
+              </Tag>
+            )
+          
+          case 'logo':
+            if (!element.logoUrl) return null
+            return (
+              <div
+                key={element.id}
+                className="hero-text-fade-in mx-auto"
+                style={{ marginBottom, width: element.logoWidth ? `${element.logoWidth}px` : 'auto' }}
+              >
+                <Image
+                  src={element.logoUrl}
+                  alt={getText(element.logoAlt) || ''}
+                  width={element.logoWidth || 200}
+                  height={element.logoHeight || element.logoWidth || 200}
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            )
+          
+          case 'button':
+            if (!element.buttonText) return null
+            const buttonVariants = {
+              'primary': 'bg-white text-slate-900 hover:bg-gray-100 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-100 border-2 border-transparent',
+              'secondary': 'border-2 border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-slate-900',
+              'outline': 'border-2 border-current hover:bg-current hover:text-white dark:border-white dark:hover:bg-white dark:hover:text-slate-900',
+              'ghost': 'hover:bg-white/10 dark:hover:bg-white/10'
+            }
+            
+            const buttonSizes = {
+              'sm': 'text-sm px-4 py-2',
+              'md': 'text-base px-6 py-3',
+              'lg': 'text-lg px-8 py-4',
+              'xl': 'text-xl px-10 py-5'
+            }
+            
+            return (
+              <div key={element.id} className="hero-text-fade-in">
+                {isEditing ? (
+                  <div className="inline-block">
+                    <EditableText
+                      value={getText(element.buttonText)}
+                      field={`hero-element-${element.id}` as any}
+                      className={`${buttonSizes[element.buttonSize || 'lg']}`}
+                      as="span"
+                    />
+                  </div>
+                ) : (
+                  <Link href={element.buttonLink || '#'}>
+                    <Button
+                      variant={element.buttonVariant === 'primary' ? 'default' : element.buttonVariant === 'secondary' || element.buttonVariant === 'outline' ? 'outline' : 'ghost'}
+                      size={element.buttonSize === 'sm' ? 'sm' : element.buttonSize === 'lg' || element.buttonSize === 'md' || element.buttonSize === 'xl' ? 'lg' : 'lg'}
+                      className={`w-full sm:w-auto ${buttonVariants[element.buttonVariant || 'primary']} transition-all duration-300 ${buttonSizes[element.buttonSize || 'lg']}`}
+                    >
+                      {getText(element.buttonText)}
+                      {element.buttonVariant === 'primary' && <ArrowRight className="w-5 h-5 ml-2 inline-block transition-transform duration-200 group-hover:translate-x-1" />}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )
+          
+          default:
+            return null
+        }
+      }
+      
+      // Render grouped elements - group consecutive buttons together
+      const groupedElements = useMemo(() => {
+        return groupElements(normalizeHeroElements)
+      }, [normalizeHeroElements])
+      const gap = layout.gap || 16
+      
       return (
         <div 
           data-hero-section
-          className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex items-center justify-center ${backgroundClass} overflow-hidden hero-fade-in`}
+          className={`relative ${data.height === 'screen' ? '' : 'py-16'} px-4 sm:px-6 lg:px-8 flex ${verticalAlignClass} ${horizontalAlignClass} ${backgroundClass} overflow-hidden hero-fade-in`}
           style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
         >
           {data.backgroundImage && (
@@ -310,104 +630,30 @@ export function ComponentRenderer({
             </div>
           )}
           
-          <div className="relative z-10 max-w-5xl mx-auto text-center py-8">
-            {data.title && (
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-4 leading-tight hero-text-fade-in hero-text-delay-1">
-                {isEditing ? (
-                  <EditableText
-                    value={getText(data.title)}
-                    field="title"
-                    className="text-4xl sm:text-5xl lg:text-7xl font-bold"
-                    as="span"
-                  />
-                ) : (
-                  getText(data.title)
-                )}
-              </h1>
-            )}
-            
-            {data.subtitle && (
-              <p className="text-xl sm:text-2xl lg:text-3xl mb-4 opacity-90 font-light hero-text-fade-in hero-text-delay-2">
-                {isEditing ? (
-                  <EditableText
-                    value={getText(data.subtitle)}
-                    field="subtitle"
-                    className="text-xl sm:text-2xl lg:text-3xl font-light opacity-90"
-                    as="span"
-                  />
-                ) : (
-                  getText(data.subtitle)
-                )}
-              </p>
-            )}
-            
-            {data.description && (
-              <p className="text-lg sm:text-xl mb-8 opacity-80 max-w-3xl mx-auto leading-relaxed hero-text-fade-in hero-text-delay-3">
-                {isEditing ? (
-                  <EditableText
-                    value={getText(data.description)}
-                    field="description"
-                    className="text-lg sm:text-xl opacity-80 max-w-3xl mx-auto leading-relaxed block"
-                    as="span"
-                    multiline
-                  />
-                ) : (
-                  getText(data.description)
-                )}
-              </p>
-            )}
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center hero-text-fade-in hero-text-delay-4">
-              {(data.primaryButton || data.heroButtonText) && (
-                <div>
-                  {isEditing ? (
-                    <div className="inline-block">
-                      <EditableText
-                        value={getText(data.primaryButton || data.heroButtonText)}
-                        field={data.primaryButton ? "primaryButton" : "heroButtonText"}
-                        className="text-lg px-8 py-4"
-                        as="span"
-                      />
-                    </div>
-                  ) : (
-                    <Link href={data.primaryButtonLink || data.heroButtonLink || "/projects"}>
-                      <Button 
-                        size="lg"
-                        className="w-full sm:w-auto text-lg px-8 py-4 h-auto bg-white text-slate-900 hover:bg-gray-100 dark:bg-white dark:text-slate-900 dark:hover:bg-gray-100 border-2 border-transparent transition-all duration-300"
-                      >
-                        {getText(data.primaryButton || data.heroButtonText)}
-                        <ArrowRight className="w-5 h-5 ml-2 inline-block transition-transform duration-200 group-hover:translate-x-1" />
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              )}
+          <div className={`relative z-10 ${getContentWidth()} ${textAlignClass} py-8 w-full`}>
+            {groupedElements.map((item, groupIndex) => {
+              const isLastGroup = groupIndex === groupedElements.length - 1
               
-              {data.secondaryButton && (
-                <div>
-                  {isEditing ? (
-                    <div className="inline-block">
-                      <EditableText
-                        value={getText(data.secondaryButton)}
-                        field="secondaryButton"
-                        className="text-lg px-8 py-4"
-                        as="span"
-                      />
-                    </div>
-                  ) : (
-                    <Link href={data.secondaryButtonLink || "/contact"}>
-                      <Button 
-                        variant="outline"
-                        size="lg"
-                        className="w-full sm:w-auto text-lg px-8 py-4 h-auto border-2 border-gray-900 text-gray-900 bg-gray-50/30 hover:bg-gray-900 hover:text-white dark:border-white dark:text-white dark:bg-white/5 dark:hover:bg-white dark:hover:text-slate-900 transition-all duration-300"
-                      >
-                        {getText(data.secondaryButton)}
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
+              // If it's an array, it's a button group - render buttons horizontally
+              if (Array.isArray(item)) {
+                return (
+                  <div 
+                    key={`button-group-${groupIndex}`}
+                    className="flex flex-col sm:flex-row gap-4 justify-center items-center hero-text-fade-in w-full"
+                    style={{ marginBottom: isLastGroup ? '0' : `${gap}px` }}
+                  >
+                    {item.map((button, btnIndex) => (
+                      <div key={button.id}>
+                        {renderSingleElement(button, btnIndex, false)}
+                      </div>
+                    ))}
+                  </div>
+                )
+              } else {
+                // Single element (text or logo)
+                return renderSingleElement(item, groupIndex, !isLastGroup)
+              }
+            })}
           </div>
         </div>
       )

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { PageComponent, ComponentData, MultilingualText } from '@/types/page-builder'
+import { PageComponent, ComponentData, MultilingualText, HeroTextBlock, HeroLayout, HeroElementType, HeroTextBlockType } from '@/types/page-builder'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MediaLibrary } from '@/components/admin/media-library'
 import { RichTextEditor } from '@/components/admin/rich-text-editor'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { Globe, CheckCircle, AlertCircle, Copy, Star, Languages, Loader2 } from 'lucide-react'
+import { Globe, CheckCircle, AlertCircle, Copy, Star, Languages, Loader2, Plus, Trash2, GripVertical, MoveUp, MoveDown, Image as ImageIcon, Type, MousePointerClick } from 'lucide-react'
 import { useT } from '@/hooks/use-t'
 
 interface Language {
@@ -35,6 +35,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   const [translationStatus, setTranslationStatus] = useState<string>('')
   const [apiConfigured, setApiConfigured] = useState(false)
   const [featuredProjects, setFeaturedProjects] = useState<any[]>([])
+  const [expandedHeroElement, setExpandedHeroElement] = useState<string | null>(null)
   
   // Fetch featured projects count for carousel auto-enable logic
   useEffect(() => {
@@ -114,6 +115,14 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
   const handleMediaSelect = (media: any) => {
     if (mediaTarget === 'backgroundImage' || mediaTarget === 'imageUrl') {
       updateData(mediaTarget, media.originalUrl)
+    } else if (mediaTarget && mediaTarget.startsWith('logo-')) {
+      // Handle logo selection for hero elements
+      const elementId = mediaTarget.replace('logo-', '')
+      const elements = normalizeHeroElements()
+      const element = elements.find(el => el.id === elementId)
+      if (element) {
+        updateHeroElement(elementId, { logoUrl: media.originalUrl })
+      }
     }
     setShowMediaLibrary(false)
   }
@@ -147,6 +156,155 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
     setShowMediaLibrary(true)
   }
 
+  // Hero builder helpers
+  const normalizeHeroElements = (): HeroTextBlock[] => {
+    if (component.data.heroElements && Array.isArray(component.data.heroElements) && component.data.heroElements.length > 0) {
+      return component.data.heroElements.sort((a, b) => a.order - b.order)
+    }
+    // Convert legacy format
+    const elements: HeroTextBlock[] = []
+    let order = 0
+    if (component.data.title) {
+      elements.push({
+        id: 'legacy-title',
+        type: 'text',
+        textType: 'heading',
+        content: component.data.title,
+        fontSize: '7xl',
+        fontWeight: 'bold',
+        order: order++,
+        visible: true
+      })
+    }
+    if (component.data.subtitle) {
+      elements.push({
+        id: 'legacy-subtitle',
+        type: 'text',
+        textType: 'subtitle',
+        content: component.data.subtitle,
+        fontSize: '3xl',
+        fontWeight: 'light',
+        opacity: 90,
+        order: order++,
+        visible: true
+      })
+    }
+    if (component.data.description) {
+      elements.push({
+        id: 'legacy-description',
+        type: 'text',
+        textType: 'body',
+        content: component.data.description,
+        fontSize: 'xl',
+        opacity: 80,
+        maxWidth: 768,
+        order: order++,
+        visible: true
+      })
+    }
+    if (component.data.primaryButton || component.data.heroButtonText) {
+      elements.push({
+        id: 'legacy-primary-button',
+        type: 'button',
+        buttonText: component.data.primaryButton || component.data.heroButtonText,
+        buttonLink: component.data.primaryButtonLink || component.data.heroButtonLink || '/projects',
+        buttonVariant: 'primary',
+        buttonSize: 'lg',
+        order: order++,
+        visible: true
+      })
+    }
+    if (component.data.secondaryButton) {
+      elements.push({
+        id: 'legacy-secondary-button',
+        type: 'button',
+        buttonText: component.data.secondaryButton,
+        buttonLink: component.data.secondaryButtonLink || '/contact',
+        buttonVariant: 'secondary',
+        buttonSize: 'lg',
+        order: order++,
+        visible: true
+      })
+    }
+    return elements
+  }
+
+  const updateHeroElements = (elements: HeroTextBlock[]) => {
+    updateData('heroElements', elements)
+  }
+
+  const addHeroElement = (type: HeroElementType) => {
+    const elements = normalizeHeroElements()
+    const newElement: HeroTextBlock = {
+      id: `hero-${Date.now()}`,
+      type,
+      order: elements.length,
+      visible: true
+    }
+    if (type === 'text') {
+      newElement.textType = 'heading'
+      newElement.content = { [activeLanguage]: '' }
+      newElement.fontSize = '7xl'
+      newElement.fontWeight = 'bold'
+    } else if (type === 'logo') {
+      newElement.logoUrl = ''
+      newElement.logoAlt = { [activeLanguage]: '' }
+      newElement.logoWidth = 200
+    } else if (type === 'button') {
+      newElement.buttonText = { [activeLanguage]: '' }
+      newElement.buttonLink = '/'
+      newElement.buttonVariant = 'primary'
+      newElement.buttonSize = 'lg'
+    }
+    updateHeroElements([...elements, newElement])
+  }
+
+  const removeHeroElement = (id: string) => {
+    const elements = normalizeHeroElements()
+    updateHeroElements(elements.filter(el => el.id !== id))
+  }
+
+  const updateHeroElement = (id: string, updates: Partial<HeroTextBlock>) => {
+    const elements = normalizeHeroElements()
+    const index = elements.findIndex(el => el.id === id)
+    if (index !== -1) {
+      elements[index] = { ...elements[index], ...updates }
+      updateHeroElements(elements)
+    }
+  }
+
+  const moveHeroElement = (id: string, direction: 'up' | 'down') => {
+    const elements = normalizeHeroElements()
+    const index = elements.findIndex(el => el.id === id)
+    if (index === -1) return
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= elements.length) return
+    
+    // Create a new array with swapped elements
+    const reordered = [...elements]
+    const [movedElement] = reordered.splice(index, 1)
+    reordered.splice(newIndex, 0, movedElement)
+    
+    // Reassign order values sequentially
+    const updated = reordered.map((el, idx) => ({
+      ...el,
+      order: idx
+    }))
+    
+    updateHeroElements(updated)
+  }
+
+  const updateHeroLayout = (updates: Partial<HeroLayout>) => {
+    const currentLayout: HeroLayout = component.data.heroLayout || {
+      textAlignment: 'center',
+      verticalAlignment: 'center',
+      horizontalAlignment: 'center',
+      contentWidth: 'wide',
+      gap: 16
+    }
+    updateData('heroLayout', { ...currentLayout, ...updates })
+  }
+
   if (showMediaLibrary) {
     return (
       <div className="p-4">
@@ -174,7 +332,12 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
     const fields: string[] = []
     switch (component.type) {
       case 'hero':
-        fields.push('title', 'subtitle', 'description', 'primaryButton', 'secondaryButton')
+        // Legacy fields for backwards compatibility
+        if (component.data.title || component.data.subtitle || component.data.description) {
+          fields.push('title', 'subtitle', 'description', 'primaryButton', 'secondaryButton')
+        }
+        // New hero elements are handled separately in the editor
+        // They don't need to be included in the general translation coverage
         break
       case 'text':
         fields.push('content')
@@ -427,144 +590,511 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
         </div>
       )}
 
-      {/* Hero Component Fields */}
-      {component.type === 'hero' && (
-        <>
-          <div>
-            <Label htmlFor="title" className="flex items-center gap-2">
-              <span>Title</span>
-              {hasTranslation('title', activeLanguage) ? (
-                <CheckCircle className="h-3 w-3 text-green-500" />
-              ) : (
-                <AlertCircle className="h-3 w-3 text-yellow-500" />
-              )}
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                ({languages.find(l => l.code === activeLanguage)?.name})
-              </span>
-            </Label>
-            <Input
-              id="title"
-              value={getMultilingualText('title', activeLanguage)}
-              onChange={(e) => updateMultilingualText('title', activeLanguage, e.target.value)}
-              placeholder="Enter hero title"
-              className={!hasTranslation('title', activeLanguage) ? 'border-yellow-300 dark:border-yellow-600' : ''}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="subtitle" className="flex items-center gap-2">
-              <span>Subtitle</span>
-              {hasTranslation('subtitle', activeLanguage) ? (
-                <CheckCircle className="h-3 w-3 text-green-500" />
-              ) : (
-                <AlertCircle className="h-3 w-3 text-yellow-500" />
-              )}
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                ({languages.find(l => l.code === activeLanguage)?.name})
-              </span>
-            </Label>
-            <Input
-              id="subtitle"
-              value={getMultilingualText('subtitle', activeLanguage)}
-              onChange={(e) => updateMultilingualText('subtitle', activeLanguage, e.target.value)}
-              placeholder="Enter hero subtitle"
-              className={!hasTranslation('subtitle', activeLanguage) ? 'border-yellow-300 dark:border-yellow-600' : ''}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="description" className="flex items-center gap-2">
-              <span>Description</span>
-              {hasTranslation('description', activeLanguage) ? (
-                <CheckCircle className="h-3 w-3 text-green-500" />
-              ) : (
-                <AlertCircle className="h-3 w-3 text-yellow-500" />
-              )}
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                ({languages.find(l => l.code === activeLanguage)?.name})
-              </span>
-            </Label>
-            <Input
-              id="description"
-              value={getMultilingualText('description', activeLanguage)}
-              onChange={(e) => updateMultilingualText('description', activeLanguage, e.target.value)}
-              placeholder="Enter hero description"
-              className={!hasTranslation('description', activeLanguage) ? 'border-yellow-300 dark:border-yellow-600' : ''}
-            />
-          </div>
-          
-          <div className="border-t pt-4">
-            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Primary Button</h5>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="primaryButton" className="flex items-center gap-2">
-                  <span>Button Text</span>
-                  {hasTranslation('primaryButton', activeLanguage) ? (
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                  ) : (
-                    <AlertCircle className="h-3 w-3 text-yellow-500" />
-                  )}
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({languages.find(l => l.code === activeLanguage)?.name})
-                  </span>
-                </Label>
-                <Input
-                  id="primaryButton"
-                  value={getMultilingualText('primaryButton', activeLanguage)}
-                  onChange={(e) => updateMultilingualText('primaryButton', activeLanguage, e.target.value)}
-                  placeholder="Enter button text"
-                  className={!hasTranslation('primaryButton', activeLanguage) ? 'border-yellow-300 dark:border-yellow-600' : ''}
-                />
+      {/* Hero Component Fields - New Flexible Builder */}
+      {component.type === 'hero' && (() => {
+        const heroElements = normalizeHeroElements()
+        const layout: HeroLayout = component.data.heroLayout || {
+          textAlignment: 'center',
+          verticalAlignment: 'center',
+          horizontalAlignment: 'center',
+          contentWidth: 'wide',
+          gap: 16
+        }
+
+        return (
+          <>
+            {/* Hero Elements Management */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <h5 className="font-medium text-gray-900 dark:text-gray-100">Hero Elements</h5>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addHeroElement('text')}
+                    className="flex items-center gap-1"
+                  >
+                    <Type className="h-4 w-4" />
+                    Add Text
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addHeroElement('logo')}
+                    className="flex items-center gap-1"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    Add Logo
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addHeroElement('button')}
+                    className="flex items-center gap-1"
+                  >
+                    <MousePointerClick className="h-4 w-4" />
+                    Add Button
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="primaryButtonLink">Button Link</Label>
-                <Input
-                  id="primaryButtonLink"
-                  value={component.data.primaryButtonLink || component.data.heroButtonLink || ''}
-                  onChange={(e) => updateData('primaryButtonLink', e.target.value)}
-                  placeholder="/projects"
-                />
+
+              {heroElements.length === 0 ? (
+                <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">No elements yet. Add text, logos, or buttons to build your hero.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {heroElements.map((element, index) => (
+                    <div key={element.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-1">
+                          <GripVertical className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {element.type === 'text' && <><Type className="h-4 w-4 inline mr-1" />Text ({element.textType || 'body'})</>}
+                            {element.type === 'logo' && <><ImageIcon className="h-4 w-4 inline mr-1" />Logo</>}
+                            {element.type === 'button' && <><MousePointerClick className="h-4 w-4 inline mr-1" />Button</>}
+                          </span>
+                          {!element.visible && (
+                            <span className="text-xs text-gray-400 dark:text-gray-500">(Hidden)</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveHeroElement(element.id, 'up')}
+                            disabled={index === 0}
+                            className="h-7 w-7 p-0"
+                          >
+                            <MoveUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveHeroElement(element.id, 'down')}
+                            disabled={index === heroElements.length - 1}
+                            className="h-7 w-7 p-0"
+                          >
+                            <MoveDown className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedHeroElement(expandedHeroElement === element.id ? null : element.id)}
+                            className="h-7 px-2 text-xs"
+                          >
+                            {expandedHeroElement === element.id ? 'Collapse' : 'Edit'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeHeroElement(element.id)}
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {expandedHeroElement === element.id && (
+                        <div className="mt-4 space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          {/* Text Element Editor */}
+                          {element.type === 'text' && (
+                            <>
+                              <div>
+                                <Label>Text Type</Label>
+                                <Select
+                                  value={element.textType || 'body'}
+                                  onChange={(e) => updateHeroElement(element.id, { textType: e.target.value as HeroTextBlockType })}
+                                >
+                                  <option value="heading">Heading</option>
+                                  <option value="subtitle">Subtitle</option>
+                                  <option value="body">Body</option>
+                                  <option value="small">Small</option>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <span>Content</span>
+                                  {element.content?.[activeLanguage] ? (
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <AlertCircle className="h-3 w-3 text-yellow-500" />
+                                  )}
+                                </Label>
+                                <Input
+                                  value={element.content?.[activeLanguage] || ''}
+                                  onChange={(e) => {
+                                    const content = { ...(element.content || {}), [activeLanguage]: e.target.value }
+                                    updateHeroElement(element.id, { content })
+                                  }}
+                                  placeholder="Enter text content"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label>Font Size</Label>
+                                  <Select
+                                    value={element.fontSize || '7xl'}
+                                    onChange={(e) => updateHeroElement(element.id, { fontSize: e.target.value as any })}
+                                  >
+                                    <option value="xs">XS</option>
+                                    <option value="sm">SM</option>
+                                    <option value="base">Base</option>
+                                    <option value="lg">LG</option>
+                                    <option value="xl">XL</option>
+                                    <option value="2xl">2XL</option>
+                                    <option value="3xl">3XL</option>
+                                    <option value="4xl">4XL</option>
+                                    <option value="5xl">5XL</option>
+                                    <option value="6xl">6XL</option>
+                                    <option value="7xl">7XL</option>
+                                    <option value="8xl">8XL</option>
+                                    <option value="9xl">9XL</option>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label>Font Weight</Label>
+                                  <Select
+                                    value={element.fontWeight || 'normal'}
+                                    onChange={(e) => updateHeroElement(element.id, { fontWeight: e.target.value as any })}
+                                  >
+                                    <option value="light">Light</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="semibold">Semibold</option>
+                                    <option value="bold">Bold</option>
+                                    <option value="extrabold">Extrabold</option>
+                                    <option value="black">Black</option>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label>Text Color (optional)</Label>
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="color"
+                                      value={element.textColor || component.data.textColor || '#000000'}
+                                      onChange={(e) => updateHeroElement(element.id, { textColor: e.target.value })}
+                                      className="w-16 h-10 p-1"
+                                    />
+                                    <Input
+                                      value={element.textColor || component.data.textColor || '#000000'}
+                                      onChange={(e) => updateHeroElement(element.id, { textColor: e.target.value })}
+                                      className="flex-1"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label>Opacity (0-100)</Label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={element.opacity ?? 100}
+                                    onChange={(e) => updateHeroElement(element.id, { opacity: parseInt(e.target.value) || 100 })}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Max Width (px, leave empty for auto)</Label>
+                                <Input
+                                  type="number"
+                                  value={typeof element.maxWidth === 'number' ? element.maxWidth : ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value
+                                    updateHeroElement(element.id, { maxWidth: val ? parseInt(val) : undefined })
+                                  }}
+                                  placeholder="e.g., 768"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  id={`visible-${element.id}`}
+                                  checked={element.visible !== false}
+                                  onChange={(e) => updateHeroElement(element.id, { visible: e.target.checked })}
+                                />
+                                <Label htmlFor={`visible-${element.id}`} className="cursor-pointer">Visible</Label>
+                              </div>
+                            </>
+                          )}
+
+                          {/* Logo Element Editor */}
+                          {element.type === 'logo' && (
+                            <>
+                              <div>
+                                <Label>Logo Image</Label>
+                                <div className="mt-2">
+                                  {element.logoUrl ? (
+                                    <div className="flex items-center gap-2">
+                                      <img src={element.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setMediaTarget(`logo-${element.id}`)
+                                          openMediaLibrary(`logo-${element.id}`, 'single')
+                                        }}
+                                      >
+                                        Change Logo
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => updateHeroElement(element.id, { logoUrl: '' })}
+                                      >
+                                        Remove
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setMediaTarget(`logo-${element.id}`)
+                                        openMediaLibrary(`logo-${element.id}`, 'single')
+                                      }}
+                                    >
+                                      Select Logo
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Alt Text</Label>
+                                <Input
+                                  value={element.logoAlt?.[activeLanguage] || ''}
+                                  onChange={(e) => {
+                                    const logoAlt = { ...(element.logoAlt || {}), [activeLanguage]: e.target.value }
+                                    updateHeroElement(element.id, { logoAlt })
+                                  }}
+                                  placeholder="Logo alt text"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label>Width (px)</Label>
+                                  <Input
+                                    type="number"
+                                    value={element.logoWidth || 200}
+                                    onChange={(e) => updateHeroElement(element.id, { logoWidth: parseInt(e.target.value) || 200 })}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Height (px, optional)</Label>
+                                  <Input
+                                    type="number"
+                                    value={element.logoHeight || ''}
+                                    onChange={(e) => updateHeroElement(element.id, { logoHeight: e.target.value ? parseInt(e.target.value) : undefined })}
+                                    placeholder="Auto"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  id={`visible-logo-${element.id}`}
+                                  checked={element.visible !== false}
+                                  onChange={(e) => updateHeroElement(element.id, { visible: e.target.checked })}
+                                />
+                                <Label htmlFor={`visible-logo-${element.id}`} className="cursor-pointer">Visible</Label>
+                              </div>
+                            </>
+                          )}
+
+                          {/* Button Element Editor */}
+                          {element.type === 'button' && (
+                            <>
+                              <div>
+                                <Label className="flex items-center gap-2">
+                                  <span>Button Text</span>
+                                  {element.buttonText?.[activeLanguage] ? (
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <AlertCircle className="h-3 w-3 text-yellow-500" />
+                                  )}
+                                </Label>
+                                <Input
+                                  value={element.buttonText?.[activeLanguage] || ''}
+                                  onChange={(e) => {
+                                    const buttonText = { ...(element.buttonText || {}), [activeLanguage]: e.target.value }
+                                    updateHeroElement(element.id, { buttonText })
+                                  }}
+                                  placeholder="Enter button text"
+                                />
+                              </div>
+                              <div>
+                                <Label>Button Link</Label>
+                                <Input
+                                  value={element.buttonLink || '/'}
+                                  onChange={(e) => updateHeroElement(element.id, { buttonLink: e.target.value })}
+                                  placeholder="/projects"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label>Variant</Label>
+                                  <Select
+                                    value={element.buttonVariant || 'primary'}
+                                    onChange={(e) => updateHeroElement(element.id, { buttonVariant: e.target.value as any })}
+                                  >
+                                    <option value="primary">Primary</option>
+                                    <option value="secondary">Secondary</option>
+                                    <option value="outline">Outline</option>
+                                    <option value="ghost">Ghost</option>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label>Size</Label>
+                                  <Select
+                                    value={element.buttonSize || 'lg'}
+                                    onChange={(e) => updateHeroElement(element.id, { buttonSize: e.target.value as any })}
+                                  >
+                                    <option value="sm">Small</option>
+                                    <option value="md">Medium</option>
+                                    <option value="lg">Large</option>
+                                    <option value="xl">Extra Large</option>
+                                  </Select>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  id={`visible-button-${element.id}`}
+                                  checked={element.visible !== false}
+                                  onChange={(e) => updateHeroElement(element.id, { visible: e.target.checked })}
+                                />
+                                <Label htmlFor={`visible-button-${element.id}`} className="cursor-pointer">Visible</Label>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Layout Controls */}
+            <div className="border-t pt-4">
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Layout</h5>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Text Alignment</Label>
+                    <Select
+                      value={layout.textAlignment || 'center'}
+                      onChange={(e) => updateHeroLayout({ textAlignment: e.target.value as any })}
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                      <option value="justify">Justify</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Vertical Alignment</Label>
+                    <Select
+                      value={layout.verticalAlignment || 'center'}
+                      onChange={(e) => updateHeroLayout({ verticalAlignment: e.target.value as any })}
+                    >
+                      <option value="top">Top</option>
+                      <option value="center">Center</option>
+                      <option value="bottom">Bottom</option>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Horizontal Alignment</Label>
+                    <Select
+                      value={layout.horizontalAlignment || 'center'}
+                      onChange={(e) => updateHeroLayout({ horizontalAlignment: e.target.value as any })}
+                    >
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Content Width</Label>
+                    <Select
+                      value={typeof layout.contentWidth === 'number' ? 'custom' : layout.contentWidth || 'wide'}
+                      onChange={(e) => {
+                        if (e.target.value === 'custom') {
+                          const width = prompt('Enter max width in pixels:', '1200')
+                          if (width && !isNaN(parseInt(width))) {
+                            updateHeroLayout({ contentWidth: parseInt(width) })
+                          }
+                        } else {
+                          updateHeroLayout({ contentWidth: e.target.value as any })
+                        }
+                      }}
+                    >
+                      <option value="narrow">Narrow</option>
+                      <option value="medium">Medium</option>
+                      <option value="wide">Wide</option>
+                      <option value="full">Full</option>
+                      <option value="custom">Custom (px)</option>
+                    </Select>
+                    {typeof layout.contentWidth === 'number' && (
+                      <Input
+                        type="number"
+                        value={layout.contentWidth}
+                        onChange={(e) => updateHeroLayout({ contentWidth: parseInt(e.target.value) || 'wide' })}
+                        className="mt-2"
+                        placeholder="Width in pixels"
+                      />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label>Gap Between Elements (px)</Label>
+                  <Input
+                    type="number"
+                    value={layout.gap || 16}
+                    onChange={(e) => updateHeroLayout({ gap: parseInt(e.target.value) || 16 })}
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <Label>Section Height</Label>
+                  <Select
+                    value={typeof component.data.height === 'string' ? component.data.height : typeof component.data.height === 'number' ? 'custom' : 'auto'}
+                    onChange={(e) => {
+                      if (e.target.value === 'custom') {
+                        const height = prompt('Enter height in pixels:', '600')
+                        if (height && !isNaN(parseInt(height))) {
+                          updateData('height', parseInt(height))
+                        }
+                      } else {
+                        updateData('height', e.target.value === 'auto' || e.target.value === 'screen' ? e.target.value : 'auto')
+                      }
+                    }}
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="screen">Full Screen</option>
+                    <option value="custom">Custom (px)</option>
+                  </Select>
+                  {typeof component.data.height === 'number' && (
+                    <Input
+                      type="number"
+                      value={component.data.height}
+                      onChange={(e) => updateData('height', parseInt(e.target.value) || 'auto')}
+                      className="mt-2"
+                      placeholder="Height in pixels"
+                    />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="border-t pt-4">
-            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Secondary Button</h5>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="secondaryButton" className="flex items-center gap-2">
-                  <span>Button Text</span>
-                  {hasTranslation('secondaryButton', activeLanguage) ? (
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                  ) : (
-                    <AlertCircle className="h-3 w-3 text-yellow-500" />
-                  )}
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({languages.find(l => l.code === activeLanguage)?.name})
-                  </span>
-                </Label>
-                <Input
-                  id="secondaryButton"
-                  value={getMultilingualText('secondaryButton', activeLanguage)}
-                  onChange={(e) => updateMultilingualText('secondaryButton', activeLanguage, e.target.value)}
-                  placeholder="Enter button text"
-                  className={!hasTranslation('secondaryButton', activeLanguage) ? 'border-yellow-300 dark:border-yellow-600' : ''}
-                />
-              </div>
-              <div>
-                <Label htmlFor="secondaryButtonLink">Button Link</Label>
-                <Input
-                  id="secondaryButtonLink"
-                  value={component.data.secondaryButtonLink || ''}
-                  onChange={(e) => updateData('secondaryButtonLink', e.target.value)}
-                  placeholder="/contact"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="border-t pt-4">
-            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Background</h5>
+
+            {/* Background Controls */}
+            <div className="border-t pt-4">
+              <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Background</h5>
             <div className="space-y-3">
               <div>
                 <Label htmlFor="backgroundType">Background Type</Label>
@@ -826,28 +1356,9 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               )}
             </div>
           </div>
-          
-          <div className="border-t pt-4">
-            <h5 className="font-medium text-gray-900 mb-3">Layout</h5>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="height">Section Height</Label>
-                <Select
-                  id="height"
-                  value={typeof component.data.height === 'string' ? component.data.height : 'auto'}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    updateData('height', value === 'auto' || value === 'screen' ? value : parseInt(value))
-                  }}
-                >
-                  <option value="auto">Auto</option>
-                  <option value="screen">Full Screen</option>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+          </>
+        )
+      })()}
 
       {/* Features Component Fields */}
       {component.type === 'features' && (

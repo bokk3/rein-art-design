@@ -9,8 +9,57 @@ export interface MultilingualText {
   [languageCode: string]: string
 }
 
+// Hero text block types
+export type HeroTextBlockType = 'heading' | 'subtitle' | 'body' | 'small'
+export type HeroElementType = 'text' | 'logo' | 'button'
+
+// Hero text block configuration
+export interface HeroTextBlock {
+  id: string
+  type: HeroElementType
+  // For text blocks
+  textType?: HeroTextBlockType // heading, subtitle, body, small
+  content?: MultilingualText
+  fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | '8xl' | '9xl'
+  fontWeight?: 'light' | 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold' | 'black'
+  textColor?: string // Override global text color
+  opacity?: number // 0-100
+  maxWidth?: number | 'full' | 'none' // Max width in pixels, 'full', or 'none'
+  order: number // Display order
+  visible?: boolean // Show/hide this block
+  // For logo blocks
+  logoUrl?: string
+  logoAlt?: MultilingualText
+  logoWidth?: number // Logo width in pixels
+  logoHeight?: number // Logo height in pixels (optional, maintains aspect ratio if not set)
+  // For button blocks
+  buttonText?: MultilingualText
+  buttonLink?: string
+  buttonVariant?: 'primary' | 'secondary' | 'outline' | 'ghost'
+  buttonSize?: 'sm' | 'md' | 'lg' | 'xl'
+}
+
+// Hero layout configuration
+export interface HeroLayout {
+  textAlignment?: 'left' | 'center' | 'right' | 'justify'
+  verticalAlignment?: 'top' | 'center' | 'bottom'
+  horizontalAlignment?: 'left' | 'center' | 'right'
+  contentWidth?: 'narrow' | 'medium' | 'wide' | 'full' | number // number = max-width in pixels
+  contentPadding?: {
+    top?: number
+    bottom?: number
+    left?: number
+    right?: number
+  }
+  gap?: number // Gap between elements in pixels
+}
+
 export interface ComponentData {
-  // Hero component - multilingual
+  // Hero component - NEW flexible structure
+  heroElements?: HeroTextBlock[] // Dynamic array of hero elements (text blocks, logos, buttons)
+  heroLayout?: HeroLayout // Layout configuration
+  
+  // Hero component - LEGACY structure (backwards compatibility)
   title?: MultilingualText
   subtitle?: MultilingualText
   description?: MultilingualText
@@ -20,6 +69,8 @@ export interface ComponentData {
   primaryButtonLink?: string
   secondaryButton?: MultilingualText
   secondaryButtonLink?: string
+  
+  // Hero background and styling
   backgroundImage?: string
   backgroundType?: 'solid' | 'gradient' | 'image'
   gradient?: string
