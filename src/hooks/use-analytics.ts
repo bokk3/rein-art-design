@@ -64,6 +64,7 @@ export async function trackEvent(
 ) {
   try {
     const sessionId = getSessionId()
+    const referrer = document.referrer || null
     
     await fetch('/api/analytics/track', {
       method: 'POST',
@@ -74,6 +75,9 @@ export async function trackEvent(
         sessionId,
         pagePath: window.location.pathname,
         pageTitle: document.title,
+        referrer,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
         eventType,
         metadata,
       }),

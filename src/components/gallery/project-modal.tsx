@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { trackEvent } from '@/hooks/use-analytics'
 
 interface ProjectModalProps {
   project: ProjectWithRelations | null
@@ -22,6 +23,20 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
   useEffect(() => {
     setCurrentImageIndex(0)
   }, [project])
+
+  // Track analytics when modal opens with a project
+  useEffect(() => {
+    if (isOpen && project) {
+      // Track project view as a custom event
+      trackEvent('project_view', {
+        projectId: project.id,
+        projectTitle: project.translations[0]?.title || 'Unknown',
+        source: window.location.pathname, // Track where the view came from
+      }).catch(err => {
+        console.error('Error tracking project view:', err)
+      })
+    }
+  }, [isOpen, project])
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -125,7 +140,7 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in" style={{ paddingTop: '6rem', paddingBottom: '2rem' }}>
       {/* Beautiful backdrop with blur */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
@@ -164,8 +179,8 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
         </Button>
       )}
 
-      {/* Modal Content - Beautiful glassmorphism */}
-      <div className="relative glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-2xl max-w-5xl max-h-[95vh] w-full overflow-hidden animate-fade-in">
+      {/* Modal Content - Beautiful glassmorphism - Original look with proper spacing */}
+      <div className="relative glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[calc(100vh-8rem)] overflow-hidden animate-fade-in">
         {/* Close Button */}
         <Button
           variant="ghost"
@@ -176,11 +191,11 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
           <X className="h-5 w-5 text-gray-900 dark:text-white" />
         </Button>
 
-        <div className="flex flex-col lg:flex-row bg-gradient-to-br from-white/95 via-white/90 to-gray-50/95 dark:from-gray-900/95 dark:via-gray-800/90 dark:to-gray-900/95">
+        <div className="flex flex-col lg:flex-row bg-gradient-to-br from-white/95 via-white/90 to-gray-50/95 dark:from-gray-900/95 dark:via-gray-800/90 dark:to-gray-900/95 max-h-[calc(100vh-8rem)]">
           {/* Image Section */}
-          <div className="lg:w-2/3 relative">
+          <div className="lg:w-2/3 relative flex flex-col flex-shrink-0">
             {currentImage && (
-              <div className="relative aspect-square lg:aspect-4/3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+              <div className="relative aspect-square lg:aspect-4/3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex-shrink-0">
                 <Image
                   src={currentImage.originalUrl}
                   alt={currentImage.alt}
@@ -221,7 +236,7 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
             
             {/* Image Thumbnails */}
             {images.length > 1 && (
-              <div className="flex gap-2 p-4 overflow-x-auto">
+              <div className="flex gap-2 p-4 overflow-x-auto bg-gradient-to-b from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm flex-shrink-0">
                 {images.map((image, index) => (
                   <button
                     key={image.id}
@@ -246,7 +261,7 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
           </div>
 
           {/* Content Section */}
-          <div className="lg:w-1/3 p-8 overflow-y-auto max-h-[50vh] lg:max-h-[95vh] bg-gradient-to-b from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm">
+          <div className="lg:w-1/3 p-8 overflow-y-auto bg-gradient-to-b from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm min-w-0">
             <div className="space-y-6">
               {/* Featured Badge */}
               {project.featured && (

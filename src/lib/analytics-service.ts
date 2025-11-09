@@ -330,3 +330,276 @@ export async function deleteOldAnalyticsData(daysOld: number = 365): Promise<num
   return result.count
 }
 
+/**
+ * Extract project ID from a project page path
+ * Projects are accessed via /projects/[id]
+ */
+function extractProjectId(path: string): string | null {
+  const match = path.match(/^\/projects\/([^\/\?]+)/)
+  return match ? match[1] : null
+}
+
+/**
+ * Get analytics statistics for projects
+ */
+export interface ProjectAnalytics {
+  projectId: string
+  totalViews: number
+  uniqueVisitors: number
+  viewsByDay: Array<{ date: string; views: number }>
+  recentViews: Array<{
+    id: string
+    sessionId: string
+    createdAt: Date
+    referrer?: string | null
+  }>
+}
+
+export interface ProjectAnalyticsStats {
+  projects: Array<{
+    projectId: string
+    totalViews: number
+    uniqueVisitors: number
+  }>
+  totalProjectViews: number
+}
+
+/**
+ * Get analytics statistics for all projects
+ */
+export async function getProjectAnalyticsStats(
+  startDate?: Date,
+  endDate?: Date
+): Promise<ProjectAnalyticsStats> {
+  const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Default: last 30 days
+  const end = endDate || new Date()
+
+  const emptyStats: ProjectAnalyticsStats = {
+    projects: [],
+    totalProjectViews: 0,
+  }
+
+  // Check if Prisma client has analyticsEvent model
+  if (!(prisma as any).analyticsEvent) {
+    console.warn('[Analytics Service] Prisma client missing analyticsEvent model. Run: npx prisma generate && restart dev server')
+    return emptyStats
+  }
+
+  try {
+    // Get both pageview events for /projects/[id] paths AND custom project_view events
+    const baseWhere = {
+      createdAt: { gte: start, lte: end },
+    }
+
+    // Get all events (both pageviews and custom events)
+    const allEvents = await (prisma as any).analyticsEvent.findMany({
+      where: baseWhere,
+      select: {
+        id: true,
+        sessionId: true,
+        pagePath: true,
+        eventType: true,
+        metadata: true,
+        createdAt: true,
+      },
+    })
+
+    // Filter and extract project IDs from two sources:
+    // 1. Pageview events for /projects/[id] paths
+    // 2. Custom project_view events with projectId in metadata
+    const projectEvents = allEvents
+      .filter((event: any) => {
+        // Include pageview events for project pages
+        if (event.eventType === 'pageview' && event.pagePath.startsWith('/projects/')) {
+          return !isAdminPath(event.pagePath)
+        }
+        // Include custom project_view events
+        if (event.eventType === 'project_view' && event.metadata && typeof event.metadata === 'object') {
+          return event.metadata.projectId != null
+        }
+        return false
+      })
+      .map((event: any) => {
+        // Extract project ID from either pagePath or metadata
+        if (event.eventType === 'project_view' && event.metadata?.projectId) {
+          return {
+            ...event,
+            projectId: event.metadata.projectId,
+          }
+        } else if (event.eventType === 'pageview') {
+          return {
+            ...event,
+            projectId: extractProjectId(event.pagePath),
+          }
+        }
+        return null
+      })
+      .filter((event: any) => event && event.projectId) // Remove events where projectId couldn't be extracted
+
+    // Aggregate by project ID
+    const projectStatsMap = new Map<string, {
+      projectId: string
+      views: number
+      uniqueSessions: Set<string>
+    }>()
+
+    projectEvents.forEach((event: any) => {
+      const projectId = event.projectId
+      if (!projectId) return
+
+      if (!projectStatsMap.has(projectId)) {
+        projectStatsMap.set(projectId, {
+          projectId,
+          views: 0,
+          uniqueSessions: new Set(),
+        })
+      }
+
+      const stats = projectStatsMap.get(projectId)!
+      stats.views++
+      stats.uniqueSessions.add(event.sessionId)
+    })
+
+    // Convert to array and sort by views
+    const projects = Array.from(projectStatsMap.values())
+      .map(({ projectId, views, uniqueSessions }) => ({
+        projectId,
+        totalViews: views,
+        uniqueVisitors: uniqueSessions.size,
+      }))
+      .sort((a, b) => b.totalViews - a.totalViews)
+
+    const totalProjectViews = projects.reduce((sum, p) => sum + p.totalViews, 0)
+
+    return {
+      projects,
+      totalProjectViews,
+    }
+  } catch (error) {
+    console.error('Error fetching project analytics stats:', error)
+    return emptyStats
+  }
+}
+
+/**
+ * Get detailed analytics for a specific project
+ */
+export async function getProjectAnalytics(
+  projectId: string,
+  startDate?: Date,
+  endDate?: Date
+): Promise<ProjectAnalytics | null> {
+  const start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Default: last 30 days
+  const end = endDate || new Date()
+
+  // Check if Prisma client has analyticsEvent model
+  if (!(prisma as any).analyticsEvent) {
+    console.warn('[Analytics Service] Prisma client missing analyticsEvent model. Run: npx prisma generate && restart dev server')
+    return null
+  }
+
+  try {
+    // Get all events in the date range (we'll filter in memory for JSON metadata)
+    const baseWhere = {
+      createdAt: { gte: start, lte: end },
+      OR: [
+        // Pageview events for this project's path
+        {
+          eventType: 'pageview',
+          pagePath: {
+            startsWith: `/projects/${projectId}`,
+          },
+        },
+        // All project_view events (we'll filter by projectId in memory)
+        {
+          eventType: 'project_view',
+        },
+      ],
+    }
+
+    // Get all events for this project
+    const events = await (prisma as any).analyticsEvent.findMany({
+      where: baseWhere,
+      select: {
+        id: true,
+        sessionId: true,
+        pagePath: true,
+        eventType: true,
+        metadata: true,
+        referrer: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    // Filter and normalize events
+    const projectEvents = events
+      .filter((event: any) => {
+        // For pageview events, exclude admin paths
+        if (event.eventType === 'pageview') {
+          return !isAdminPath(event.pagePath)
+        }
+        // For project_view events, verify projectId matches
+        if (event.eventType === 'project_view') {
+          return event.metadata?.projectId === projectId
+        }
+        return false
+      })
+      .map((event: any) => {
+        // Normalize referrer - use source from metadata if available (for modal views)
+        const referrer = event.metadata?.source || event.referrer || null
+        return {
+          ...event,
+          referrer,
+        }
+      })
+
+    if (projectEvents.length === 0) {
+      return {
+        projectId,
+        totalViews: 0,
+        uniqueVisitors: 0,
+        viewsByDay: [],
+        recentViews: [],
+      }
+    }
+
+    // Calculate unique visitors
+    const uniqueSessions = new Set(projectEvents.map((e: any) => e.sessionId))
+
+    // Views by day
+    const viewsByDayMap = new Map<string, number>()
+    projectEvents.forEach((event: any) => {
+      const date = event.createdAt.toISOString().split('T')[0]
+      viewsByDayMap.set(date, (viewsByDayMap.get(date) || 0) + 1)
+    })
+
+    const viewsByDay = Array.from(viewsByDayMap.entries())
+      .map(([date, views]) => ({ date, views }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    // Recent views (last 20)
+    const recentViews = projectEvents
+      .slice(0, 20)
+      .map((event: any) => ({
+        id: event.id,
+        sessionId: event.sessionId,
+        createdAt: event.createdAt,
+        referrer: event.referrer,
+      }))
+
+    return {
+      projectId,
+      totalViews: projectEvents.length,
+      uniqueVisitors: uniqueSessions.size,
+      viewsByDay,
+      recentViews,
+    }
+  } catch (error) {
+    console.error('Error fetching project analytics:', error)
+    return null
+  }
+}
+

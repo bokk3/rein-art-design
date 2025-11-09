@@ -5,7 +5,7 @@ import { ProjectWithRelations } from '@/types/project'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { Languages, Loader2 } from 'lucide-react'
+import { Languages, Loader2, Eye } from 'lucide-react'
 import { useT } from '@/hooks/use-t'
 
 interface ProjectListProps {
@@ -25,6 +25,10 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
   const [isTranslating, setIsTranslating] = useState(false)
   const [translationStatus, setTranslationStatus] = useState<string>('')
   const [apiConfigured, setApiConfigured] = useState(false)
+  const [projectAnalytics, setProjectAnalytics] = useState<Record<string, { totalViews: number; uniqueVisitors: number }>>({})
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false)
+  const [sortBy, setSortBy] = useState<'name' | 'views' | 'created'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const fetchProjects = async () => {
     try {
@@ -53,6 +57,40 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
   useEffect(() => {
     fetchProjects()
   }, [search, publishedFilter, featuredFilter])
+
+  // Fetch project analytics when projects are loaded
+  useEffect(() => {
+    if (projects.length > 0 && !loading) {
+      fetchProjectAnalytics()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.length, loading])
+
+  const fetchProjectAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true)
+      const response = await fetch('/api/admin/analytics/projects?days=30')
+      if (!response.ok) {
+        throw new Error('Failed to fetch project analytics')
+      }
+
+      const data = await response.json()
+      // Convert array to map for easy lookup
+      const analyticsMap: Record<string, { totalViews: number; uniqueVisitors: number }> = {}
+      data.projects.forEach((project: { projectId: string; totalViews: number; uniqueVisitors: number }) => {
+        analyticsMap[project.projectId] = {
+          totalViews: project.totalViews,
+          uniqueVisitors: project.uniqueVisitors,
+        }
+      })
+      setProjectAnalytics(analyticsMap)
+    } catch (err) {
+      console.error('Error fetching project analytics:', err)
+      // Don't show error to user, just log it
+    } finally {
+      setLoadingAnalytics(false)
+    }
+  }
 
   // Check if translation API is configured
   useEffect(() => {
@@ -162,6 +200,26 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
     return translation?.title || 'Untitled Project'
   }
 
+  // Sort projects based on selected sort option
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (sortBy === 'views') {
+      const viewsA = projectAnalytics[a.id]?.totalViews || 0
+      const viewsB = projectAnalytics[b.id]?.totalViews || 0
+      return sortOrder === 'desc' ? viewsB - viewsA : viewsA - viewsB
+    } else if (sortBy === 'created') {
+      const dateA = new Date(a.createdAt).getTime()
+      const dateB = new Date(b.createdAt).getTime()
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB
+    } else {
+      // Sort by name
+      const nameA = getProjectTitle(a).toLowerCase()
+      const nameB = getProjectTitle(b).toLowerCase()
+      return sortOrder === 'desc' 
+        ? nameB.localeCompare(nameA)
+        : nameA.localeCompare(nameB)
+    }
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -230,7 +288,7 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
       )}
 
       {/* Filters */}
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center flex-wrap">
         <Input
           placeholder={t('admin.searchProjects')}
           value={search}
@@ -253,6 +311,21 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
           <option value="true">{t('admin.featured')}</option>
           <option value="false">{t('admin.notFeatured')}</option>
         </Select>
+        <Select
+          value={`${sortBy}-${sortOrder}`}
+          onChange={(e) => {
+            const [newSortBy, newSortOrder] = e.target.value.split('-') as ['name' | 'views' | 'created', 'asc' | 'desc']
+            setSortBy(newSortBy)
+            setSortOrder(newSortOrder)
+          }}
+        >
+          <option value="views-desc">Most Views</option>
+          <option value="views-asc">Least Views</option>
+          <option value="name-asc">Name (A-Z)</option>
+          <option value="name-desc">Name (Z-A)</option>
+          <option value="created-desc">Newest First</option>
+          <option value="created-asc">Oldest First</option>
+        </Select>
       </div>
 
       {/* Projects Table */}
@@ -269,6 +342,22 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 {t('admin.images')}
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-300" onClick={() => {
+                if (sortBy === 'views') {
+                  setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')
+                } else {
+                  setSortBy('views')
+                  setSortOrder('desc')
+                }
+              }}>
+                <div className="flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  Views (30d)
+                  {sortBy === 'views' && (
+                    <span className="ml-1">{sortOrder === 'desc' ? '▼' : '▲'}</span>
+                  )}
+                </div>
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 {t('admin.created')}
               </th>
@@ -280,12 +369,12 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {projects.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   {t('admin.noProjectsFound')}
                 </td>
               </tr>
             ) : (
-              projects.map((project) => (
+              sortedProjects.map((project) => (
                 <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4">
                     <div>
@@ -315,6 +404,24 @@ export function ProjectList({ onCreateProject, onEditProject, onDeleteProject }:
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {project.images.length} image(s)
+                  </td>
+                  <td className="px-6 py-4">
+                    {loadingAnalytics ? (
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-xs">Loading...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
+                          <Eye className="h-4 w-4 text-blue-500" />
+                          {projectAnalytics[project.id]?.totalViews || 0}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {projectAnalytics[project.id]?.uniqueVisitors || 0} unique
+                        </div>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     {new Date(project.createdAt).toLocaleDateString()}
