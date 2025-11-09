@@ -142,12 +142,12 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={getLocalizedHref(link.href)}
-                className={`relative px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200 font-medium rounded-lg hover:bg-gray-100/50 dark:hover:bg-[#1a1a1a]/50 group ${
+                className={`relative px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 font-medium group ${
                   isScrolled ? 'text-base' : 'text-lg lg:text-xl'
                 }`}
               >
                 {link.label}
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full" />
+                <span className="absolute bottom-2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gray-900 to-transparent dark:via-white scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out origin-center" />
               </Link>
             ))}
             
