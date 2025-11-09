@@ -570,39 +570,10 @@ export function ComponentRenderer({
         
         const dir = gradientDirectionMap[direction] || 'to bottom right'
         
-        // Calculate dark mode colors (inline to avoid TypeScript errors)
-        const calculateDarkColor = (color: string, factor: number = 0.4): string => {
-          if (!color) return color
-          const hex = color.replace('#', '')
-          if (hex.length !== 6) return color
-          const r = parseInt(hex.substring(0, 2), 16)
-          const g = parseInt(hex.substring(2, 4), 16)
-          const b = parseInt(hex.substring(4, 6), 16)
-          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-          if (luminance > 0.9) {
-            const darkValue = Math.floor(30 + (luminance - 0.9) * 20)
-            return `#${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}${darkValue.toString(16).padStart(2, '0')}`
-          }
-          const newR = Math.max(0, Math.floor(r * (1 - factor)))
-          const newG = Math.max(0, Math.floor(g * (1 - factor)))
-          const newB = Math.max(0, Math.floor(b * (1 - factor)))
-          return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
-        }
-        
-        const isLight = (color: string): boolean => {
-          if (!color) return false
-          const hex = color.replace('#', '')
-          if (hex.length !== 6) return false
-          const r = parseInt(hex.substring(0, 2), 16)
-          const g = parseInt(hex.substring(2, 4), 16)
-          const b = parseInt(hex.substring(4, 6), 16)
-          const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-          return luminance > 0.5
-        }
-        
-        const fromDark = isLight(fromColor) ? calculateDarkColor(fromColor, 0.4) : fromColor
-        const viaDark = viaColor ? (isLight(viaColor) ? calculateDarkColor(viaColor, 0.4) : viaColor) : null
-        const toDark = isLight(toColor) ? calculateDarkColor(toColor, 0.4) : toColor
+        // Calculate dark mode colors
+        const fromDark = isLightColor(fromColor) ? darkenColor(fromColor, 0.4) : fromColor
+        const viaDark = viaColor ? (isLightColor(viaColor) ? darkenColor(viaColor, 0.4) : viaColor) : null
+        const toDark = isLightColor(toColor) ? darkenColor(toColor, 0.4) : toColor
         
         // Build gradients
         const lightGradient = viaColor 
@@ -624,30 +595,13 @@ export function ComponentRenderer({
         // Store in CSS variable
         heroCSSVars['--hero-bg-color'] = bgColor
         
-        // For dark mode: smart color adaptation (inline to avoid TypeScript errors)
-        try {
-          const hex = bgColor.replace('#', '')
-          if (hex.length === 6) {
-            const r = parseInt(hex.substring(0, 2), 16)
-            const g = parseInt(hex.substring(2, 4), 16)
-            const b = parseInt(hex.substring(4, 6), 16)
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-            if (luminance > 0.5) {
-              // Light color - darken for dark mode
-              const factor = 0.6
-              const newR = Math.max(0, Math.floor(r * (1 - factor)))
-              const newG = Math.max(0, Math.floor(g * (1 - factor)))
-              const newB = Math.max(0, Math.floor(b * (1 - factor)))
-              heroCSSVars['--hero-bg-color-dark'] = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
-            } else {
-              // Dark color - keep as is
-              heroCSSVars['--hero-bg-color-dark'] = bgColor
-            }
-          } else {
-            heroCSSVars['--hero-bg-color-dark'] = bgColor
-          }
-        } catch (e) {
-          heroCSSVars['--hero-bg-color-dark'] = bgColor
+        // For dark mode: smart color adaptation
+        if (isLightColor(bgColor)) {
+          // Light colors: darken significantly to create contrast
+          heroCSSVars['--hero-bg-color-dark'] = darkenColor(bgColor, 0.6)
+        } else {
+          // Dark colors: adjust slightly for dark mode (lighten a bit for contrast)
+          heroCSSVars['--hero-bg-color-dark'] = adjustDarkColorForDarkMode(bgColor)
         }
         
         heroBackgroundStyle.backgroundColor = bgColor
@@ -666,49 +620,29 @@ export function ComponentRenderer({
       if (data.textColor) {
         heroCSSVars['--hero-text-color'] = data.textColor
         
-        // For dark mode: smart text color adaptation (inline to avoid TypeScript errors)
-        try {
-          if (data.backgroundType === 'solid' && data.backgroundColor) {
-            const bgHex = data.backgroundColor.replace('#', '')
-            const textHex = data.textColor.replace('#', '')
-            if (bgHex.length === 6 && textHex.length === 6) {
-              const bgR = parseInt(bgHex.substring(0, 2), 16)
-              const bgG = parseInt(bgHex.substring(2, 4), 16)
-              const bgB = parseInt(bgHex.substring(4, 6), 16)
-              const bgLuminance = (0.299 * bgR + 0.587 * bgG + 0.114 * bgB) / 255
-              const textR = parseInt(textHex.substring(0, 2), 16)
-              const textG = parseInt(textHex.substring(2, 4), 16)
-              const textB = parseInt(textHex.substring(4, 6), 16)
-              const textLuminance = (0.299 * textR + 0.587 * textG + 0.114 * textB) / 255
-              
-              const bgIsLight = bgLuminance > 0.5
-              const textIsLight = textLuminance > 0.5
-              const bgIsPureBlack = bgR < 10 && bgG < 10 && bgB < 10
-              
-              if (bgIsLight) {
-                // Light background: in dark mode it becomes dark, so dark text should become light
-                if (!textIsLight) {
-                  // Lighten the text color for dark mode
-                  const factor = 0.8
-                  const newR = Math.min(255, Math.floor(textR + (255 - textR) * factor))
-                  const newG = Math.min(255, Math.floor(textG + (255 - textG) * factor))
-                  const newB = Math.min(255, Math.floor(textB + (255 - textB) * factor))
-                  heroCSSVars['--hero-text-color-dark'] = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
-                } else {
-                  heroCSSVars['--hero-text-color-dark'] = data.textColor
-                }
-              } else if (bgIsPureBlack) {
-                heroCSSVars['--hero-text-color-dark'] = data.textColor
-              } else {
-                heroCSSVars['--hero-text-color-dark'] = data.textColor
-              }
+        // For dark mode: smart text color adaptation
+        if (data.backgroundType === 'solid' && data.backgroundColor) {
+          const bgIsLight = isLightColor(data.backgroundColor)
+          const textIsLight = isLightColor(data.textColor)
+          const bgIsPureBlack = isPureBlack(data.backgroundColor)
+          
+          if (bgIsLight) {
+            // Light background: in dark mode it becomes dark, so dark text should become light
+            if (!textIsLight) {
+              heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.8)
             } else {
+              // Light text on light background - might need to darken in dark mode
               heroCSSVars['--hero-text-color-dark'] = data.textColor
             }
+          } else if (bgIsPureBlack) {
+            // Pure black background: keep text as is
+            // Black stays black in dark mode, so text color should stay the same
+            heroCSSVars['--hero-text-color-dark'] = data.textColor
           } else {
+            // Dark (but not pure black) background: keep text as is
             heroCSSVars['--hero-text-color-dark'] = data.textColor
           }
-        } catch (e) {
+        } else {
           heroCSSVars['--hero-text-color-dark'] = data.textColor
         }
         
@@ -2095,28 +2029,11 @@ export function ComponentRenderer({
       if (data.backgroundColor && data.backgroundColor !== 'white' && data.backgroundColor !== 'gray-50') {
         splitStyle['--split-bg-color'] = data.backgroundColor
         // For dark mode, darken light colors
-        try {
-          const hex = data.backgroundColor.replace('#', '')
-          if (hex.length === 6) {
-            const r = parseInt(hex.substring(0, 2), 16)
-            const g = parseInt(hex.substring(2, 4), 16)
-            const b = parseInt(hex.substring(4, 6), 16)
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-            if (luminance > 0.5) {
-              // Light color - darken for dark mode
-              const factor = 0.6
-              const newR = Math.max(0, Math.floor(r * (1 - factor)))
-              const newG = Math.max(0, Math.floor(g * (1 - factor)))
-              const newB = Math.max(0, Math.floor(b * (1 - factor)))
-              splitStyle['--split-bg-dark'] = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
-            } else {
-              splitStyle['--split-bg-dark'] = data.backgroundColor
-            }
-          } else {
-            splitStyle['--split-bg-dark'] = data.backgroundColor
-          }
-        } catch (e) {
-          splitStyle['--split-bg-dark'] = data.backgroundColor
+        if (isLightColor(data.backgroundColor)) {
+          splitStyle['--split-bg-dark'] = darkenColor(data.backgroundColor, 0.6)
+        } else {
+          // For dark colors, keep them but adjust slightly
+          splitStyle['--split-bg-dark'] = adjustDarkColorForDarkMode(data.backgroundColor)
         }
         splitStyle.backgroundColor = data.backgroundColor
       }
@@ -2128,26 +2045,15 @@ export function ComponentRenderer({
       // Handle text color with dark mode
       if (data.textColor) {
         splitStyle['--split-text-color'] = data.textColor
-        try {
-          if (data.backgroundColor && data.backgroundColor !== 'white' && data.backgroundColor !== 'gray-50') {
-            const hex = data.backgroundColor.replace('#', '')
-            if (hex.length === 6) {
-              const r = parseInt(hex.substring(0, 2), 16)
-              const g = parseInt(hex.substring(2, 4), 16)
-              const b = parseInt(hex.substring(4, 6), 16)
-              const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-              if (luminance > 0.5) {
-                splitStyle['--split-text-dark'] = '#ffffff'
-              } else {
-                splitStyle['--split-text-dark'] = data.textColor
-              }
-            } else {
-              splitStyle['--split-text-dark'] = data.textColor
-            }
+        // For dark mode text, adjust based on background
+        if (data.backgroundColor && data.backgroundColor !== 'white' && data.backgroundColor !== 'gray-50') {
+          if (isLightColor(data.backgroundColor)) {
+            // Light background becomes dark, so lighten text
+            splitStyle['--split-text-dark'] = lightenColor(data.textColor, 0.8)
           } else {
             splitStyle['--split-text-dark'] = data.textColor
           }
-        } catch (e) {
+        } else {
           splitStyle['--split-text-dark'] = data.textColor
         }
         splitStyle.color = data.textColor
