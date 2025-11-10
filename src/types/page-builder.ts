@@ -150,6 +150,7 @@ export interface ComponentData {
   splitButtonLink?: string
   splitImageOverlay?: boolean // Add subtle overlay on image for text readability
   splitImageParallax?: boolean // Enable/disable parallax effect on image
+  splitImageKenBurns?: boolean // Enable/disable Ken Burns zoom effect on image
   
   // Image-text-overlay component - Text overlaid on large image
   overlayImageUrl?: string

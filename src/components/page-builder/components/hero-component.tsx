@@ -189,42 +189,28 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
   if (data.textColor) {
     heroCSSVars['--hero-text-color'] = data.textColor
     
-    // For dark mode: smart text color adaptation
-    // Check background type and color to determine dark mode text color
-    if (data.backgroundType === 'solid' && data.backgroundColor) {
-      const bgIsLight = isLightColor(data.backgroundColor)
-      const textIsLight = isLightColor(data.textColor)
-      const bgIsPureBlack = isPureBlack(data.backgroundColor)
-      
-      if (bgIsLight) {
-        // Light background: in dark mode it becomes dark, so dark text should become light
-        if (!textIsLight) {
-          heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.8)
-        } else {
-          // Light text on light background - might need to darken in dark mode
-          heroCSSVars['--hero-text-color-dark'] = data.textColor
-        }
-      } else if (bgIsPureBlack) {
-        // Pure black background: keep text as is
-        // Black stays black in dark mode, so text color should stay the same
-        heroCSSVars['--hero-text-color-dark'] = data.textColor
-      } else {
-        // Dark (but not pure black) background: keep text as is
-        heroCSSVars['--hero-text-color-dark'] = data.textColor
-      }
-    } else if (data.backgroundType === 'image' || data.backgroundImage) {
-      // For image backgrounds, text is usually light (white) on dark overlay
-      // In dark mode, keep it light or adjust based on text color
-      const textIsLight = isLightColor(data.textColor)
-      if (!textIsLight) {
-        // Dark text on image - lighten it in dark mode
-        heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.8)
-      } else {
-        // Light text - keep it light in dark mode
-        heroCSSVars['--hero-text-color-dark'] = data.textColor
-      }
+    // For dark mode: always adapt dark text to light, and keep light text light
+    // This ensures readability regardless of background type
+    const textIsLight = isLightColor(data.textColor)
+    const textIsPureBlack = isPureBlack(data.textColor)
+    
+    // Normalize color string for comparison
+    const normalizedColor = data.textColor.trim().toLowerCase()
+    const isBlackColor = textIsPureBlack || 
+                        normalizedColor === '#000' || 
+                        normalizedColor === '#000000' ||
+                        normalizedColor === 'black' ||
+                        normalizedColor === 'rgb(0, 0, 0)' ||
+                        normalizedColor === 'rgba(0, 0, 0, 1)'
+    
+    if (isBlackColor) {
+      // Pure black text: make it white in dark mode for visibility
+      heroCSSVars['--hero-text-color-dark'] = '#ffffff'
+    } else if (!textIsLight) {
+      // Dark (but not pure black) text: lighten significantly for dark mode
+      heroCSSVars['--hero-text-color-dark'] = lightenColor(data.textColor, 0.9)
     } else {
-      // Default gradient or no specific background
+      // Light text: keep it light in dark mode
       heroCSSVars['--hero-text-color-dark'] = data.textColor
     }
     
@@ -319,7 +305,11 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
   // Render a single hero element
   const renderSingleElement = (element: HeroTextBlock, index: number, isLastInGroup: boolean = false) => {
     const elementStyle: React.CSSProperties = {}
-    if (element.textColor) elementStyle.color = element.textColor
+    // Only apply element-specific textColor if explicitly set, otherwise inherit from parent hero-text-custom
+    if (element.textColor) {
+      elementStyle.color = element.textColor
+    }
+    // Always ensure text elements inherit color from parent for dark mode
     if (element.opacity !== undefined) elementStyle.opacity = element.opacity / 100
     if (element.maxWidth && typeof element.maxWidth === 'number') {
       elementStyle.maxWidth = `${element.maxWidth}px`
@@ -387,7 +377,7 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
         return (
           <Tag
             key={element.id}
-            className={`${fontSizeClasses[fontSize]} ${fontWeightClasses[fontWeight]} ${textTypeClass} ${maxWidthClass} hero-text-fade-in`}
+            className={`${fontSizeClasses[fontSize]} ${fontWeightClasses[fontWeight]} ${textTypeClass} ${maxWidthClass} hero-text-fade-in hero-text-custom`}
             style={{ ...elementStyle, marginBottom, ...maxWidthStyle, width: maxWidthStyle.width || '100%' }}
           >
             {isEditing ? (

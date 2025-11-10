@@ -2787,6 +2787,16 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
             />
             <Label htmlFor="splitImageParallax">Enable image parallax effect</Label>
           </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="splitImageKenBurns"
+              checked={component.data.splitImageKenBurns || false}
+              onChange={(e) => updateData('splitImageKenBurns', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="splitImageKenBurns">Enable Ken Burns zoom effect</Label>
+          </div>
         </>
       )}
 

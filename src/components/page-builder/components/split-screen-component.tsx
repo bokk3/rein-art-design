@@ -104,7 +104,7 @@ export function SplitScreenComponent({ data, getText }: SplitScreenComponentProp
             <>
               <div 
                 ref={imageParallax.ref}
-                className="absolute inset-0 overflow-hidden"
+                className={`absolute inset-0 overflow-hidden ${data.splitImageKenBurns ? 'animate-ken-burns' : ''}`}
                 style={imageParallax.style}
               >
                 <Image
