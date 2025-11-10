@@ -2,6 +2,7 @@ import { LanguageSettings } from '@/components/admin/language-settings';
 import { SettingsSidebar } from '@/components/admin/settings-sidebar';
 import { Breadcrumb } from '@/components/admin/breadcrumb';
 import { AuthGuard } from '@/components/admin/auth-guard';
+import { ExportSettings } from '@/components/admin/export-settings';
 
 export default function AdminSettingsPage() {
   return (
@@ -27,6 +28,10 @@ export default function AdminSettingsPage() {
         </div>
 
             <LanguageSettings />
+            
+            <div className="mt-8">
+              <ExportSettings />
+            </div>
           </div>
         </div>
       </div>
