@@ -192,6 +192,7 @@ export interface ComponentData {
   heroCarouselSubtitle?: MultilingualText // Subtitle overlay
   heroCarouselButtonText?: MultilingualText // CTA button text
   heroCarouselButtonLink?: string // CTA button link
+  heroCarouselBottomText?: MultilingualText // Text displayed at bottom of carousel (above dots)
   heroCarouselShowDots?: boolean // Show navigation dots
   heroCarouselShowArrows?: boolean // Show arrow controls
   heroCarouselParallax?: boolean // Enable parallax on background images

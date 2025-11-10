@@ -3252,6 +3252,24 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
           </div>
 
           <div>
+            <Label htmlFor="heroCarouselBottomText" className="flex items-center gap-2">
+              <span>Bottom Text (displayed above navigation dots)</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="heroCarouselBottomText"
+              value={component.data.heroCarouselBottomText?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...(component.data.heroCarouselBottomText || {}), [activeLanguage]: e.target.value }
+                updateData('heroCarouselBottomText', updated)
+              }}
+              placeholder="Enter bottom text (e.g., 'Op Maat Gemaakte Keukenkasten')"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="heroCarouselInterval">Auto-play Interval (ms)</Label>
             <Input
               id="heroCarouselInterval"

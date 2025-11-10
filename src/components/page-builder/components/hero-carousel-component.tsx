@@ -251,29 +251,38 @@ export function HeroCarouselComponent({ data, getText, currentLanguage }: HeroCa
         </div>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Simple <> style */}
       {showArrows && images.length > 1 && (
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-40 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 sm:p-4 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-40 text-white text-4xl sm:text-5xl font-light hover:opacity-80 transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
             aria-label="Previous image"
           >
-            <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            &lt;
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-40 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 sm:p-4 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-40 text-white text-4xl sm:text-5xl font-light hover:opacity-80 transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
             aria-label="Next image"
           >
-            <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            &gt;
           </button>
         </>
       )}
 
+      {/* Bottom Text Overlay */}
+      {data.heroCarouselBottomText && (
+        <div className="absolute bottom-20 sm:bottom-24 md:bottom-28 left-1/2 -translate-x-1/2 z-40 text-center px-4 sm:px-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white animate-fade-in-up-delay-2">
+            {getText(data.heroCarouselBottomText)}
+          </h2>
+        </div>
+      )}
+
       {/* Navigation Dots */}
       {showDots && images.length > 1 && (
-        <div className="absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 z-40 flex gap-2 sm:gap-3" role="tablist" aria-label="Carousel navigation">
+        <div className={`absolute left-1/2 -translate-x-1/2 z-40 flex gap-2 sm:gap-3 ${data.heroCarouselBottomText ? 'bottom-16 sm:bottom-20' : 'bottom-16 sm:bottom-20'}`} role="tablist" aria-label="Carousel navigation">
           {images.map((_, index) => (
             <button
               key={index}
@@ -291,12 +300,10 @@ export function HeroCarouselComponent({ data, getText, currentLanguage }: HeroCa
         </div>
       )}
 
-      {/* Scroll Indicator - Only show if there's content below */}
-      {!showDots && (
-        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 animate-bounce">
-          <ChevronDown className="w-6 h-6 sm:w-8 sm:h-8 text-white/80" />
-        </div>
-      )}
+      {/* Scroll Indicator - Animated arrow showing you can scroll down */}
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 animate-bounce">
+        <ChevronDown className="w-6 h-6 sm:w-8 sm:h-8 text-white/80" />
+      </div>
     </section>
   )
 }
