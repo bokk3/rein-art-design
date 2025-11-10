@@ -111,6 +111,18 @@ export function HomepageClient({
 
         const currentScroll = window.scrollY
         const viewportCenter = window.innerHeight / 2
+        const viewportBottom = currentScroll + window.innerHeight
+        
+        // Get the last component's bottom position
+        const lastComponent = componentElements[componentElements.length - 1]
+        const lastComponentRect = lastComponent.getBoundingClientRect()
+        const lastComponentBottom = lastComponentRect.bottom + window.scrollY
+        
+        // Don't snap if we're already past the last component (e.g., at footer)
+        // Allow some buffer (100px) so we can scroll to footer without snapping back
+        if (viewportBottom > lastComponentBottom + 100) {
+          return // User is scrolling to footer, don't interfere
+        }
         
         // Find which component's center is closest to viewport center
         let nearestIndex = 0

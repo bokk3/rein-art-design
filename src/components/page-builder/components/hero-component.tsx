@@ -303,7 +303,7 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
   }
   
   // Render a single hero element
-  const renderSingleElement = (element: HeroTextBlock, index: number, isLastInGroup: boolean = false) => {
+  const renderSingleElement = (element: HeroTextBlock, index: number, isLastInGroup: boolean = false, extraMarginBottom: number = 0) => {
     const elementStyle: React.CSSProperties = {}
     // Only apply element-specific textColor if explicitly set, otherwise inherit from parent hero-text-custom
     if (element.textColor) {
@@ -316,7 +316,11 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
     }
     
     const gap = layout.gap || 16
-    const marginBottom = isLastInGroup ? `${gap}px` : '0'
+    // If it's the last element, only add extraMarginBottom if specified
+    // Otherwise, always add gap, plus extraMarginBottom if specified
+    const marginBottom = isLastInGroup 
+      ? (extraMarginBottom > 0 ? `${extraMarginBottom}px` : '0')
+      : `${gap + extraMarginBottom}px`
     
     switch (element.type) {
       case 'text':
@@ -511,6 +515,9 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
       >
         {groupedElements.map((item, groupIndex) => {
           const isLastGroup = groupIndex === groupedElements.length - 1
+          const nextItem = groupIndex < groupedElements.length - 1 ? groupedElements[groupIndex + 1] : null
+          const isFollowedByButtons = Array.isArray(nextItem)
+          const isSubtitle = !Array.isArray(item) && item.type === 'text' && item.textType === 'subtitle'
           
           // If it's an array, it's a button group - render buttons horizontally
           if (Array.isArray(item)) {
@@ -518,7 +525,9 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
               <div 
                 key={`button-group-${groupIndex}`}
                 className="flex flex-col sm:flex-row gap-4 justify-center items-center hero-text-fade-in w-full"
-                style={{ marginBottom: isLastGroup ? '0' : `${gap}px` }}
+                style={{ 
+                  marginBottom: isLastGroup ? '0' : `${gap}px`
+                }}
               >
                 {item.map((button, btnIndex) => (
                   <div key={button.id}>
@@ -529,7 +538,9 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
             )
           } else {
             // Single element (text or logo)
-            return renderSingleElement(item, groupIndex, !isLastGroup)
+            // If it's a subtitle followed by buttons, add extra marginBottom
+            const extraSpacing = isSubtitle && isFollowedByButtons ? gap * 2 : 0
+            return renderSingleElement(item, groupIndex, !isLastGroup, extraSpacing)
           }
         })}
       </div>

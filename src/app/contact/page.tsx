@@ -5,10 +5,54 @@ import { Mail, Phone, MapPin, Clock, MessageCircle } from 'lucide-react'
 import { useT } from '@/hooks/use-t'
 import { useLanguage } from '@/contexts/language-context'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
+
+interface BusinessHours {
+  monday: { open: string; close: string; closed: boolean }
+  tuesday: { open: string; close: string; closed: boolean }
+  wednesday: { open: string; close: string; closed: boolean }
+  thursday: { open: string; close: string; closed: boolean }
+  friday: { open: string; close: string; closed: boolean }
+  saturday: { open: string; close: string; closed: boolean }
+  sunday: { open: string; close: string; closed: boolean }
+}
+
+interface BusinessInfo {
+  contactEmail: string
+  contactPhone: string
+  address: string
+  city: string
+  postalCode: string
+}
 
 export default function ContactPage() {
   const { t } = useT()
   const { currentLanguage, languages } = useLanguage()
+  const [businessHours, setBusinessHours] = useState<BusinessHours | null>(null)
+  const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
+
+  // Fetch business hours and info from API
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/business-hours').then(res => res.json()),
+      fetch('/api/business-info').then(res => res.json())
+    ])
+      .then(([hoursData, infoData]) => {
+        if (hoursData.businessHours) {
+          setBusinessHours(hoursData.businessHours)
+        }
+        if (infoData) {
+          setBusinessInfo({
+            contactEmail: infoData.contactEmail || 'contact@reinartdesign.be',
+            contactPhone: infoData.contactPhone || '+ 32 (0) 487 837 041',
+            address: infoData.address || 'Bornestraat 285',
+            city: infoData.city || 'Wilsele',
+            postalCode: infoData.postalCode || '3012'
+          })
+        }
+      })
+      .catch(err => console.error('Error fetching business data:', err))
+  }, [])
 
   // Helper function to add language parameter to URLs
   const getLocalizedHref = (href: string) => {
@@ -18,6 +62,112 @@ export default function ContactPage() {
     }
     const separator = href.includes('?') ? '&' : '?'
     return `${href}${separator}lang=${currentLanguage}`
+  }
+
+  // Format time from HH:mm to readable format
+  const formatTime = (time: string) => {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const hour = parseInt(hours, 10)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${ampm}`
+  }
+
+  // Get day name - with fallback if translation key doesn't exist
+  const getDayName = (day: string): string => {
+    const dayMap: Record<string, { key: string; fallback: Record<string, string> }> = {
+      monday: { 
+        key: 'contact.monday', 
+        fallback: { nl: 'Maandag', en: 'Monday', fr: 'Lundi', de: 'Montag' }
+      },
+      tuesday: { 
+        key: 'contact.tuesday', 
+        fallback: { nl: 'Dinsdag', en: 'Tuesday', fr: 'Mardi', de: 'Dienstag' }
+      },
+      wednesday: { 
+        key: 'contact.wednesday', 
+        fallback: { nl: 'Woensdag', en: 'Wednesday', fr: 'Mercredi', de: 'Mittwoch' }
+      },
+      thursday: { 
+        key: 'contact.thursday', 
+        fallback: { nl: 'Donderdag', en: 'Thursday', fr: 'Jeudi', de: 'Donnerstag' }
+      },
+      friday: { 
+        key: 'contact.friday', 
+        fallback: { nl: 'Vrijdag', en: 'Friday', fr: 'Vendredi', de: 'Freitag' }
+      },
+      saturday: { 
+        key: 'contact.saturday', 
+        fallback: { nl: 'Zaterdag', en: 'Saturday', fr: 'Samedi', de: 'Samstag' }
+      },
+      sunday: { 
+        key: 'contact.sunday', 
+        fallback: { nl: 'Zondag', en: 'Sunday', fr: 'Dimanche', de: 'Sonntag' }
+      }
+    }
+    
+    const dayInfo = dayMap[day]
+    if (!dayInfo) return day
+    
+    // Try to get translation
+    const translated = t(dayInfo.key)
+    
+    // If translation is empty or equals the key, use fallback based on current language
+    if (!translated || translated === dayInfo.key || translated === '') {
+      return dayInfo.fallback[currentLanguage] || dayInfo.fallback.nl || day
+    }
+    
+    return translated
+  }
+
+  // Group days with same opening hours
+  const groupBusinessHours = (hours: BusinessHours) => {
+    const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+    
+    // Create a key for each day's hours
+    const getHoursKey = (dayHours: { open: string; close: string; closed: boolean }) => {
+      if (dayHours.closed) return 'closed'
+      return `${dayHours.open}-${dayHours.close}`
+    }
+    
+    // Group consecutive days with same hours
+    const groups: Array<{
+      startDay: string
+      endDay: string
+      hours: { open: string; close: string; closed: boolean }
+    }> = []
+    
+    let currentGroup: { startDay: string; endDay: string; hours: { open: string; close: string; closed: boolean } } | null = null
+    
+    dayOrder.forEach((day) => {
+      const dayHours = hours[day]
+      if (!dayHours) return
+      
+      const hoursKey = getHoursKey(dayHours)
+      
+      if (!currentGroup || getHoursKey(currentGroup.hours) !== hoursKey) {
+        // Start new group
+        if (currentGroup) {
+          groups.push(currentGroup)
+        }
+        currentGroup = {
+          startDay: day,
+          endDay: day,
+          hours: dayHours
+        }
+      } else {
+        // Extend current group
+        currentGroup.endDay = day
+      }
+    })
+    
+    // Add last group
+    if (currentGroup) {
+      groups.push(currentGroup)
+    }
+    
+    return groups
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900">
@@ -67,9 +217,13 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.email')}</div>
-                    <a href="mailto:contact@reinartdesign.be" className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
-                      contact@reinartdesign.be
-                    </a>
+                    {businessInfo ? (
+                      <a href={`mailto:${businessInfo.contactEmail}`} className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
+                        {businessInfo.contactEmail}
+                      </a>
+                    ) : (
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">contact@reinartdesign.be</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -78,9 +232,13 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.phone')}</div>
-                    <a href="tel:+32487837041" className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
-                      + 32 (0) 487 837 041
-                    </a>
+                    {businessInfo ? (
+                      <a href={`tel:${businessInfo.contactPhone.replace(/\s/g, '')}`} className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
+                        {businessInfo.contactPhone}
+                      </a>
+                    ) : (
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">+ 32 (0) 487 837 041</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -89,9 +247,15 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.location')}</div>
-                    <span className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-line">
-                      Bornestraat 285{'\n'}3012 Wilsele
-                    </span>
+                    {businessInfo ? (
+                      <span className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-line">
+                        {businessInfo.address}{'\n'}{businessInfo.postalCode} {businessInfo.city}
+                      </span>
+                    ) : (
+                      <span className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-line">
+                        Bornestraat 285{'\n'}3012 Wilsele
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -103,18 +267,47 @@ export default function ContactPage() {
                 {t('contact.businessHours')}
               </h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.mondayFriday')}</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-semibold">9:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.saturday')}</span>
-                  <span className="text-gray-900 dark:text-gray-100 font-semibold">10:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.sunday')}</span>
-                  <span className="text-gray-500 dark:text-gray-400 font-semibold">{t('contact.closed')}</span>
-                </div>
+                {businessHours ? (
+                  groupBusinessHours(businessHours).map((group, index, array) => {
+                    const isLast = index === array.length - 1
+                    const startDayKey = getDayName(group.startDay)
+                    const endDayKey = getDayName(group.endDay)
+                    const dayLabel = group.startDay === group.endDay
+                      ? t(startDayKey)
+                      : `${t(startDayKey)} - ${t(endDayKey)}`
+                    
+                    return (
+                      <div key={`${group.startDay}-${group.endDay}`} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                        <span className="text-gray-700 dark:text-gray-300 font-medium">
+                          {dayLabel}
+                        </span>
+                        {group.hours.closed ? (
+                          <span className="text-gray-500 dark:text-gray-400 font-semibold">{t('contact.closed')}</span>
+                        ) : (
+                          <span className="text-gray-900 dark:text-gray-100 font-semibold">
+                            {formatTime(group.hours.open)} - {formatTime(group.hours.close)}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })
+                ) : (
+                  // Fallback while loading
+                  <>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.mondayFriday')}</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-semibold">9:00 AM - 6:00 PM</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.saturday')}</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-semibold">10:00 AM - 4:00 PM</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.sunday')}</span>
+                      <span className="text-gray-500 dark:text-gray-400 font-semibold">{t('contact.closed')}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

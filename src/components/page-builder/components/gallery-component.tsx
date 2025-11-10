@@ -32,9 +32,9 @@ export function GalleryComponent({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
+  const [projectsPerView, setProjectsPerView] = useState(3) // Responsive: 1 on mobile, 3 on desktop/tablet
   const useCarousel = data.useCarousel !== false && (data.useCarousel === true || featuredProjects.length > 3)
   const projectsToShow = data.maxItems ? Math.min(featuredProjects.length, data.maxItems) : featuredProjects.length
-  const projectsPerView = 3 // Number of projects visible at once
   const maxScrollIndex = Math.max(0, projectsToShow - projectsPerView) // Stop when last project is visible
   
   // Calculate min-height for full page (accounting for navigation)
@@ -42,6 +42,21 @@ export function GalleryComponent({
     ? { minHeight: 'calc(100vh - 80px)' }
     : {}
   
+  // Responsive projects per view: 1 on mobile, 3 on tablet/desktop
+  useEffect(() => {
+    const updateProjectsPerView = () => {
+      if (window.innerWidth < 768) {
+        setProjectsPerView(1) // Mobile: 1 item
+      } else {
+        setProjectsPerView(3) // Tablet/Desktop: 3 items
+      }
+    }
+    
+    updateProjectsPerView()
+    window.addEventListener('resize', updateProjectsPerView)
+    return () => window.removeEventListener('resize', updateProjectsPerView)
+  }, [])
+
   useEffect(() => {
     if (data.showFeatured) {
       fetch('/api/projects?featured=true')
