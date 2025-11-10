@@ -13,6 +13,7 @@ interface ThemeSettingsData {
   allowUserToggle: boolean
   defaultTheme: 'light' | 'dark'
   grayscaleImages: boolean
+  scrollSnapEnabled: boolean
 }
 
 export function ThemeSettings() {
@@ -21,7 +22,8 @@ export function ThemeSettings() {
     mode: 'user-choice',
     allowUserToggle: true,
     defaultTheme: 'light',
-    grayscaleImages: false
+    grayscaleImages: false,
+    scrollSnapEnabled: true
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -37,7 +39,14 @@ export function ThemeSettings() {
       const response = await fetch('/api/admin/theme-settings')
       if (response.ok) {
         const data = await response.json()
-        setSettings(data)
+        // Merge with defaults to ensure all fields are defined
+        setSettings({
+          mode: data.mode ?? 'user-choice',
+          allowUserToggle: data.allowUserToggle ?? true,
+          defaultTheme: data.defaultTheme ?? 'light',
+          grayscaleImages: data.grayscaleImages ?? false,
+          scrollSnapEnabled: data.scrollSnapEnabled ?? true
+        })
       }
     } catch (error) {
       console.error('Error loading theme settings:', error)
@@ -191,7 +200,7 @@ export function ThemeSettings() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={settings.allowUserToggle}
+                checked={settings.allowUserToggle ?? true}
                 onChange={(e) => handleToggleChange(e.target.checked)}
                 disabled={settings.mode !== 'user-choice'}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
@@ -251,7 +260,7 @@ export function ThemeSettings() {
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={settings.grayscaleImages}
+                checked={settings.grayscaleImages ?? false}
                 onChange={(e) => setSettings(prev => ({ ...prev, grayscaleImages: e.target.checked }))}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
@@ -261,6 +270,29 @@ export function ThemeSettings() {
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400 ml-5">
               Apply a grayscale filter to all project and gallery images for a monochrome aesthetic
+            </p>
+          </div>
+        </div>
+
+        {/* Scroll Snap Toggle */}
+        <div>
+          <Label className="text-base font-medium text-gray-900 dark:text-white mb-3 block">
+            Scroll Behavior
+          </Label>
+          <div className="space-y-3">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={settings.scrollSnapEnabled ?? true}
+                onChange={(e) => setSettings(prev => ({ ...prev, scrollSnapEnabled: e.target.checked }))}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                Enable scroll snapping on homepage
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 ml-5">
+              When enabled, scrolling will snap to the top of each component, aligning perfectly with the navigation bar for a smooth experience
             </p>
           </div>
         </div>

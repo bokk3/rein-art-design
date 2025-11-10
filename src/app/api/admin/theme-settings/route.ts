@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
       mode: 'user-choice',
       allowUserToggle: true,
       defaultTheme: 'light',
-      grayscaleImages: false
+      grayscaleImages: false,
+      scrollSnapEnabled: true
     }
 
     return NextResponse.json(themeSettings?.value || defaultSettings)

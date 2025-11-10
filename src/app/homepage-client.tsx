@@ -5,8 +5,8 @@ import { ProjectCard } from '@/components/gallery/project-card'
 import { ProjectModal } from '@/components/gallery/project-modal'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ArrowRight, ChevronDown } from 'lucide-react'
 import { useLanguage } from '@/contexts/language-context'
 import { PageComponent } from '@/types/page-builder'
 import { ComponentRenderer } from '@/components/page-builder/component-renderer'
@@ -26,6 +26,9 @@ export function HomepageClient({
   const [selectedProject, setSelectedProject] = useState<ProjectWithRelations | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [allFeaturedProjects, setAllFeaturedProjects] = useState<ProjectWithRelations[]>(featuredProjects)
+  const [scrollSnapEnabled, setScrollSnapEnabled] = useState(true)
+  const [currentComponentIndex, setCurrentComponentIndex] = useState(0)
+  const componentRefs = useRef<(HTMLDivElement | null)[]>([])
   const { currentLanguage } = useLanguage()
   const { theme, toggleTheme } = useTheme()
 
@@ -36,6 +39,16 @@ export function HomepageClient({
       .then(data => setAllFeaturedProjects(data.projects || featuredProjects))
       .catch(() => setAllFeaturedProjects(featuredProjects))
   }, [featuredProjects])
+
+  // Fetch scroll snap setting
+  useEffect(() => {
+    fetch('/api/admin/theme-settings')
+      .then(res => res.json())
+      .then(data => {
+        setScrollSnapEnabled(data.scrollSnapEnabled !== false) // Default to true
+      })
+      .catch(() => setScrollSnapEnabled(true))
+  }, [])
 
   const handleProjectClick = (project: ProjectWithRelations) => {
     setSelectedProject(project)
@@ -51,6 +64,76 @@ export function HomepageClient({
     setSelectedProject(project)
   }
 
+  // Initialize component refs array
+  useEffect(() => {
+    if (pageBuilderComponents && pageBuilderComponents.length > 0) {
+      componentRefs.current = new Array(pageBuilderComponents.length).fill(null)
+    }
+  }, [pageBuilderComponents])
+
+  // Enable scroll snapping on homepage based on settings
+  useEffect(() => {
+    if (pageBuilderComponents && pageBuilderComponents.length > 0 && scrollSnapEnabled) {
+      // Add snap-container class to html element
+      document.documentElement.classList.add('snap-container')
+      
+      return () => {
+        // Remove on unmount
+        document.documentElement.classList.remove('snap-container')
+      }
+    } else {
+      // Remove if disabled or no components
+      document.documentElement.classList.remove('snap-container')
+    }
+  }, [pageBuilderComponents, scrollSnapEnabled])
+
+  // Track which component is currently in view for scroll button
+  useEffect(() => {
+    if (!pageBuilderComponents || pageBuilderComponents.length === 0 || !scrollSnapEnabled) {
+      return
+    }
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY + 100 // Offset for nav
+      const componentElements = componentRefs.current.filter(Boolean) as HTMLDivElement[]
+      
+      for (let i = 0; i < componentElements.length; i++) {
+        const element = componentElements[i]
+        const rect = element.getBoundingClientRect()
+        const elementTop = rect.top + window.scrollY
+        
+        // Check if this component is in the viewport (with some tolerance)
+        if (scrollY >= elementTop - 100 && scrollY < elementTop + rect.height / 2) {
+          setCurrentComponentIndex(i)
+          break
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Check initial position
+    
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [pageBuilderComponents, scrollSnapEnabled])
+
+  // Scroll to next component
+  const scrollToNext = () => {
+    if (!pageBuilderComponents || pageBuilderComponents.length === 0) return
+    
+    const nextIndex = currentComponentIndex + 1
+    if (nextIndex < componentRefs.current.length) {
+      const nextElement = componentRefs.current[nextIndex]
+      if (nextElement) {
+        const rect = nextElement.getBoundingClientRect()
+        const scrollTop = window.scrollY + rect.top - 72 // Account for nav height
+        window.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        })
+      }
+    }
+  }
+
   // If page builder components exist, use them; otherwise show default homepage
   if (pageBuilderComponents && pageBuilderComponents.length > 0) {
     return (
@@ -58,16 +141,35 @@ export function HomepageClient({
         <div className="min-h-screen bg-white dark:bg-[#181818] relative overflow-x-hidden">
           {pageBuilderComponents
             .sort((a, b) => a.order - b.order)
-            .map((component) => (
-              <ComponentRenderer
-                key={component.id}
-                component={component}
-                isPreview={true}
-                currentLanguage={currentLanguage}
-                onProjectClick={handleProjectClick}
-              />
+            .map((component, index) => (
+              <div 
+                key={component.id} 
+                ref={(el) => { componentRefs.current[index] = el }}
+                className={scrollSnapEnabled ? 'snap-item' : ''}
+              >
+                <ComponentRenderer
+                  component={component}
+                  isPreview={true}
+                  currentLanguage={currentLanguage}
+                  onProjectClick={handleProjectClick}
+                />
+              </div>
             ))}
         </div>
+
+        {/* Scroll to Next Component Button */}
+        {scrollSnapEnabled && 
+         pageBuilderComponents && 
+         pageBuilderComponents.length > 1 && 
+         currentComponentIndex < pageBuilderComponents.length - 1 && (
+          <button
+            onClick={scrollToNext}
+            className="fixed bottom-6 right-6 z-50 p-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 dark:border-gray-700 group"
+            aria-label="Scroll to next section"
+          >
+            <ChevronDown className="w-6 h-6 text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
+          </button>
+        )}
 
         {/* Project Modal */}
         <ProjectModal
