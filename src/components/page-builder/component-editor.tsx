@@ -122,6 +122,20 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
       const imageUrl = media.originalUrl || media.url || media.thumbnailUrl
       console.log('Setting image URL:', imageUrl, 'for field:', mediaTarget)
       updateData(mediaTarget, imageUrl)
+    } else if (mediaTarget && mediaTarget.startsWith('heroCarouselImage-')) {
+      // Handle hero carousel image selection
+      const index = parseInt(mediaTarget.replace('heroCarouselImage-', ''))
+      const images = [...(component.data.heroCarouselImages || [])]
+      if (images[index]) {
+        const imageUrl = media.originalUrl || media.url || media.thumbnailUrl
+        const altText = media.alt || {}
+        images[index] = {
+          ...images[index],
+          src: imageUrl,
+          alt: altText
+        }
+        updateData('heroCarouselImages', images)
+      }
     } else if (mediaTarget && mediaTarget.startsWith('logo-')) {
       // Handle logo selection for hero elements
       const elementId = mediaTarget.replace('logo-', '')
@@ -3099,6 +3113,212 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
               onChange={(e) => updateData('showcaseButtonLink', e.target.value)}
               placeholder="/projects/{id} or leave empty to use project ID"
             />
+          </div>
+        </>
+      )}
+
+      {/* Hero Carousel Component Fields */}
+      {component.type === 'hero-carousel' && (
+        <>
+          <div>
+            <Label>Carousel Images</Label>
+            <div className="space-y-3 mt-2">
+              {(component.data.heroCarouselImages || []).map((image, index) => (
+                <div key={image.id || index} className="flex gap-2 items-center p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800">
+                  {image.src ? (
+                    <img src={image.src} alt="" className="w-16 h-16 object-cover rounded" />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{image.src || 'No image'}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setMediaTarget(`heroCarouselImage-${index}`)
+                      setMediaSelectionMode('single')
+                      setShowMediaLibrary(true)
+                    }}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const updated = [...(component.data.heroCarouselImages || [])]
+                      updated.splice(index, 1)
+                      updateData('heroCarouselImages', updated)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const updated = [...(component.data.heroCarouselImages || [])]
+                  updated.push({ id: Date.now().toString(), src: '', alt: {} })
+                  updateData('heroCarouselImages', updated)
+                }}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Image
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="heroCarouselTitle" className="flex items-center gap-2">
+              <span>Title</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="heroCarouselTitle"
+              value={component.data.heroCarouselTitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.heroCarouselTitle, [activeLanguage]: e.target.value }
+                updateData('heroCarouselTitle', updated)
+              }}
+              placeholder="Enter main title"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="heroCarouselSubtitle" className="flex items-center gap-2">
+              <span>Subtitle</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="heroCarouselSubtitle"
+              value={component.data.heroCarouselSubtitle?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.heroCarouselSubtitle, [activeLanguage]: e.target.value }
+                updateData('heroCarouselSubtitle', updated)
+              }}
+              placeholder="Enter subtitle"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="heroCarouselButtonText" className="flex items-center gap-2">
+              <span>Button Text</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ({languages.find(l => l.code === activeLanguage)?.name})
+              </span>
+            </Label>
+            <Input
+              id="heroCarouselButtonText"
+              value={component.data.heroCarouselButtonText?.[activeLanguage] || ''}
+              onChange={(e) => {
+                const updated = { ...component.data.heroCarouselButtonText, [activeLanguage]: e.target.value }
+                updateData('heroCarouselButtonText', updated)
+              }}
+              placeholder="Enter button text"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="heroCarouselButtonLink">Button Link</Label>
+            <Input
+              id="heroCarouselButtonLink"
+              value={component.data.heroCarouselButtonLink || ''}
+              onChange={(e) => updateData('heroCarouselButtonLink', e.target.value)}
+              placeholder="/projects"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="heroCarouselInterval">Auto-play Interval (ms)</Label>
+            <Input
+              id="heroCarouselInterval"
+              type="number"
+              value={component.data.heroCarouselInterval || 5000}
+              onChange={(e) => updateData('heroCarouselInterval', parseInt(e.target.value) || 5000)}
+              min="1000"
+              step="500"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="heroCarouselOverlayOpacity">Overlay Opacity: {component.data.heroCarouselOverlayOpacity !== undefined ? component.data.heroCarouselOverlayOpacity : 40}%</Label>
+            <input
+              type="range"
+              id="heroCarouselOverlayOpacity"
+              min="0"
+              max="100"
+              value={component.data.heroCarouselOverlayOpacity !== undefined ? component.data.heroCarouselOverlayOpacity : 40}
+              onChange={(e) => updateData('heroCarouselOverlayOpacity', parseInt(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="heroCarouselAutoPlay"
+              checked={component.data.heroCarouselAutoPlay !== false}
+              onChange={(e) => updateData('heroCarouselAutoPlay', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="heroCarouselAutoPlay">Enable auto-play</Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="heroCarouselShowDots"
+              checked={component.data.heroCarouselShowDots !== false}
+              onChange={(e) => updateData('heroCarouselShowDots', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="heroCarouselShowDots">Show navigation dots</Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="heroCarouselShowArrows"
+              checked={component.data.heroCarouselShowArrows !== false}
+              onChange={(e) => updateData('heroCarouselShowArrows', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="heroCarouselShowArrows">Show arrow controls</Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="heroCarouselParallax"
+              checked={component.data.heroCarouselParallax !== false}
+              onChange={(e) => updateData('heroCarouselParallax', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="heroCarouselParallax">Enable parallax effect</Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="heroCarouselKenBurns"
+              checked={component.data.heroCarouselKenBurns !== false}
+              onChange={(e) => updateData('heroCarouselKenBurns', e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="heroCarouselKenBurns">Enable Ken Burns effect (subtle zoom)</Label>
           </div>
         </>
       )}

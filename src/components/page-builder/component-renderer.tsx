@@ -7,6 +7,7 @@ import { HeroComponent } from './components/hero-component'
 import { SplitScreenComponent } from './components/split-screen-component'
 import { ImageTextOverlayComponent } from './components/image-text-overlay-component'
 import { FeatureShowcaseComponent } from './components/feature-showcase-component'
+import { HeroCarouselComponent } from './components/hero-carousel-component'
 import { TextComponent } from './components/text-component'
 import { ImageComponent } from './components/image-component'
 import { SpacerComponent } from './components/spacer-component'
@@ -101,6 +102,15 @@ export function ComponentRenderer({
     case 'feature-showcase':
       return (
         <FeatureShowcaseComponent
+          data={data}
+          getText={getText}
+          currentLanguage={currentLanguage}
+        />
+      )
+
+    case 'hero-carousel':
+      return (
+        <HeroCarouselComponent
           data={data}
           getText={getText}
           currentLanguage={currentLanguage}

@@ -142,12 +142,20 @@ export function Navigation() {
               <Link
                 key={link.href}
                 href={getLocalizedHref(link.href)}
-                className={`relative px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 font-medium group ${
+                className={`relative px-5 py-3 transition-all duration-300 font-medium group ${
                   isScrolled ? 'text-base' : 'text-lg lg:text-xl'
+                } ${
+                  isHomepage && !isScrolled
+                    ? 'text-gray-900 dark:text-white [text-shadow:0_1px_2px_rgba(255,255,255,0.8),0_0_4px_rgba(255,255,255,0.6)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.8),0_0_6px_rgba(0,0,0,0.5)] hover:text-gray-800 dark:hover:text-white hover:[text-shadow:0_1px_3px_rgba(255,255,255,0.9),0_0_6px_rgba(255,255,255,0.7)] dark:hover:[text-shadow:0_1px_4px_rgba(0,0,0,0.9),0_0_8px_rgba(0,0,0,0.6)]' // Dark text with white shadow for visibility on transparent nav
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white' // Normal colors when nav has background
                 }`}
               >
                 {link.label}
-                <span className="absolute bottom-2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gray-900 to-transparent dark:via-white scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out origin-center" />
+                <span className={`absolute bottom-2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out origin-center ${
+                  isHomepage && !isScrolled
+                    ? 'via-gray-900 dark:via-white' // Dark underline in light mode, white in dark mode
+                    : 'via-gray-900 dark:via-white' // Normal underline colors
+                }`} />
               </Link>
             ))}
             
@@ -163,7 +171,11 @@ export function Navigation() {
                     variant="ghost"
                     size="sm"
                     onClick={toggleLanguageMenu}
-                    className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                    className={`flex items-center gap-2 transition-all ${
+                      isHomepage && !isScrolled
+                        ? 'text-gray-900 dark:text-white [text-shadow:0_1px_2px_rgba(255,255,255,0.8),0_0_4px_rgba(255,255,255,0.6)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.8),0_0_6px_rgba(0,0,0,0.5)] hover:text-gray-800 dark:hover:text-white' // Dark text with shadow for visibility
+                        : 'text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white' // Normal colors
+                    }`}
                   >
                     <Globe className="h-4 w-4" />
                     <span className="uppercase font-medium">

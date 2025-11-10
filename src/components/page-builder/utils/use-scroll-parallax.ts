@@ -41,6 +41,7 @@ export function useScrollParallax({
       const parentSection = element.closest('[data-hero-section]')
       if (!parentSection) {
         setTransform('translateY(0px)')
+        initialScrollYRef.current = null
         ticking = false
         return
       }
@@ -48,38 +49,77 @@ export function useScrollParallax({
       const parentRect = parentSection.getBoundingClientRect()
       const parentTop = parentRect.top
       const parentBottom = parentRect.bottom
+      const parentHeight = parentRect.height
       
-      // Initialize scroll position on first render when hero is visible
-      if (initialScrollYRef.current === null) {
-        if (parentTop < windowHeight && parentBottom > 0) {
-          // Hero is in or near viewport - initialize
-          initialScrollYRef.current = Math.max(0, scrollY)
-        } else {
-          // Hero not in viewport yet - no parallax
-          setTransform('translateY(0px)')
-          ticking = false
-          return
-        }
+      // Check if hero is in viewport
+      const isInViewport = parentTop < windowHeight && parentBottom > 0
+      
+      // Reset initialization if hero is far above viewport (scrolled back up past it)
+      if (parentBottom < -windowHeight * 0.5) {
+        // Hero is far above viewport - reset
+        initialScrollYRef.current = null
+        setTransform('translateY(0px)')
+        ticking = false
+        return
       }
       
-      // Only apply parallax when hero is in viewport or just above
-      if (parentTop > windowHeight * 1.5) {
+      // Only apply parallax when hero is in or near viewport
+      if (!isInViewport && parentTop > windowHeight * 1.5) {
         // Hero is far below viewport - no parallax
         setTransform('translateY(0px)')
         ticking = false
         return
       }
       
-      // Calculate how much we've scrolled since initialization
-      const scrollDelta = scrollY - initialScrollYRef.current
+      // Calculate parallax based on hero's position relative to viewport
+      // Use parentTop directly - when it's 0, hero is at top of viewport (no parallax)
+      // As we scroll down, parentTop becomes negative, parallax increases (text moves up)
+      // As we scroll up, parentTop becomes positive, parallax decreases (text moves down)
       
-      // Parallax effect: text moves up faster than scroll
-      // Speed of 1.5 means text moves 1.5x the scroll distance upward
-      // Since the container moves with scroll naturally, we apply extra upward movement
-      // For speed 1.5: (1.5 - 1.0) = 0.5x extra movement upward
-      const parallaxOffset = -scrollDelta * (speed - 1.0)
+      if (isInViewport) {
+        // Calculate parallax based on how far hero top is from viewport top
+        // parentTop = 0 means hero top is at viewport top (baseline, no parallax)
+        // parentTop < 0 means we've scrolled down (hero moved up), apply upward parallax
+        // parentTop > 0 means hero is below viewport top (scrolled up), apply downward parallax
+        
+        // Initialize reference when hero first enters viewport from above
+        // If hero is already visible on load, use current parentTop as baseline
+        if (initialScrollYRef.current === null) {
+          // Store the scroll position when hero top reaches viewport top
+          // This happens when parentTop = 0, so we calculate: scrollY - parentTop
+          initialScrollYRef.current = scrollY - parentTop
+        }
+        
+        // Calculate how much we've scrolled since hero was at viewport top
+        // When hero top is at viewport top: scrollDelta = 0 (no parallax)
+        // As we scroll down: scrollDelta increases (positive), parallax moves text up
+        // As we scroll up: scrollDelta decreases (negative), parallax moves text down
+        const scrollDelta = scrollY - initialScrollYRef.current
+        
+        // Only apply parallax when scrolling down (positive scrollDelta)
+        // When scrolling up (negative scrollDelta), reset to prevent text going too low
+        if (scrollDelta >= 0) {
+          // Parallax effect: text moves up faster than scroll
+          // Speed of 1.5 means text moves 1.5x the scroll distance upward
+          // Since the container moves with scroll naturally, we apply extra upward movement
+          // For speed 1.5: (1.5 - 1.0) = 0.5x extra movement upward
+          const parallaxOffset = -scrollDelta * (speed - 1.0)
+          setTransform(`translateY(${parallaxOffset}px)`)
+        } else {
+          // Scrolled back up past initial position - reset parallax
+          setTransform('translateY(0px)')
+          // Reset initialization so it recalculates when scrolling down again
+          initialScrollYRef.current = scrollY - parentTop
+        }
+      } else {
+        // Hero not in viewport - reset parallax
+        setTransform('translateY(0px)')
+        // Reset initialization when hero is far from viewport so it recalculates on re-entry
+        if (parentBottom < -windowHeight * 0.5 || parentTop > windowHeight * 1.5) {
+          initialScrollYRef.current = null
+        }
+      }
       
-      setTransform(`translateY(${parallaxOffset}px)`)
       ticking = false
     }
 

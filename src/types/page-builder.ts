@@ -1,6 +1,6 @@
 export interface PageComponent {
   id: string
-  type: 'hero' | 'text' | 'image' | 'gallery' | 'gallery-showcase' | 'cta' | 'spacer' | 'features' | 'testimonials' | 'split-screen' | 'image-text-overlay' | 'feature-showcase'
+  type: 'hero' | 'text' | 'image' | 'gallery' | 'gallery-showcase' | 'cta' | 'spacer' | 'features' | 'testimonials' | 'split-screen' | 'image-text-overlay' | 'feature-showcase' | 'hero-carousel'
   order: number
   data: ComponentData
 }
@@ -176,6 +176,26 @@ export interface ComponentData {
   showcaseLayout?: 'image-left' | 'image-right' | 'image-top' | 'full-image' // Layout options
   showcaseImageSize?: 'medium' | 'large' | 'xlarge' // Image prominence
   showcaseImageParallax?: boolean // Enable/disable parallax effect on image
+  
+  // Hero Carousel component - Full-page image carousel with auto-scroll
+  heroCarouselImages?: Array<{
+    id: string
+    src: string
+    alt: MultilingualText
+    title?: MultilingualText
+    subtitle?: MultilingualText
+  }>
+  heroCarouselAutoPlay?: boolean // Enable/disable auto-play
+  heroCarouselInterval?: number // Auto-play interval in milliseconds (default 5000)
+  heroCarouselTitle?: MultilingualText // Main title overlay
+  heroCarouselSubtitle?: MultilingualText // Subtitle overlay
+  heroCarouselButtonText?: MultilingualText // CTA button text
+  heroCarouselButtonLink?: string // CTA button link
+  heroCarouselShowDots?: boolean // Show navigation dots
+  heroCarouselShowArrows?: boolean // Show arrow controls
+  heroCarouselParallax?: boolean // Enable parallax on background images
+  heroCarouselKenBurns?: boolean // Enable Ken Burns effect (subtle zoom)
+  heroCarouselOverlayOpacity?: number // Gradient overlay opacity (0-100)
   
   // Common properties
   backgroundColor?: string

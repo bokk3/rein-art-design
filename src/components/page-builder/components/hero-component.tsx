@@ -510,12 +510,13 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
         style={{
           ...textParallax.style,
           // Apply CSS variables for text color (dark mode handled by CSS)
-          ...(data.textColor ? {
-            '--hero-text-color': data.textColor,
-            ...(heroCSSVars['--hero-text-color-dark'] ? {
-              '--hero-text-color-dark': heroCSSVars['--hero-text-color-dark']
-            } : {})
-          } : {})
+          // Always set CSS variables if they were calculated in heroCSSVars
+          ...(heroCSSVars['--hero-text-color'] && {
+            '--hero-text-color': heroCSSVars['--hero-text-color']
+          }),
+          ...(heroCSSVars['--hero-text-color-dark'] && {
+            '--hero-text-color-dark': heroCSSVars['--hero-text-color-dark']
+          })
         } as React.CSSProperties}
       >
         {groupedElements.map((item, groupIndex) => {

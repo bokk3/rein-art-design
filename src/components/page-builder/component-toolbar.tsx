@@ -15,7 +15,8 @@ import {
   Columns,
   Layers,
   Award,
-  ChevronDown
+  ChevronDown,
+  Sliders
 } from 'lucide-react'
 
 interface ComponentToolbarProps {
@@ -28,6 +29,12 @@ const componentTypes = [
     label: 'Hero Section',
     icon: Star,
     description: 'Large banner with title, subtitle and call-to-action'
+  },
+  {
+    type: 'hero-carousel' as const,
+    label: 'Hero Carousel',
+    icon: Sliders,
+    description: 'Full-page image carousel with auto-scroll'
   },
   {
     type: 'text' as const,
