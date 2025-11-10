@@ -36,7 +36,7 @@ html.snap-container {
 /* Scroll snap items - all components snap to start (top) */
 .snap-item {
   scroll-snap-align: start;
-  scroll-snap-stop: normal;
+  scroll-snap-stop: always; /* Force snap even with fast scrolling */
 }
 
 /* Respect reduced motion preference */
