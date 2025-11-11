@@ -20,7 +20,9 @@ const nextConfig: NextConfig = {
         hostname: 'www.reinartdesign.be',
         port: '',
         pathname: '/**',
-      }
+      },
+      // Note: Instagram images are downloaded and stored locally,
+      // so we don't need to add Instagram CDN domains here
     ],
   },
 };

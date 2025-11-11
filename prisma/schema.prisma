@@ -116,6 +116,7 @@ model Project {
   translations  ProjectTranslation[]
   createdBy     String
   creator       User                 @relation(fields: [createdBy], references: [id])
+  instagramPost InstagramPost?
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 
@@ -195,6 +196,8 @@ model InstagramPost {
   postedAt    DateTime
   syncedAt    DateTime @default(now())
   isActive    Boolean  @default(true)
+  projectId   String?  @unique
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@map("instagram_posts")
 }

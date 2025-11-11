@@ -16,6 +16,7 @@
     "clear-and-seed": "tsx scripts/clear-and-seed.ts",
     "create-modern-homepage": "tsx scripts/create-modern-homepage.ts",
     "scrape-projects": "tsx scripts/scrape-projects.ts",
+    "instagram-sync": "tsx scripts/instagram-sync.ts",
     "fix:prisma": "bash scripts/fix-prisma-client.sh"
   },
   "prisma": {
