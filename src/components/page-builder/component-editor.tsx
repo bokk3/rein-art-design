@@ -1818,6 +1818,39 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     </Select>
                   </div>
                   
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor={`feature-icon-color-${index}`}>Icon Color</Label>
+                      <Input
+                        id={`feature-icon-color-${index}`}
+                        type="color"
+                        value={feature.iconColor || '#2563eb'}
+                        onChange={(e) => {
+                          const currentFeatures = component.data.features || []
+                          const updatedFeatures = [...currentFeatures]
+                          updatedFeatures[index] = { ...updatedFeatures[index], iconColor: e.target.value }
+                          updateData('features', updatedFeatures)
+                        }}
+                        className="h-10"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`feature-icon-bg-color-${index}`}>Icon Background</Label>
+                      <Input
+                        id={`feature-icon-bg-color-${index}`}
+                        type="color"
+                        value={feature.iconBgColor || '#dbeafe'}
+                        onChange={(e) => {
+                          const currentFeatures = component.data.features || []
+                          const updatedFeatures = [...currentFeatures]
+                          updatedFeatures[index] = { ...updatedFeatures[index], iconBgColor: e.target.value }
+                          updateData('features', updatedFeatures)
+                        }}
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+                  
                   <div>
                     <Label htmlFor={`feature-title-${index}`}>Title ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input

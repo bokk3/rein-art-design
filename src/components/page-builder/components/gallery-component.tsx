@@ -33,6 +33,8 @@ export function GalleryComponent({
   const carouselRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
   const [projectsPerView, setProjectsPerView] = useState(3) // Responsive: 1 on mobile, 3 on desktop/tablet
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
   const useCarousel = data.useCarousel !== false && (data.useCarousel === true || featuredProjects.length > 3)
   const projectsToShow = data.maxItems ? Math.min(featuredProjects.length, data.maxItems) : featuredProjects.length
   const maxScrollIndex = Math.max(0, projectsToShow - projectsPerView) // Stop when last project is visible
@@ -114,6 +116,35 @@ export function GalleryComponent({
     setCurrentScrollIndex((prev) => Math.min(maxScrollIndex, prev + 1))
   }
 
+  // Touch/swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return
+
+    const diff = touchStartX.current - touchEndX.current
+    const minSwipeDistance = 50
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        // Swiped left - go to next
+        handleScrollRight()
+      } else {
+        // Swiped right - go to previous
+        handleScrollLeft()
+      }
+    }
+
+    touchStartX.current = null
+    touchEndX.current = null
+  }
+
   // Use Tailwind classes only for specific string values, otherwise use inline style
   const galleryBgClass = data.backgroundColor === 'gray-50' 
     ? 'bg-gray-50 dark:bg-gray-800' 
@@ -185,7 +216,7 @@ export function GalleryComponent({
           <>
             {useCarousel ? (
               <div className="flex-1 flex flex-col justify-center" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
-                <div className="relative flex items-center gap-8 px-8">
+                <div className="relative flex items-center justify-center gap-2 sm:gap-4 md:gap-8 px-2 sm:px-4 md:px-8">
                   {/* Left Arrow */}
                   <button
                     onClick={handleScrollLeft}
@@ -193,7 +224,7 @@ export function GalleryComponent({
                     aria-label="Scroll left"
                     disabled={currentScrollIndex === 0}
                   >
-                    <ArrowLeft className="w-10 h-10" />
+                    <ArrowLeft className="w-8 h-8 sm:w-10 sm:h-10" />
                   </button>
 
                   {/* Scrollable Container */}
@@ -202,6 +233,9 @@ export function GalleryComponent({
                     className="flex-1 w-full relative"
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                   >
                     <div 
                       className="relative overflow-hidden"
@@ -261,7 +295,7 @@ export function GalleryComponent({
                     aria-label="Scroll right"
                     disabled={currentScrollIndex >= maxScrollIndex}
                   >
-                    <ArrowRight className="w-10 h-10" />
+                    <ArrowRight className="w-8 h-8 sm:w-10 sm:h-10" />
                   </button>
                 </div>
 

@@ -401,18 +401,26 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
       
       case 'logo':
         if (!element.logoUrl) return null
+        const logoWidth = element.logoWidth || 200
+        // On mobile, reduce logo size by ~5% to ensure buttons fit on screen
+        const mobileLogoWidth = Math.floor(logoWidth * 0.95)
         return (
           <div
             key={element.id}
             className="hero-text-fade-in mx-auto hero-logo-container"
-            style={{ marginBottom, width: element.logoWidth ? `${element.logoWidth}px` : 'auto' }}
+            style={{ marginBottom }}
           >
             <Image
               src={element.logoUrl}
               alt={getText(element.logoAlt) || ''}
-              width={element.logoWidth || 200}
-              height={element.logoHeight || element.logoWidth || 200}
-              className="object-contain hero-logo-image"
+              width={logoWidth}
+              height={element.logoHeight || logoWidth}
+              className="object-contain hero-logo-image w-full"
+              style={{
+                maxWidth: `min(95%, ${logoWidth}px)`,
+                width: 'auto',
+                height: 'auto'
+              }}
               priority
             />
           </div>

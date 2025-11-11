@@ -52,7 +52,7 @@ interface FeaturesComponentProps {
   onUpdateNested?: (arrayField: string, index: number, field: string, value: string) => void
 }
 
-const getIcon = (iconName: string) => {
+const getIcon = (iconName: string, iconColor?: string) => {
   const icons = {
     award: Award,
     users: Users,
@@ -93,7 +93,8 @@ const getIcon = (iconName: string) => {
     handshake: Handshake
   }
   const IconComponent = icons[iconName as keyof typeof icons] || Award
-  return <IconComponent className="w-12 h-12" />
+  const iconStyle = iconColor ? { color: iconColor } : undefined
+  return <IconComponent className="w-12 h-12" style={iconStyle} />
 }
 
 export function FeaturesComponent({ data, getText, isEditing = false, onUpdate, onUpdateNested }: FeaturesComponentProps) {
@@ -159,11 +160,30 @@ export function FeaturesComponent({ data, getText, isEditing = false, onUpdate, 
         
         {data.features && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {data.features.map((feature: any, index: number) => (
+            {data.features.map((feature: any, index: number) => {
+              // Get icon color from feature or component level, with fallback
+              const iconColor = feature.iconColor || data.featuresIconColor
+              const iconBgColor = feature.iconBgColor || data.featuresIconBgColor
+              
+              // Build icon container style
+              const iconContainerStyle: React.CSSProperties = {}
+              if (iconBgColor) {
+                iconContainerStyle.backgroundColor = iconBgColor
+              }
+              if (iconColor) {
+                iconContainerStyle.color = iconColor
+              }
+              
+              // Default classes if no custom colors
+              const iconContainerClass = !iconBgColor && !iconColor
+                ? 'p-4 bg-blue-100 dark:bg-blue-900 rounded-full text-blue-600 dark:text-blue-400'
+                : 'p-4 rounded-full'
+              
+              return (
               <div key={index} className="text-center">
                 <div className="flex justify-center mb-6">
-                  <div className="p-4 bg-blue-100 dark:bg-blue-900 rounded-full text-blue-600 dark:text-blue-400">
-                    {getIcon(feature.icon)}
+                  <div className={iconContainerClass} style={Object.keys(iconContainerStyle).length > 0 ? iconContainerStyle : undefined}>
+                    {getIcon(feature.icon, iconColor)}
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
@@ -196,7 +216,7 @@ export function FeaturesComponent({ data, getText, isEditing = false, onUpdate, 
                   )}
                 </p>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>

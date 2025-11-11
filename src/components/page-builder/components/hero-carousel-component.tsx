@@ -181,7 +181,7 @@ export function HeroCarouselComponent({ data, getText, currentLanguage }: HeroCa
 
   if (images.length === 0) {
     return (
-      <section className="relative w-screen h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <section className="relative w-full h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <p className="text-gray-500 dark:text-gray-400">No images in carousel</p>
       </section>
     )
@@ -192,7 +192,7 @@ export function HeroCarouselComponent({ data, getText, currentLanguage }: HeroCa
   return (
     <section
       ref={containerRef}
-      className="relative w-screen h-screen overflow-hidden"
+      className="relative w-full h-screen overflow-hidden"
       data-parallax-container
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
