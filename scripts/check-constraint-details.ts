@@ -10,6 +10,7 @@ async function checkConstraintDetails() {
       table_name: string
       constraint_type: string
       constraint_definition: string
+      column_name: string  // Added missing property
     }>>`
       SELECT 
         tc.constraint_name,
