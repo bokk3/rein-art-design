@@ -134,9 +134,16 @@ export class ContentService {
       // Filter out empty translations (only keep those with title or content)
       const validTranslations = translations.filter(t => {
         const hasTitle = t.title && t.title.trim().length > 0
-        const hasContent = t.content && 
-          (typeof t.content === 'string' ? t.content.trim().length > 0 :
-           ContentValidator.extractPlainText(t.content as any).trim().length > 0)
+        let hasContent = false
+        if (t.content) {
+          try {
+            const plainText = ContentValidator.extractPlainText(t.content)
+            hasContent = plainText.trim().length > 0
+          } catch {
+            // If content is invalid, consider it empty
+            hasContent = false
+          }
+        }
         return hasTitle || hasContent
       })
 
