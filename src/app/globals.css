@@ -27,6 +27,31 @@ html {
   scroll-behavior: auto; /* Let browser handle natural scrolling */
 }
 
+/* Hero content responsive scaling: 5% larger on desktop */
+.hero-content-responsive-scale {
+  transform-origin: center center;
+}
+
+@media (min-width: 768px) {
+  .hero-content-responsive-scale {
+    transform: scale(1.05);
+  }
+}
+
+/* Mobile adjustments: Reduce titles and logo by 5%, keep buttons normal size */
+@media (max-width: 767px) {
+  /* Scale down all content by 5% on mobile */
+  .hero-content-responsive-scale {
+    transform: scale(0.95);
+  }
+  
+  /* Counter-scale button groups to keep buttons at normal size */
+  .hero-content-responsive-scale .hero-button-group {
+    transform: scale(1.0526); /* 1 / 0.95 = 1.0526 to counter the 0.95 scale */
+    transform-origin: center center;
+  }
+}
+
 /* Scroll snap container - applied to html element on homepage via JS */
 html.snap-container {
   scroll-snap-type: y proximity; /* Less aggressive than 'mandatory' */

@@ -402,12 +402,10 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
       case 'logo':
         if (!element.logoUrl) return null
         const logoWidth = element.logoWidth || 200
-        // On mobile, reduce logo size by ~5% to ensure buttons fit on screen
-        const mobileLogoWidth = Math.floor(logoWidth * 0.95)
         return (
           <div
             key={element.id}
-            className="hero-text-fade-in mx-auto hero-logo-container"
+            className="hero-text-fade-in hero-logo-container inline-block"
             style={{ marginBottom }}
           >
             <Image
@@ -415,9 +413,9 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
               alt={getText(element.logoAlt) || ''}
               width={logoWidth}
               height={element.logoHeight || logoWidth}
-              className="object-contain hero-logo-image w-full"
+              className="object-contain hero-logo-image"
               style={{
-                maxWidth: `min(95%, ${logoWidth}px)`,
+                maxWidth: `${logoWidth}px`,
                 width: 'auto',
                 height: 'auto'
               }}
@@ -521,18 +519,19 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
           })
         } as React.CSSProperties}
       >
-        {groupedElements.map((item, groupIndex) => {
+        <div className="hero-content-responsive-scale">
+          {groupedElements.map((item, groupIndex) => {
           const isLastGroup = groupIndex === groupedElements.length - 1
           const nextItem = groupIndex < groupedElements.length - 1 ? groupedElements[groupIndex + 1] : null
           const isFollowedByButtons = Array.isArray(nextItem)
           const isSubtitle = !Array.isArray(item) && item.type === 'text' && item.textType === 'subtitle'
           
-          // If it's an array, it's a button group - render buttons horizontally
+          // If it's an array, it's a button group - render buttons horizontally (not scaled on mobile)
           if (Array.isArray(item)) {
             return (
               <div 
                 key={`button-group-${groupIndex}`}
-                className="flex flex-col sm:flex-row gap-4 justify-center items-center hero-text-fade-in w-full"
+                className="flex flex-col sm:flex-row gap-4 justify-center items-center hero-text-fade-in w-full hero-button-group"
                 style={{ 
                   marginBottom: isLastGroup ? '0' : `${gap}px`
                 }}
@@ -545,12 +544,13 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
               </div>
             )
           } else {
-            // Single element (text or logo)
+            // Single element (text or logo) - these get scaled on mobile
             // If it's a subtitle followed by buttons, add extra marginBottom
             const extraSpacing = isSubtitle && isFollowedByButtons ? gap * 2 : 0
             return renderSingleElement(item, groupIndex, !isLastGroup, extraSpacing)
           }
         })}
+        </div>
       </div>
     </div>
   )
