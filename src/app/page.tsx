@@ -46,7 +46,7 @@ async function HomePage({ searchParams }: HomeProps) {
       })
       // Type check and cast the JSON value to PageComponent[]
       if (homepage?.value && Array.isArray(homepage.value)) {
-        pageBuilderComponents = homepage.value as PageComponent[]
+        pageBuilderComponents = homepage.value as unknown as PageComponent[]
       } else {
         pageBuilderComponents = null
       }
