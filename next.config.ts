@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker staging/production builds
+  // This is required by Dockerfile.prod for the runner stage
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   images: {
     remotePatterns: [
       {
@@ -21,8 +24,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      // Note: Instagram images are downloaded and stored locally,
-      // so we don't need to add Instagram CDN domains here
+      {
+        protocol: 'https',
+        hostname: 'rein.truyens.pro',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

@@ -1,0 +1,118 @@
+services:
+  # PostgreSQL Database (Staging)
+  postgres:
+    image: postgres:15-alpine
+    container_name: rein-postgres-staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rein_staging
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      # Expose for direct access during staging (optional)
+      - "5434:5432"
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+      - ./backup_db.bak:/backup/backup_db.bak:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rein-staging-network
+    # Resource limits for Raspberry Pi
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # Next.js Application (Staging)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      # For Raspberry Pi ARM64
+      platform: linux/arm64
+      args:
+        - NODE_ENV=production
+    container_name: rein-app-staging
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/rein_staging
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://rein.truyens.pro}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://rein.truyens.pro}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://rein.truyens.pro}
+      - PORT=3000
+      # Memory limit for Pi
+      - NODE_OPTIONS=--max-old-space-size=1536
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads_data_staging:/app/public/uploads
+      # Mount backup for easy restore during testing
+      - ./backup_db.bak:/backup/backup_db.bak:ro
+    networks:
+      - rein-staging-network
+    # Resource limits for Raspberry Pi
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Nginx Reverse Proxy (Staging)
+  nginx:
+    image: nginx:alpine
+    container_name: rein-nginx-staging
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-staging.conf:/etc/nginx/nginx.conf:ro
+      - certbot_data_staging:/etc/letsencrypt
+      - certbot_www_staging:/var/www/certbot
+      - nginx_logs_staging:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - rein-staging-network
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  # Certbot for SSL (Staging)
+  certbot:
+    image: certbot/certbot
+    container_name: rein-certbot-staging
+    volumes:
+      - certbot_data_staging:/etc/letsencrypt
+      - certbot_www_staging:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - rein-staging-network
+
+volumes:
+  postgres_data_staging:
+  uploads_data_staging:
+  nginx_logs_staging:
+  certbot_data_staging:
+  certbot_www_staging:
+
+networks:
+  rein-staging-network:
+    driver: bridge
