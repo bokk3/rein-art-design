@@ -22,21 +22,22 @@
   --color-foreground: #ededed;
 }
 
-/* Beautiful smooth scrolling */
+/* Smooth scrolling only for programmatic scrolls (not user scrolling) */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* Let browser handle natural scrolling */
 }
 
 /* Scroll snap container - applied to html element on homepage via JS */
 html.snap-container {
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: y proximity; /* Less aggressive than 'mandatory' */
   scroll-padding-top: 72px; /* Account for fixed nav (h-18 = 72px when scrolled) */
+  scroll-behavior: auto; /* Natural scrolling, snap happens naturally */
 }
 
 /* Scroll snap items - all components snap to start (top) */
 .snap-item {
   scroll-snap-align: start;
-  scroll-snap-stop: always; /* Force snap even with fast scrolling */
+  scroll-snap-stop: normal; /* Allow scrolling through multiple items */
 }
 
 /* Respect reduced motion preference */

@@ -87,93 +87,9 @@ export function HomepageClient({
     }
   }, [pageBuilderComponents, scrollSnapEnabled])
 
-  // Gentle scroll snapping - helps CSS scroll snap work better
-  useEffect(() => {
-    if (!pageBuilderComponents || pageBuilderComponents.length === 0 || !scrollSnapEnabled) {
-      return
-    }
-
-    let scrollTimeout: NodeJS.Timeout | null = null
-    const SNAP_THRESHOLD = 400 // Larger area to look for snap points (was 150px)
-    const MIN_OFFSET = 30 // Minimum offset to trigger snap
-
-    const handleScroll = () => {
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
-
-      // Wait for scroll to settle - shorter delay for fast scrolling, longer for slow
-      scrollTimeout = setTimeout(() => {
-        const componentElements = componentRefs.current.filter(Boolean) as HTMLDivElement[]
-        if (componentElements.length === 0) {
-          return
-        }
-
-        const currentScroll = window.scrollY
-        const viewportCenter = window.innerHeight / 2
-        const viewportBottom = currentScroll + window.innerHeight
-        
-        // Get the last component's bottom position
-        const lastComponent = componentElements[componentElements.length - 1]
-        const lastComponentRect = lastComponent.getBoundingClientRect()
-        const lastComponentBottom = lastComponentRect.bottom + window.scrollY
-        
-        // Don't snap if we're already past the last component (e.g., at footer)
-        // Allow some buffer (100px) so we can scroll to footer without snapping back
-        if (viewportBottom > lastComponentBottom + 100) {
-          return // User is scrolling to footer, don't interfere
-        }
-        
-        // Find which component's center is closest to viewport center
-        let nearestIndex = 0
-        let minDistance = Infinity
-        
-        for (let i = 0; i < componentElements.length; i++) {
-          const element = componentElements[i]
-          const rect = element.getBoundingClientRect()
-          const elementTop = rect.top + window.scrollY
-          const elementCenter = elementTop + rect.height / 2
-          const viewportCenterAbsolute = currentScroll + viewportCenter
-          const distance = Math.abs(viewportCenterAbsolute - elementCenter)
-          
-          if (distance < minDistance) {
-            minDistance = distance
-            nearestIndex = i
-          }
-        }
-
-        // Always snap to the nearest component if we're within threshold
-        const nearestElement = componentElements[nearestIndex]
-        if (nearestElement) {
-          const rect = nearestElement.getBoundingClientRect()
-          const snapPosition = rect.top + window.scrollY - 72 // Account for nav
-          const offset = Math.abs(currentScroll - snapPosition)
-          
-          // Snap if we're meaningfully off the snap position
-          // Use larger threshold so we catch more cases
-          if (offset > MIN_OFFSET) {
-            window.scrollTo({
-              top: snapPosition,
-              behavior: 'smooth'
-            })
-          }
-        }
-      }, 250) // Balanced delay for both fast and slow scrolling
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
-    }
-  }, [pageBuilderComponents, scrollSnapEnabled])
-
   // Track which component is currently in view for scroll button
   useEffect(() => {
-    if (!pageBuilderComponents || pageBuilderComponents.length === 0 || !scrollSnapEnabled) {
+    if (!pageBuilderComponents || pageBuilderComponents.length === 0) {
       return
     }
 
@@ -198,9 +114,9 @@ export function HomepageClient({
     handleScroll() // Check initial position
     
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [pageBuilderComponents, scrollSnapEnabled])
+  }, [pageBuilderComponents])
 
-  // Scroll to next component
+  // Scroll to next component (only for button clicks - uses smooth scrolling)
   const scrollToNext = () => {
     if (!pageBuilderComponents || pageBuilderComponents.length === 0) return
     
@@ -210,6 +126,12 @@ export function HomepageClient({
       if (nextElement) {
         const rect = nextElement.getBoundingClientRect()
         const scrollTop = window.scrollY + rect.top - 72 // Account for nav height
+        // Use smooth scrolling only for programmatic scrolls (button clicks)
+        nextElement.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        })
+        // Fallback for browsers that don't support scrollIntoView properly
         window.scrollTo({
           top: scrollTop,
           behavior: 'smooth'
