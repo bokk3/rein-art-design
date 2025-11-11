@@ -31,6 +31,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Allow DATABASE_URL to be passed as build arg, but use dummy if not provided
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+ENV DATABASE_URL=$DATABASE_URL
+
 # Generate Prisma client and build
 RUN npx prisma generate
 # Build with production environment
@@ -67,4 +71,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
+# Note: DATABASE_URL will be set at runtime via docker-compose environment variables
 CMD ["node", "server.js"]
