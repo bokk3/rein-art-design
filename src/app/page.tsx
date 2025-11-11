@@ -2,6 +2,7 @@ import { ProjectService } from '@/lib/project-service'
 import { HomepageClient } from './homepage-client'
 import { Metadata } from 'next'
 import { PageComponent } from '@/types/page-builder'
+import { ProjectWithRelations } from '@/types/project'
 import { Suspense } from 'react'
 
 // Force dynamic rendering since we need database access
@@ -29,8 +30,8 @@ async function HomePage({ searchParams }: HomeProps) {
   const languageCode = resolvedSearchParams.lang || 'nl'
   
   // Fetch featured projects for the homepage with language support
-  let featuredProjects = []
-  let pageBuilderComponents = null
+  let featuredProjects: ProjectWithRelations[] = []
+  let pageBuilderComponents: PageComponent[] | null = null
   
   try {
     // Check if database is available (not in build environment)
@@ -53,7 +54,7 @@ async function HomePage({ searchParams }: HomeProps) {
   return (
     <HomepageClient 
       featuredProjects={featuredProjects} 
-      pageBuilderComponents={pageBuilderComponents as PageComponent[] | null}
+      pageBuilderComponents={pageBuilderComponents}
       currentLanguage={languageCode}
     />
   )
