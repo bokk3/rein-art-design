@@ -9,7 +9,6 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { CookieConsentProvider } from "@/contexts/cookie-consent-context";
 import { ImageSettingsProvider } from "@/contexts/image-settings-context";
-import { prisma } from "@/lib/db";
 
 const karla = localFont({
   src: [
@@ -60,15 +59,31 @@ const karla = localFont({
 
 // Generate metadata dynamically from SEO settings
 export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const seoSettings = await prisma.siteSettings.findUnique({
-      where: { key: 'seo_settings' }
-    })
+  const defaultMetadata: Metadata = {
+    title: "Portfolio | Custom Artisan Work",
+    description: "Discover unique custom projects and artisan work. Browse our portfolio of handcrafted pieces made with quality materials and attention to detail.",
+  }
 
-    const defaultMetadata: Metadata = {
-      title: "Portfolio | Custom Artisan Work",
-      description: "Discover unique custom projects and artisan work. Browse our portfolio of handcrafted pieces made with quality materials and attention to detail.",
-    }
+  // Check if we're in a build environment (dummy DATABASE_URL means build time)
+  // During Docker build, DATABASE_URL will be the dummy value - skip database calls
+  if (process.env.DATABASE_URL?.includes('dummy') || 
+      process.env.DATABASE_URL?.includes('localhost:5432/dummy') ||
+      !process.env.DATABASE_URL) {
+    return defaultMetadata
+  }
+
+  try {
+    // Import prisma only when we need it (lazy import)
+    const { prisma } = await import('@/lib/db')
+    
+    // Try to fetch SEO settings from database with a short timeout
+    const seoSettings = await Promise.race([
+      prisma.siteSettings.findUnique({
+        where: { key: 'seo_settings' }
+      }),
+      // Timeout after 2 seconds to prevent hanging during build
+      new Promise((resolve) => setTimeout(() => resolve(null), 2000))
+    ]) as any
 
     if (!seoSettings || !seoSettings.value) {
       return defaultMetadata

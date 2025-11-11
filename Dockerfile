@@ -31,15 +31,25 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Allow DATABASE_URL to be passed as build arg, but use dummy if not provided
+# Set dummy DATABASE_URL for build (Prisma needs it for generate, but won't connect during build)
+# This prevents database connection attempts during static page generation
 ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
 ENV DATABASE_URL=$DATABASE_URL
+
+# Set other required environment variables for build (with defaults)
+ARG BETTER_AUTH_SECRET="dummy-secret-for-build-only"
+ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
+ARG NEXT_PUBLIC_APP_URL="https://rein.truyens.pro"
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_SITE_URL="https://rein.truyens.pro"
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 # Generate Prisma client and build
 RUN npx prisma generate
 # Build with production environment
 ARG NODE_ENV=production
 ENV NODE_ENV=$NODE_ENV
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Production runner (for staging)
