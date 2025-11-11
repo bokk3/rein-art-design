@@ -1855,7 +1855,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`feature-title-${index}`}>Title ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input
                       id={`feature-title-${index}`}
-                      value={typeof feature.title === 'string' ? feature.title : (feature.title?.[activeLanguage] || '')}
+                      value={feature.title?.[activeLanguage] || ''}
                       onChange={(e) => {
                         const currentFeatures = component.data.features || []
                         const updatedFeatures = [...currentFeatures]
@@ -1874,7 +1874,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`feature-description-${index}`}>Description ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input
                       id={`feature-description-${index}`}
-                      value={typeof feature.description === 'string' ? feature.description : (feature.description?.[activeLanguage] || '')}
+                      value={feature.description?.[activeLanguage] || ''}
                       onChange={(e) => {
                         const currentFeatures = component.data.features || []
                         const updatedFeatures = [...currentFeatures]
@@ -1969,7 +1969,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`testimonial-role-${index}`}>Role ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input
                       id={`testimonial-role-${index}`}
-                      value={typeof testimonial.role === 'string' ? testimonial.role : (testimonial.role?.[activeLanguage] || '')}
+                      value={testimonial.role?.[activeLanguage] || ''}
                       onChange={(e) => {
                         const currentTestimonials = component.data.testimonials || []
                         const updatedTestimonials = [...currentTestimonials]
@@ -1988,7 +1988,7 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`testimonial-content-${index}`}>Content ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <textarea
                       id={`testimonial-content-${index}`}
-                      value={typeof testimonial.content === 'string' ? testimonial.content : (testimonial.content?.[activeLanguage] || '')}
+                      value={testimonial.content?.[activeLanguage] || ''}
                       onChange={(e) => {
                         const currentTestimonials = component.data.testimonials || []
                         const updatedTestimonials = [...currentTestimonials]
