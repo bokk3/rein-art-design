@@ -44,7 +44,12 @@ async function HomePage({ searchParams }: HomeProps) {
       const homepage = await prisma.siteSettings.findUnique({
         where: { key: 'homepage_components' }
       })
-      pageBuilderComponents = homepage?.value || null
+      // Type check and cast the JSON value to PageComponent[]
+      if (homepage?.value && Array.isArray(homepage.value)) {
+        pageBuilderComponents = homepage.value as PageComponent[]
+      } else {
+        pageBuilderComponents = null
+      }
     }
   } catch (error) {
     console.error('Error fetching data:', error)
