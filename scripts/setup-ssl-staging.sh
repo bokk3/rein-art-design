@@ -12,7 +12,7 @@ DOMAIN=${LETSENCRYPT_DOMAIN:-rein.truyens.pro}
 echo "🔐 Setting up SSL certificates for $DOMAIN (staging)..."
 
 # Ensure nginx is running (HTTP only, for ACME challenge)
-docker-compose -f docker-compose.staging.yml up -d nginx
+docker compose -f docker-compose.staging.yml up -d nginx
 
 # Wait for nginx
 sleep 10
@@ -29,7 +29,7 @@ echo "✅ DNS resolves correctly"
 
 # Obtain certificate
 echo "📜 Obtaining SSL certificate..."
-docker-compose -f docker-compose.staging.yml run --rm certbot certonly \
+docker compose -f docker-compose.staging.yml run --rm certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
@@ -40,7 +40,7 @@ docker-compose -f docker-compose.staging.yml run --rm certbot certonly \
 
 echo "✅ SSL certificate obtained!"
 echo "🔄 Restarting nginx..."
-docker-compose -f docker-compose.staging.yml restart nginx
+docker compose -f docker-compose.staging.yml restart nginx
 
 echo "✅ SSL setup complete!"
 echo "🌐 Test with: curl -I https://$DOMAIN"
