@@ -15,6 +15,9 @@ interface AboutPageProps {
   }>
 }
 
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+
 // Generate metadata for SEO
 export async function generateMetadata({ searchParams }: AboutPageProps): Promise<Metadata> {
   const resolvedSearchParams = await searchParams

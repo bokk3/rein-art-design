@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { CookieConsentProvider } from "@/contexts/cookie-consent-context";
 import { ImageSettingsProvider } from "@/contexts/image-settings-context";
+import { Suspense } from "react";
 
 const karla = localFont({
   src: [
@@ -182,17 +183,23 @@ export default function RootLayout({
         className="antialiased bg-white dark:bg-[#181818] text-gray-900 dark:text-gray-100 transition-colors font-sans"
       >
         <ThemeProvider>
-          <LanguageProvider>
-            <CookieConsentProvider>
-              <ImageSettingsProvider>
-                <AnalyticsTracker />
-                <Navigation />
-                <main>{children}</main>
-                <Footer />
-                <CookieBanner />
-              </ImageSettingsProvider>
-            </CookieConsentProvider>
-          </LanguageProvider>
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+            </div>
+          }>
+            <LanguageProvider>
+              <CookieConsentProvider>
+                <ImageSettingsProvider>
+                  <AnalyticsTracker />
+                  <Navigation />
+                  <main>{children}</main>
+                  <Footer />
+                  <CookieBanner />
+                </ImageSettingsProvider>
+              </CookieConsentProvider>
+            </LanguageProvider>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

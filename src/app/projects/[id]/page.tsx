@@ -9,6 +9,9 @@ interface ProjectPageProps {
   }>
 }
 
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const resolvedParams = await params
   const project = await ProjectService.getProjectById(resolvedParams.id)
