@@ -37,10 +37,10 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
-      # For Raspberry Pi ARM64
-      platform: linux/arm64
       args:
         - NODE_ENV=production
+    # Platform for runtime (Docker will build for ARM64 automatically on Pi)
+    platform: linux/arm64
     container_name: rein-app-staging
     restart: unless-stopped
     environment:
