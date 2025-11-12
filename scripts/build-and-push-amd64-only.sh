@@ -7,12 +7,14 @@ set -e
 # Configuration
 DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME:-your-username}"
 IMAGE_NAME="${IMAGE_NAME:-rein-art-design}"
-TAG="${TAG:-staging-amd64-latest}"
+TAG="${TAG:-amd64-local}"
 FULL_IMAGE_NAME="${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${TAG}"
 
 echo "🐳 Building and pushing AMD64 image to Docker Hub..."
 echo "   Image: ${FULL_IMAGE_NAME}"
 echo "   Platform: linux/amd64"
+echo ""
+echo "ℹ️  Set TAG (e.g. TAG=latest) if you want to overwrite a different repository tag."
 echo ""
 
 # Check if Docker Hub username is set

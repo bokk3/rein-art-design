@@ -2,6 +2,11 @@
 
 This document explains different strategies for building Docker images for both ARM64 (Raspberry Pi) and AMD64 (regular servers).
 
+> **Heads-up**  
+> The GitHub Actions workflow in this repo already publishes a multi-architecture manifest at `3bok/rein-art-design:latest`.  
+> For day‑to‑day deployment you can simply `docker pull 3bok/rein-art-design:latest` and Docker will fetch the correct architecture automatically.  
+> The strategies below are only needed if you want to build/push images manually.
+
 ## The Challenge
 
 - **Raspberry Pi** = ARM64 architecture
@@ -17,24 +22,24 @@ This document explains different strategies for building Docker images for both 
 1. **On Raspberry Pi** (build ARM64):
    ```bash
    export DOCKERHUB_USERNAME=your-username
-   ./scripts/push-staging-to-dockerhub.sh
-   # Tag as: your-username/rein-art-design:staging-arm64-latest
+   TAG=arm64-local ./scripts/push-staging-to-dockerhub.sh
+   # Pushes your-username/rein-art-design:arm64-local
    ```
 
 2. **On AMD64 machine** (build AMD64):
    ```bash
    export DOCKERHUB_USERNAME=your-username
-   ./scripts/build-and-push-amd64-only.sh
-   # Tag as: your-username/rein-art-design:staging-amd64-latest
+   TAG=amd64-local ./scripts/build-and-push-amd64-only.sh
+   # Pushes your-username/rein-art-design:amd64-local
    ```
 
 3. **Create manifest** (combines both):
    ```bash
-   docker manifest create your-username/rein-art-design:staging-latest \
-     your-username/rein-art-design:staging-arm64-latest \
-     your-username/rein-art-design:staging-amd64-latest
+   docker manifest create your-username/rein-art-design:latest \
+     your-username/rein-art-design:arm64-local \
+     your-username/rein-art-design:amd64-local
    
-   docker manifest push your-username/rein-art-design:staging-latest
+   docker manifest push your-username/rein-art-design:latest
    ```
 
 **Pros:**
