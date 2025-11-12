@@ -1855,11 +1855,14 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`feature-title-${index}`}>Title ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input
                       id={`feature-title-${index}`}
-                      value={feature.title?.[activeLanguage] || ''}
+                      value={typeof feature.title === 'string' ? feature.title : (feature.title?.[activeLanguage] || '')}
                       onChange={(e) => {
                         const currentFeatures = component.data.features || []
                         const updatedFeatures = [...currentFeatures]
-                        const currentTitle = updatedFeatures[index].title || {}
+                        // Handle backward compatibility: if title is a string, convert to multilingual object
+                        const currentTitle = typeof updatedFeatures[index].title === 'string' 
+                          ? {} 
+                          : (updatedFeatures[index].title || {})
                         updatedFeatures[index] = {
                           ...updatedFeatures[index],
                           title: { ...currentTitle, [activeLanguage]: e.target.value }
@@ -1874,11 +1877,14 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`feature-description-${index}`}>Description ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input
                       id={`feature-description-${index}`}
-                      value={feature.description?.[activeLanguage] || ''}
+                      value={typeof feature.description === 'string' ? feature.description : (feature.description?.[activeLanguage] || '')}
                       onChange={(e) => {
                         const currentFeatures = component.data.features || []
                         const updatedFeatures = [...currentFeatures]
-                        const currentDescription = updatedFeatures[index].description || {}
+                        // Handle backward compatibility: if description is a string, convert to multilingual object
+                        const currentDescription = typeof updatedFeatures[index].description === 'string' 
+                          ? {} 
+                          : (updatedFeatures[index].description || {})
                         updatedFeatures[index] = {
                           ...updatedFeatures[index],
                           description: { ...currentDescription, [activeLanguage]: e.target.value }
@@ -1969,11 +1975,14 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`testimonial-role-${index}`}>Role ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <Input
                       id={`testimonial-role-${index}`}
-                      value={testimonial.role?.[activeLanguage] || ''}
+                      value={typeof testimonial.role === 'string' ? testimonial.role : (testimonial.role?.[activeLanguage] || '')}
                       onChange={(e) => {
                         const currentTestimonials = component.data.testimonials || []
                         const updatedTestimonials = [...currentTestimonials]
-                        const currentRole = updatedTestimonials[index].role || {}
+                        // Handle backward compatibility: if role is a string, convert to multilingual object
+                        const currentRole = typeof updatedTestimonials[index].role === 'string' 
+                          ? {} 
+                          : (updatedTestimonials[index].role || {})
                         updatedTestimonials[index] = {
                           ...updatedTestimonials[index],
                           role: { ...currentRole, [activeLanguage]: e.target.value }
@@ -1988,11 +1997,14 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                     <Label htmlFor={`testimonial-content-${index}`}>Content ({languages.find(l => l.code === activeLanguage)?.name})</Label>
                     <textarea
                       id={`testimonial-content-${index}`}
-                      value={testimonial.content?.[activeLanguage] || ''}
+                      value={typeof testimonial.content === 'string' ? testimonial.content : (testimonial.content?.[activeLanguage] || '')}
                       onChange={(e) => {
                         const currentTestimonials = component.data.testimonials || []
                         const updatedTestimonials = [...currentTestimonials]
-                        const currentContent = updatedTestimonials[index].content || {}
+                        // Handle backward compatibility: if content is a string, convert to multilingual object
+                        const currentContent = typeof updatedTestimonials[index].content === 'string' 
+                          ? {} 
+                          : (updatedTestimonials[index].content || {})
                         updatedTestimonials[index] = {
                           ...updatedTestimonials[index],
                           content: { ...currentContent, [activeLanguage]: e.target.value }
