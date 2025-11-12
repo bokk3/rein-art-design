@@ -60,6 +60,7 @@ export function BusinessSettings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [contactCategories, setContactCategories] = useState<string[]>([])
 
   useEffect(() => {
     loadSettings()
@@ -68,10 +69,19 @@ export function BusinessSettings() {
   const loadSettings = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/business-settings')
-      if (response.ok) {
-        const data = await response.json()
+      const [businessResponse, categoriesResponse] = await Promise.all([
+        fetch('/api/admin/business-settings'),
+        fetch('/api/admin/contact-categories')
+      ])
+      
+      if (businessResponse.ok) {
+        const data = await businessResponse.json()
         setSettings(data)
+      }
+      
+      if (categoriesResponse.ok) {
+        const categories = await categoriesResponse.json()
+        setContactCategories(categories)
       }
     } catch (error) {
       console.error('Error loading business settings:', error)
@@ -84,24 +94,34 @@ export function BusinessSettings() {
     try {
       setSaving(true)
       setSaveMessage(null)
-      const response = await fetch('/api/admin/business-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(settings)
-      })
+      
+      const [businessResponse, categoriesResponse] = await Promise.all([
+        fetch('/api/admin/business-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(settings)
+        }),
+        fetch('/api/admin/contact-categories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(contactCategories.filter(cat => cat.trim().length > 0))
+        })
+      ])
 
-      if (response.ok) {
-        setSaveMessage({ type: 'success', text: 'Business settings saved successfully!' })
+      if (businessResponse.ok && categoriesResponse.ok) {
+        setSaveMessage({ type: 'success', text: 'Settings saved successfully!' })
         setTimeout(() => setSaveMessage(null), 3000)
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        setSaveMessage({ type: 'error', text: errorData.error || 'Failed to save business settings' })
+        const errorData = await businessResponse.json().catch(() => ({ error: 'Unknown error' }))
+        setSaveMessage({ type: 'error', text: errorData.error || 'Failed to save settings' })
       }
     } catch (error) {
-      console.error('Error saving business settings:', error)
-      setSaveMessage({ type: 'error', text: 'Error saving business settings' })
+      console.error('Error saving settings:', error)
+      setSaveMessage({ type: 'error', text: 'Error saving settings' })
     } finally {
       setSaving(false)
     }
@@ -122,6 +142,18 @@ export function BusinessSettings() {
         }
       }
     }))
+  }
+
+  const addCategory = () => {
+    setContactCategories(prev => [...prev, ''])
+  }
+
+  const updateCategory = (index: number, value: string) => {
+    setContactCategories(prev => prev.map((cat, i) => i === index ? value : cat))
+  }
+
+  const removeCategory = (index: number) => {
+    setContactCategories(prev => prev.filter((_, i) => i !== index))
   }
 
   if (loading) {
@@ -428,6 +460,49 @@ export function BusinessSettings() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Contact Form Categories */}
+      <div className="glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-xl p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Mail className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Form Categories</h3>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Manage the project type categories shown in the contact form dropdown.
+          </p>
+          
+          {contactCategories.map((category, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input
+                value={category}
+                onChange={(e) => updateCategory(index, e.target.value)}
+                placeholder="Category name"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeCategory(index)}
+                className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addCategory}
+            className="w-full"
+          >
+            + Add Category
+          </Button>
         </div>
       </div>
 
