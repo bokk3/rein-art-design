@@ -241,7 +241,7 @@ export function HeroCarouselComponent({ data, getText, currentLanguage }: HeroCa
               <Link href={data.heroCarouselButtonLink || '/projects'}>
                 <Button
                   size="lg"
-                  className="bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 rounded-full shadow-2xl transition-all duration-300 hover:scale-105"
+                  className="bg-white text-gray-900 dark:text-gray-900 hover:bg-gray-100 text-lg px-8 py-6 rounded-full shadow-2xl transition-all duration-300 hover:scale-105"
                 >
                   {getText(data.heroCarouselButtonText)}
                 </Button>
