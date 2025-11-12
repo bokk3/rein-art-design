@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { CookieConsentProvider } from "@/contexts/cookie-consent-context";
 import { ImageSettingsProvider } from "@/contexts/image-settings-context";
+import { DynamicFavicon } from "@/components/dynamic-favicon";
 import { Suspense } from "react";
 
 const karla = localFont({
@@ -177,6 +178,16 @@ export default function RootLayout({
                   theme = 'light';
                 }
                 document.documentElement.classList.toggle('dark', theme === 'dark');
+                
+                // Set initial favicon based on theme
+                let faviconLink = document.querySelector("link[rel~='icon']");
+                if (!faviconLink) {
+                  faviconLink = document.createElement('link');
+                  faviconLink.rel = 'icon';
+                  faviconLink.type = 'image/x-icon';
+                  document.head.appendChild(faviconLink);
+                }
+                faviconLink.href = theme === 'dark' ? '/favicon-dark.ico' : '/favicon.ico';
               } catch (e) {}
             `,
           }}
@@ -186,6 +197,7 @@ export default function RootLayout({
         className="antialiased bg-white dark:bg-[#181818] text-gray-900 dark:text-gray-100 transition-colors font-sans"
       >
         <ThemeProvider>
+          <DynamicFavicon />
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-gray-600 dark:text-gray-400">Loading...</div>
