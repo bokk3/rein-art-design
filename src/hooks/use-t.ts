@@ -239,16 +239,16 @@ export function useT(options: UseTOptions = {}) {
         }
       }
       
-      // If we absolutely can't find anything, return defaultValue or empty string
-      // Only return the key as absolute last resort (should rarely happen)
-      // Returning empty string or defaultValue prevents the key from flashing
+      // If we absolutely can't find anything, return defaultValue or key
+      // Return the key as last resort so at least something is visible
+      // Components should use fallbacks like: t('key') || 'Fallback text'
       if (defaultValue) {
         return defaultValue
       }
       
-      // Return empty string instead of key to prevent flash
-      // The component will update once translation is fetched
-      return ''
+      // Return the key so it's visible (components should provide fallbacks)
+      // This is better than empty string which causes blank text
+      return key
     },
     [currentLanguage, translations, loadingKeys, languageLoading, defaultValue, fetchTranslation, languageVersion]
   )

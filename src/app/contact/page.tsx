@@ -27,9 +27,25 @@ interface BusinessInfo {
 
 export default function ContactPage() {
   const { t } = useT()
-  const { currentLanguage, languages } = useLanguage()
+  const { currentLanguage, languages, isLoading: languageLoading } = useLanguage()
   const [businessHours, setBusinessHours] = useState<BusinessHours | null>(null)
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Helper to get translation with fallback
+  const getT = (key: string, fallback: string): string => {
+    const translation = t(key)
+    // If translation is empty, equals the key, or is falsy, use fallback
+    if (!translation || translation === key || translation.trim() === '') {
+      return fallback
+    }
+    return translation
+  }
+
+  // Mark as mounted to prevent hydration issues
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Fetch business hours and info from API
   useEffect(() => {
@@ -174,18 +190,20 @@ export default function ContactPage() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 max-w-7xl">
         {/* Breadcrumbs */}
         <nav className="mb-8 text-sm text-gray-600 dark:text-gray-400 animate-fade-in">
-          <Link href={getLocalizedHref('/')} className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">{t('nav.home')}</Link>
+          <Link href={getLocalizedHref('/')} className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+            {getT('nav.home', 'Home')}
+          </Link>
           <span className="mx-2">/</span>
-          <span className="text-gray-900 dark:text-gray-100">{t('nav.contact')}</span>
+          <span className="text-gray-900 dark:text-gray-100">{getT('nav.contact', 'Contact')}</span>
         </nav>
 
         {/* Page header */}
         <header className="mb-12 animate-fade-in">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent mb-6">
-            {t('contact.title')}
+            {getT('contact.title', 'Contact Us')}
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl">
-            {t('contact.subtitle')}
+            {getT('contact.subtitle', 'Contact us for questions about our furniture or for a custom-made order.')}
           </p>
         </header>
 
@@ -196,7 +214,7 @@ export default function ContactPage() {
               <div className="flex items-center gap-3 mb-8">
                 <MessageCircle className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {t('contact.sendMessage')}
+                  {getT('contact.sendMessage', 'Send us a message')}
                 </h2>
               </div>
               <ContactForm />
@@ -208,7 +226,7 @@ export default function ContactPage() {
             <div className="glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-xl p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <Mail className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                {t('contact.contactInformation')}
+                {getT('contact.contactInformation', 'Contact Information')}
               </h3>
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
                 <div className="flex items-start gap-4">
@@ -216,7 +234,7 @@ export default function ContactPage() {
                     <Mail className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.email')}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{getT('contact.email', 'Email')}</div>
                     {businessInfo ? (
                       <a href={`mailto:${businessInfo.contactEmail}`} className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
                         {businessInfo.contactEmail}
@@ -231,7 +249,7 @@ export default function ContactPage() {
                     <Phone className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.phone')}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{getT('contact.phone', 'Phone')}</div>
                     {businessInfo ? (
                       <a href={`tel:${businessInfo.contactPhone.replace(/\s/g, '')}`} className="text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium">
                         {businessInfo.contactPhone}
@@ -246,7 +264,7 @@ export default function ContactPage() {
                     <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('contact.location')}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{getT('contact.location', 'Location')}</div>
                     {businessInfo ? (
                       <span className="text-gray-900 dark:text-gray-100 font-medium whitespace-pre-line">
                         {businessInfo.address}{'\n'}{businessInfo.postalCode} {businessInfo.city}
@@ -264,17 +282,17 @@ export default function ContactPage() {
             <div className="glass border border-white/20 dark:border-gray-700/30 rounded-2xl shadow-xl p-8">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <Clock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                {t('contact.businessHours')}
+                {getT('contact.businessHours', 'Business Hours')}
               </h3>
               <div className="space-y-3">
                 {businessHours ? (
                   groupBusinessHours(businessHours).map((group, index, array) => {
                     const isLast = index === array.length - 1
-                    const startDayKey = getDayName(group.startDay)
-                    const endDayKey = getDayName(group.endDay)
+                    const startDayName = getDayName(group.startDay)
+                    const endDayName = getDayName(group.endDay)
                     const dayLabel = group.startDay === group.endDay
-                      ? t(startDayKey)
-                      : `${t(startDayKey)} - ${t(endDayKey)}`
+                      ? startDayName
+                      : `${startDayName} - ${endDayName}`
                     
                     return (
                       <div key={`${group.startDay}-${group.endDay}`} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
@@ -282,7 +300,7 @@ export default function ContactPage() {
                           {dayLabel}
                         </span>
                         {group.hours.closed ? (
-                          <span className="text-gray-500 dark:text-gray-400 font-semibold">{t('contact.closed')}</span>
+                          <span className="text-gray-500 dark:text-gray-400 font-semibold">{getT('contact.closed', 'Closed')}</span>
                         ) : (
                           <span className="text-gray-900 dark:text-gray-100 font-semibold">
                             {formatTime(group.hours.open)} - {formatTime(group.hours.close)}
@@ -295,16 +313,16 @@ export default function ContactPage() {
                   // Fallback while loading
                   <>
                     <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.mondayFriday')}</span>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{getT('contact.mondayFriday', 'Monday - Friday')}</span>
                       <span className="text-gray-900 dark:text-gray-100 font-semibold">9:00 AM - 6:00 PM</span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-0">
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.saturday')}</span>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{getT('contact.saturday', 'Saturday')}</span>
                       <span className="text-gray-900 dark:text-gray-100 font-semibold">10:00 AM - 4:00 PM</span>
                     </div>
                     <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">{t('contact.sunday')}</span>
-                      <span className="text-gray-500 dark:text-gray-400 font-semibold">{t('contact.closed')}</span>
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">{getT('contact.sunday', 'Sunday')}</span>
+                      <span className="text-gray-500 dark:text-gray-400 font-semibold">{getT('contact.closed', 'Closed')}</span>
                     </div>
                   </>
                 )}
@@ -316,10 +334,10 @@ export default function ContactPage() {
                 <MessageCircle className="h-5 w-5 text-gray-600 dark:text-gray-400 shrink-0 mt-0.5" />
                 <div>
                   <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100 mb-2">
-                    {t('contact.quickResponse')}
+                    {getT('contact.quickResponse', 'Quick Response')}
                   </h3>
                   <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed">
-                    {t('contact.quickResponseText')}
+                    {getT('contact.quickResponseText', 'We typically respond within 24 hours.')}
                   </p>
                 </div>
               </div>
@@ -333,7 +351,7 @@ export default function ContactPage() {
             href={getLocalizedHref('/')}
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors font-medium"
           >
-            {t('contact.backToHome')}
+            {getT('contact.backToHome', 'Back to Home')}
           </Link>
         </div>
       </main>

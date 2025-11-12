@@ -192,6 +192,17 @@ export function Footer() {
                 <p>BTW: BE 0682 403 611</p>
               </div>
             )}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+              Made with ❤️ in Belgium by{' '}
+              <a 
+                href="https://truyens.pro" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors underline"
+              >
+                truyens.pro
+              </a>
+            </p>
           </div>
         </div>
       </div>
