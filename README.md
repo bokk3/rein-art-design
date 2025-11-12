@@ -1,4 +1,5 @@
 # Rein Art Design CMS
+[![Build and Push Docker Image](https://github.com/bokk3/rein-art-design/actions/workflows/docker-build.yml/badge.svg?branch=production)](https://github.com/bokk3/rein-art-design/actions/workflows/docker-build.yml)
 
 Website voor Rein Art Design - Elegante en functionele meubels handgemaakt in onze werkplaats.
 
