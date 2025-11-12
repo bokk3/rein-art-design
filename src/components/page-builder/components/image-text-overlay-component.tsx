@@ -101,7 +101,7 @@ export function ImageTextOverlayComponent({ data, getText }: ImageTextOverlayCom
                     size="lg" 
                     className={overlayBg === 'light' 
                       ? 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-100' 
-                      : 'bg-white text-gray-900 hover:bg-gray-100'}
+                      : 'bg-white text-gray-900 dark:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-100'}
                   >
                     {getText(data.overlayButtonText)}
                     <ArrowRight className="w-4 h-4 ml-2" />

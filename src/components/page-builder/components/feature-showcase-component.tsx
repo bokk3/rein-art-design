@@ -90,7 +90,10 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
                 )}
                 {data.showcaseButtonText && (
                   <Link href={data.showcaseButtonLink || `/projects/${data.showcaseProjectId}`}>
-                    <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100">
+                    <Button 
+                      size="lg" 
+                      className="bg-white text-gray-900 dark:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-100"
+                    >
                       {getText(data.showcaseButtonText)}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -172,7 +175,11 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
           )}
           {data.showcaseButtonText && (
             <Link href={data.showcaseButtonLink || `/projects/${data.showcaseProjectId || ''}`}>
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:border-white"
+              >
                 {getText(data.showcaseButtonText)}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { useT } from '@/hooks/use-t';
@@ -37,6 +37,35 @@ export function ContactForm() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitError, setSubmitError] = useState<string>('');
   const [errors, setErrors] = useState<ContactFormErrors>({});
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch('/api/contact/categories')
+        if (response.ok) {
+          const data = await response.json()
+          setCategories(data)
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error)
+        // Fallback to defaults
+        setCategories([
+          'Keukens',
+          'Badkamermeubels',
+          'Woonkamermeubels',
+          'Op maat gemaakte meubels',
+          'Renovatie',
+          'Andere'
+        ])
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+    loadCategories()
+  }, [])
 
   const validateForm = (): boolean => {
     const newErrors: ContactFormErrors = {};
@@ -241,14 +270,14 @@ export function ContactForm() {
           value={formData.projectType}
           onChange={(e) => handleChange('projectType', e.target.value)}
           className={`w-full rounded-md border ${errors.projectType ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+          disabled={loadingCategories}
         >
-          <option value="">{t('form.selectProjectType')}</option>
-          <option value="Web Development">Web Development</option>
-          <option value="Mobile App">Mobile App</option>
-          <option value="E-commerce">E-commerce</option>
-          <option value="Branding & Design">Branding & Design</option>
-          <option value="Consulting">Consulting</option>
-          <option value="Other">Other</option>
+          <option value="">{loadingCategories ? 'Loading...' : t('form.selectProjectType')}</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
         </select>
         {errors.projectType && (
           <p className="mt-1 text-sm text-red-600">{errors.projectType}</p>

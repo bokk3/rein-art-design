@@ -516,7 +516,7 @@ export class TranslationService {
     ])
 
     const allKeys = await prisma.translationKey.findMany({
-      select: { key: true }
+      select: { id: true, key: true }
     })
 
     const translatedKeyIds = await prisma.translation.findMany({

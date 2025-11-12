@@ -9,7 +9,8 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { CookieConsentProvider } from "@/contexts/cookie-consent-context";
 import { ImageSettingsProvider } from "@/contexts/image-settings-context";
-import { prisma } from "@/lib/db";
+import { DynamicFavicon } from "@/components/dynamic-favicon";
+import { Suspense } from "react";
 
 const karla = localFont({
   src: [
@@ -60,15 +61,31 @@ const karla = localFont({
 
 // Generate metadata dynamically from SEO settings
 export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const seoSettings = await prisma.siteSettings.findUnique({
-      where: { key: 'seo_settings' }
-    })
+  const defaultMetadata: Metadata = {
+    title: "Portfolio | Custom Artisan Work",
+    description: "Discover unique custom projects and artisan work. Browse our portfolio of handcrafted pieces made with quality materials and attention to detail.",
+  }
 
-    const defaultMetadata: Metadata = {
-      title: "Portfolio | Custom Artisan Work",
-      description: "Discover unique custom projects and artisan work. Browse our portfolio of handcrafted pieces made with quality materials and attention to detail.",
-    }
+  // Check if we're in a build environment (dummy DATABASE_URL means build time)
+  // During Docker build, DATABASE_URL will be the dummy value - skip database calls
+  if (process.env.DATABASE_URL?.includes('dummy') || 
+      process.env.DATABASE_URL?.includes('localhost:5432/dummy') ||
+      !process.env.DATABASE_URL) {
+    return defaultMetadata
+  }
+
+  try {
+    // Import prisma only when we need it (lazy import)
+    const { prisma } = await import('@/lib/db')
+    
+    // Try to fetch SEO settings from database with a short timeout
+    const seoSettings = await Promise.race([
+      prisma.siteSettings.findUnique({
+        where: { key: 'seo_settings' }
+      }),
+      // Timeout after 2 seconds to prevent hanging during build
+      new Promise((resolve) => setTimeout(() => resolve(null), 2000))
+    ]) as any
 
     if (!seoSettings || !seoSettings.value) {
       return defaultMetadata
@@ -152,12 +169,25 @@ export default function RootLayout({
               try {
                 const saved = localStorage.getItem('theme');
                 let theme;
-                if (saved === 'system' || !saved) {
+                if (saved === 'system') {
                   theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                } else {
+                } else if (saved === 'dark' || saved === 'light') {
                   theme = saved;
+                } else {
+                  // Default to light if no preference is saved
+                  theme = 'light';
                 }
                 document.documentElement.classList.toggle('dark', theme === 'dark');
+                
+                // Set initial favicon based on theme
+                let faviconLink = document.querySelector("link[rel~='icon']");
+                if (!faviconLink) {
+                  faviconLink = document.createElement('link');
+                  faviconLink.rel = 'icon';
+                  faviconLink.type = 'image/x-icon';
+                  document.head.appendChild(faviconLink);
+                }
+                faviconLink.href = theme === 'dark' ? '/favicon-dark.ico' : '/favicon.ico';
               } catch (e) {}
             `,
           }}
@@ -167,17 +197,24 @@ export default function RootLayout({
         className="antialiased bg-white dark:bg-[#181818] text-gray-900 dark:text-gray-100 transition-colors font-sans"
       >
         <ThemeProvider>
-          <LanguageProvider>
-            <CookieConsentProvider>
-              <ImageSettingsProvider>
-                <AnalyticsTracker />
-                <Navigation />
-                <main>{children}</main>
-                <Footer />
-                <CookieBanner />
-              </ImageSettingsProvider>
-            </CookieConsentProvider>
-          </LanguageProvider>
+          <DynamicFavicon />
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+            </div>
+          }>
+            <LanguageProvider>
+              <CookieConsentProvider>
+                <ImageSettingsProvider>
+                  <AnalyticsTracker />
+                  <Navigation />
+                  <main>{children}</main>
+                  <Footer />
+                  <CookieBanner />
+                </ImageSettingsProvider>
+              </CookieConsentProvider>
+            </LanguageProvider>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

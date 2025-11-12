@@ -120,7 +120,11 @@ export interface ComponentData {
     icon: string
     title: MultilingualText
     description: MultilingualText
+    iconColor?: string  // Optional icon color (hex)
+    iconBgColor?: string  // Optional icon background color (hex)
   }>
+  featuresIconColor?: string  // Optional default icon color for all features (hex)
+  featuresIconBgColor?: string  // Optional default icon background color for all features (hex)
   
   // Testimonials component
   testimonials?: Array<{

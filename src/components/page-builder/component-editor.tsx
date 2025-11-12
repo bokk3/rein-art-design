@@ -1859,7 +1859,10 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                       onChange={(e) => {
                         const currentFeatures = component.data.features || []
                         const updatedFeatures = [...currentFeatures]
-                        const currentTitle = updatedFeatures[index].title || {}
+                        // Handle backward compatibility: if title is a string, convert to multilingual object
+                        const currentTitle = typeof updatedFeatures[index].title === 'string' 
+                          ? {} 
+                          : (updatedFeatures[index].title || {})
                         updatedFeatures[index] = {
                           ...updatedFeatures[index],
                           title: { ...currentTitle, [activeLanguage]: e.target.value }
@@ -1878,7 +1881,10 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                       onChange={(e) => {
                         const currentFeatures = component.data.features || []
                         const updatedFeatures = [...currentFeatures]
-                        const currentDescription = updatedFeatures[index].description || {}
+                        // Handle backward compatibility: if description is a string, convert to multilingual object
+                        const currentDescription = typeof updatedFeatures[index].description === 'string' 
+                          ? {} 
+                          : (updatedFeatures[index].description || {})
                         updatedFeatures[index] = {
                           ...updatedFeatures[index],
                           description: { ...currentDescription, [activeLanguage]: e.target.value }
@@ -1973,7 +1979,10 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                       onChange={(e) => {
                         const currentTestimonials = component.data.testimonials || []
                         const updatedTestimonials = [...currentTestimonials]
-                        const currentRole = updatedTestimonials[index].role || {}
+                        // Handle backward compatibility: if role is a string, convert to multilingual object
+                        const currentRole = typeof updatedTestimonials[index].role === 'string' 
+                          ? {} 
+                          : (updatedTestimonials[index].role || {})
                         updatedTestimonials[index] = {
                           ...updatedTestimonials[index],
                           role: { ...currentRole, [activeLanguage]: e.target.value }
@@ -1992,7 +2001,10 @@ export function ComponentEditor({ component, onChange }: ComponentEditorProps) {
                       onChange={(e) => {
                         const currentTestimonials = component.data.testimonials || []
                         const updatedTestimonials = [...currentTestimonials]
-                        const currentContent = updatedTestimonials[index].content || {}
+                        // Handle backward compatibility: if content is a string, convert to multilingual object
+                        const currentContent = typeof updatedTestimonials[index].content === 'string' 
+                          ? {} 
+                          : (updatedTestimonials[index].content || {})
                         updatedTestimonials[index] = {
                           ...updatedTestimonials[index],
                           content: { ...currentContent, [activeLanguage]: e.target.value }

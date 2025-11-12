@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../lib/db';
 import { emailService } from '../../../lib/email-service';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Simple in-memory rate limiting (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -58,11 +59,11 @@ export async function POST(request: NextRequest) {
     const body: ContactFormData = await request.json();
     let { name, email, projectType, message, privacyAccepted, marketingConsent } = body;
 
-    // Trim input data first
-    name = name?.trim() || '';
-    email = email?.trim() || '';
-    projectType = projectType?.trim() || '';
-    message = message?.trim() || '';
+    // Trim and sanitize input data (remove all HTML to prevent XSS)
+    name = DOMPurify.sanitize(name?.trim() || '', { ALLOWED_TAGS: [] });
+    email = email?.trim().toLowerCase() || '';
+    projectType = DOMPurify.sanitize(projectType?.trim() || '', { ALLOWED_TAGS: [] });
+    message = DOMPurify.sanitize(message?.trim() || '', { ALLOWED_TAGS: [] }); // Plain text only
 
     // Validate required fields
     if (!name || !email || !projectType || !message) {
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
     const contactMessage = await prisma.contactMessage.create({
       data: {
         name,
-        email: email.toLowerCase(),
+        email, // Already lowercased above
         projectType,
         message,
         privacyAccepted,

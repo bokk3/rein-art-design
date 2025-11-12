@@ -150,7 +150,11 @@ export function SplitScreenComponent({ data, getText }: SplitScreenComponentProp
             )}
             {data.splitButtonText && (
               <Link href={data.splitButtonLink || '/projects'}>
-                <Button size="lg" variant="outline">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 dark:border-white"
+                >
                   {getText(data.splitButtonText)}
                   <ArrowRight className="w-4 w-4 ml-2" />
                 </Button>

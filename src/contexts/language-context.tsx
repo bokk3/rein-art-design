@@ -76,6 +76,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [searchParams, languages, currentLanguage])
 
   const setLanguage = (code: string) => {
+    // Update state first so components can react immediately
     setCurrentLanguage(code)
     
     // Update URL with language parameter
@@ -90,8 +91,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       url.searchParams.set('lang', code)
     }
     
-    // Navigate to the new URL
-    router.push(url.pathname + url.search)
+    // Use replace instead of push to avoid adding to history and prevent full page reload
+    // This ensures client-side navigation without page refresh
+    router.replace(url.pathname + url.search, { scroll: false })
   }
 
 

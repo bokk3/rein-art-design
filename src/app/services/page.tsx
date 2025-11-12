@@ -1,6 +1,9 @@
 import { notFound, redirect } from 'next/navigation'
 import { ContentService } from '@/lib/content-service'
 
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+
 interface ServicesPageProps {
   searchParams: {
     lang?: string

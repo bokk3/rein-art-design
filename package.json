@@ -1,6 +1,6 @@
 {
   "name": "rein-art",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3020",
@@ -16,6 +16,8 @@
     "clear-and-seed": "tsx scripts/clear-and-seed.ts",
     "create-modern-homepage": "tsx scripts/create-modern-homepage.ts",
     "scrape-projects": "tsx scripts/scrape-projects.ts",
+    "scrape-images": "tsx scripts/scrape-images.ts",
+    "migrate-images": "tsx scripts/migrate-images-to-local.ts",
     "instagram-sync": "tsx scripts/instagram-sync.ts",
     "fix:prisma": "bash scripts/fix-prisma-client.sh"
   },

@@ -3,6 +3,9 @@ import { ProjectGalleryClient } from './project-gallery-client'
 import { ProjectsHeader } from '@/components/projects/projects-header'
 import { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+
 export const metadata: Metadata = {
   title: 'Projects | Portfolio',
   description: 'Browse our collection of custom projects and artisan work.',

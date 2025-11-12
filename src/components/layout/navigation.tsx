@@ -86,11 +86,20 @@ export function Navigation() {
     return `${href}${separator}lang=${currentLanguage}`
   }
 
+  // Helper to get translation with fallback
+  const getT = (key: string, fallback: string): string => {
+    const translation = t(key)
+    if (!translation || translation === key || translation.trim() === '') {
+      return fallback
+    }
+    return translation
+  }
+
   const navLinks = [
-    { href: '/', label: t('nav.home') },
-    { href: '/projects', label: t('nav.projects') },
-    { href: '/about', label: t('nav.about') },
-    { href: '/contact', label: t('nav.contact') },
+    { href: '/', label: getT('nav.home', 'Home') },
+    { href: '/projects', label: getT('nav.projects', 'Projects') },
+    { href: '/about', label: getT('nav.about', 'About') },
+    { href: '/contact', label: getT('nav.contact', 'Contact') },
   ]
 
   // Determine nav background based on scroll state and homepage
@@ -267,7 +276,7 @@ export function Navigation() {
               {showThemeToggle && (
                 <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 mt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('nav.theme')}</span>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{getT('nav.theme', 'Theme')}</span>
                     <ThemeToggle />
                   </div>
                 </div>
@@ -276,7 +285,7 @@ export function Navigation() {
               {/* Mobile Language Selector */}
               {!isLoading && languages.length > 1 && (
                 <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 mt-3">
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t('nav.language')}</div>
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{getT('nav.language', 'Language')}</div>
                   <div className="space-y-1">
                     {languages.map((language) => (
                       <button

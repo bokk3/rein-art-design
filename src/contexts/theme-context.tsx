@@ -17,7 +17,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 // Get the resolved theme (actual light/dark value)
 function getResolvedTheme(theme: Theme): 'light' | 'dark' {
   if (theme === 'system') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    // Safe check for browser environment
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    // Default to light during SSR
+    return 'light'
   }
   return theme
 }
@@ -45,7 +50,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initTheme = () => {
       try {
         const saved = localStorage.getItem('theme') as Theme | null
-        const initial: Theme = saved || 'system'
+        // Default to 'light' instead of 'system' to respect user preference
+        const initial: Theme = saved || 'light'
         
         setThemeState(initial)
         const resolved = getResolvedTheme(initial)
@@ -58,7 +64,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setMounted(true)
     }
 
-    initTheme()
+    // Only run in browser
+    if (typeof window !== 'undefined') {
+      initTheme()
+    }
   }, [])
 
   // Listen to system preference changes when theme is 'system'
@@ -109,7 +118,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(newTheme)
   }
 
-  const resolvedTheme = getResolvedTheme(theme)
+  // Only resolve theme on client side to prevent hydration mismatch
+  const resolvedTheme = mounted ? getResolvedTheme(theme) : 'light'
 
   const value = {
     theme,
