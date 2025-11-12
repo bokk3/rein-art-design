@@ -29,6 +29,27 @@ if ! docker buildx version > /dev/null 2>&1; then
     exit 1
 fi
 
+# Warn if building on ARM64 (Raspberry Pi) for AMD64
+ARCH=$(uname -m)
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    echo "⚠️  WARNING: You're building on ARM64 (Raspberry Pi)"
+    echo "   Cross-compiling for AMD64 will be VERY slow (30-60+ minutes)"
+    echo "   Consider using a remote builder or building on an AMD64 machine instead"
+    echo ""
+    read -p "   Continue anyway? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "❌ Cancelled"
+        echo ""
+        echo "💡 Alternatives:"
+        echo "   1. Use GitHub Actions (free for public repos)"
+        echo "   2. Build on an AMD64 server/computer"
+        echo "   3. Use Docker buildx with remote builder"
+        echo "   4. Build ARM64 only (faster on Pi)"
+        exit 1
+    fi
+fi
+
 # Check if user is logged in to Docker Hub
 if ! docker info | grep -q "Username"; then
     echo "⚠️  Not logged in to Docker Hub"
