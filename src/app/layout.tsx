@@ -168,10 +168,13 @@ export default function RootLayout({
               try {
                 const saved = localStorage.getItem('theme');
                 let theme;
-                if (saved === 'system' || !saved) {
+                if (saved === 'system') {
                   theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                } else {
+                } else if (saved === 'dark' || saved === 'light') {
                   theme = saved;
+                } else {
+                  // Default to light if no preference is saved
+                  theme = 'light';
                 }
                 document.documentElement.classList.toggle('dark', theme === 'dark');
               } catch (e) {}

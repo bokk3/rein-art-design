@@ -50,7 +50,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initTheme = () => {
       try {
         const saved = localStorage.getItem('theme') as Theme | null
-        const initial: Theme = saved || 'system'
+        // Default to 'light' instead of 'system' to respect user preference
+        const initial: Theme = saved || 'light'
         
         setThemeState(initial)
         const resolved = getResolvedTheme(initial)
