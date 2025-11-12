@@ -5,7 +5,7 @@ import { Mail, Phone, MapPin, Clock, MessageCircle } from 'lucide-react'
 import { useT } from '@/hooks/use-t'
 import { useLanguage } from '@/contexts/language-context'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 interface BusinessHours {
   monday: { open: string; close: string; closed: boolean }
@@ -91,7 +91,8 @@ export default function ContactPage() {
   }
 
   // Get day name - with fallback if translation key doesn't exist
-  const getDayName = (day: string): string => {
+  // Memoize to ensure it updates when language changes
+  const getDayName = useMemo(() => {
     const dayMap: Record<string, { key: string; fallback: Record<string, string> }> = {
       monday: { 
         key: 'contact.monday', 
@@ -123,19 +124,21 @@ export default function ContactPage() {
       }
     }
     
-    const dayInfo = dayMap[day]
-    if (!dayInfo) return day
-    
-    // Try to get translation
-    const translated = t(dayInfo.key)
-    
-    // If translation is empty or equals the key, use fallback based on current language
-    if (!translated || translated === dayInfo.key || translated === '') {
-      return dayInfo.fallback[currentLanguage] || dayInfo.fallback.nl || day
+    return (day: string): string => {
+      const dayInfo = dayMap[day]
+      if (!dayInfo) return day
+      
+      // Try to get translation
+      const translated = t(dayInfo.key)
+      
+      // If translation is empty or equals the key, use fallback based on current language
+      if (!translated || translated === dayInfo.key || translated === '') {
+        return dayInfo.fallback[currentLanguage] || dayInfo.fallback.nl || day
+      }
+      
+      return translated
     }
-    
-    return translated
-  }
+  }, [t, currentLanguage])
 
   // Group days with same opening hours
   const groupBusinessHours = (hours: BusinessHours) => {

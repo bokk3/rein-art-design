@@ -157,7 +157,14 @@ export function useT(options: UseTOptions = {}) {
         'footer.brand', 'footer.navigation', 'footer.legal',
         'button.submit', 'button.cancel', 'button.save',
         'admin.dashboard', 'admin.projects', 'admin.content',
-        'projects.backToProjects', 'projects.title', 'projects.subtitle'
+        'projects.backToProjects', 'projects.title', 'projects.subtitle',
+        // Contact page keys
+        'contact.title', 'contact.subtitle', 'contact.sendMessage',
+        'contact.contactInformation', 'contact.email', 'contact.phone', 'contact.location',
+        'contact.businessHours', 'contact.monday', 'contact.tuesday', 'contact.wednesday',
+        'contact.thursday', 'contact.friday', 'contact.saturday', 'contact.sunday',
+        'contact.mondayFriday', 'contact.closed', 'contact.quickResponse', 'contact.quickResponseText',
+        'contact.backToHome', 'form.selectProjectType'
       ]
       
       // Filter out keys that are already cached
