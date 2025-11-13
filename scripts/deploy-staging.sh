@@ -41,7 +41,7 @@ fi
 
 # Stop existing containers
 echo "🛑 Stopping existing staging containers..."
-docker compose -f docker-compose.staging.yml down
+docker compose --env-file .env.staging -f docker-compose.staging.yml down
 
 # Create necessary directories
 mkdir -p nginx/ssl
@@ -52,22 +52,22 @@ if [ -n "$APP_IMAGE" ]; then
     echo "📥 Pulling application image from DockerHub: $APP_IMAGE"
     docker pull "$APP_IMAGE" || {
         echo "⚠️  Failed to pull image, will build locally instead"
-        docker compose -f docker-compose.staging.yml build app
+        docker compose --env-file .env.staging -f docker-compose.staging.yml build app
     }
 else
     echo "🔨 Building application (this may take 15-30 minutes on Raspberry Pi)..."
     echo "   💡 Tip: Set APP_IMAGE in .env.staging to use DockerHub image instead"
-    docker compose -f docker-compose.staging.yml build app
+    docker compose --env-file .env.staging -f docker-compose.staging.yml build app
 fi
 
 # Start database
 echo "🗄️  Starting database..."
-docker compose -f docker-compose.staging.yml up -d postgres
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d postgres
 
 # Wait for PostgreSQL to be ready
 echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
-    if docker compose -f docker-compose.staging.yml exec -T postgres pg_isready -U ${POSTGRES_USER:-postgres} > /dev/null 2>&1; then
+    if docker compose --env-file .env.staging -f docker-compose.staging.yml exec -T postgres pg_isready -U ${POSTGRES_USER:-postgres} > /dev/null 2>&1; then
         echo "✅ PostgreSQL is ready!"
         break
     fi
@@ -84,8 +84,8 @@ if [ "$RESTORE_DB" = true ] && [ -n "$BACKUP_FILE" ]; then
     echo "📦 Restoring database from backup: $BACKUP_FILE"
     
     # Create database if it doesn't exist
-    docker compose -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -c "DROP DATABASE IF EXISTS ${POSTGRES_DB:-rein_staging};" 2>/dev/null || true
-    docker compose -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -c "CREATE DATABASE ${POSTGRES_DB:-rein_staging};" 2>/dev/null || true
+    docker compose --env-file .env.staging -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -c "DROP DATABASE IF EXISTS ${POSTGRES_DB:-rein_staging};" 2>/dev/null || true
+    docker compose --env-file .env.staging -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -c "CREATE DATABASE ${POSTGRES_DB:-rein_staging};" 2>/dev/null || true
     
     # Copy backup into container
     docker cp "$BACKUP_FILE" rein-postgres-staging:/tmp/backup.sql
@@ -93,18 +93,18 @@ if [ "$RESTORE_DB" = true ] && [ -n "$BACKUP_FILE" ]; then
     # Restore database (handle both .sql and .bak formats)
     if [[ "$BACKUP_FILE" == *.sql ]]; then
         # SQL dump format
-        if docker compose -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-rein_staging} -f /tmp/backup.sql > /dev/null 2>&1; then
+        if docker compose --env-file .env.staging -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-rein_staging} -f /tmp/backup.sql > /dev/null 2>&1; then
             echo "✅ Database restored from SQL backup!"
         else
             echo "⚠️  SQL restore failed. Trying alternative method..."
-            docker compose -f docker-compose.staging.yml exec -T postgres bash -c "psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-rein_staging} < /tmp/backup.sql" > /dev/null 2>&1 && \
+            docker compose --env-file .env.staging -f docker-compose.staging.yml exec -T postgres bash -c "psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-rein_staging} < /tmp/backup.sql" > /dev/null 2>&1 && \
                 echo "✅ Database restored!" || \
                 echo "⚠️  Backup restore failed. Initializing fresh database..."
             RESTORE_DB=false
         fi
     else
         # Assume .bak format (custom dump)
-        if docker compose -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-rein_staging} -f /tmp/backup.sql > /dev/null 2>&1; then
+        if docker compose --env-file .env.staging -f docker-compose.staging.yml exec -T postgres psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-rein_staging} -f /tmp/backup.sql > /dev/null 2>&1; then
             echo "✅ Database restored from backup!"
         else
             echo "⚠️  Backup restore failed. Initializing fresh database..."
@@ -116,14 +116,14 @@ fi
 # Initialize fresh database if restore failed or no backup
 if [ "$RESTORE_DB" != true ]; then
     echo "🆕 Initializing fresh database..."
-    docker compose -f docker-compose.staging.yml run --rm app npx prisma db push
-    docker compose -f docker-compose.staging.yml run --rm app npm run clear-and-seed
+    docker compose --env-file .env.staging -f docker-compose.staging.yml run --rm app npx prisma db push
+    docker compose --env-file .env.staging -f docker-compose.staging.yml run --rm app npm run clear-and-seed
     echo "✅ Database initialized!"
 fi
 
 # Start application
 echo "🚀 Starting application..."
-docker compose -f docker-compose.staging.yml up -d app
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d app
 
 # Wait for app to be ready
 echo "⏳ Waiting for application to start..."
@@ -146,43 +146,70 @@ if [ ! -f "nginx/nginx-staging.conf" ]; then
     exit 1
 fi
 
-# Check if certificates already exist in volume
-CERT_EXISTS=$(docker compose -f docker-compose.staging.yml run --rm --no-deps certbot test -f /etc/letsencrypt/live/rein.truyens.pro/fullchain.pem 2>/dev/null && echo "yes" || echo "no")
+# Check if certificates already exist in volume (simple check without running certbot)
+CERT_EXISTS="no"
+# Find the certbot volume name (it may vary based on project directory name)
+CERTBOT_VOLUME=$(docker volume ls --format "{{.Name}}" | grep certbot_data_staging | head -1)
+if [ -n "$CERTBOT_VOLUME" ]; then
+    # Check if certificate files exist in the volume
+    if docker run --rm -v "$CERTBOT_VOLUME:/etc/letsencrypt" alpine test -f /etc/letsencrypt/live/rein.truyens.pro/fullchain.pem 2>/dev/null; then
+        CERT_EXISTS="yes"
+    fi
+fi
 
 if [ "$CERT_EXISTS" != "yes" ]; then
     echo "   Obtaining new SSL certificates..."
     
     # Start nginx with HTTP-only config (already configured for ACME challenge)
     echo "   Starting nginx with HTTP-only config for ACME challenge..."
-    docker compose -f docker-compose.staging.yml up -d nginx
+    docker compose --env-file .env.staging -f docker-compose.staging.yml up -d nginx
     
     # Wait for nginx to be ready
     sleep 10
     
     # Verify nginx is running
-    if ! docker compose -f docker-compose.staging.yml ps nginx | grep -q "Up"; then
-        echo "❌ Nginx failed to start. Check logs: docker compose -f docker-compose.staging.yml logs nginx"
+    if ! docker compose --env-file .env.staging -f docker-compose.staging.yml ps nginx | grep -q "Up"; then
+        echo "❌ Nginx failed to start. Check logs: docker compose --env-file .env.staging -f docker-compose.staging.yml logs nginx"
         exit 1
     fi
     
-    # Obtain SSL certificate
+    # Obtain SSL certificate (override entrypoint to avoid conflict with renewal loop)
     echo "   Requesting certificate from Let's Encrypt..."
-    if docker compose -f docker-compose.staging.yml run --rm certbot certonly \
+    echo "   This may take 30-60 seconds..."
+    
+    # Run certbot with timeout and proper error handling
+    if timeout 120 docker compose --env-file .env.staging -f docker-compose.staging.yml run --rm --entrypoint="" certbot certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email ${LETSENCRYPT_EMAIL:-admin@rein.truyens.pro} \
         --agree-tos \
         --no-eff-email \
-        -d rein.truyens.pro; then
-        echo "✅ SSL certificate obtained!"
+        --non-interactive \
+        -d rein.truyens.pro 2>&1 | tee /tmp/certbot-output.log; then
         
-        # Switch to SSL config
-        echo "   Switching to SSL configuration..."
-        cp nginx/nginx-staging.conf.ssl nginx/nginx-staging.conf
+        # Check if certificate was actually created (find volume name dynamically)
+        CERTBOT_VOLUME=$(docker volume ls --format "{{.Name}}" | grep certbot_data_staging | head -1)
+        if [ -n "$CERTBOT_VOLUME" ] && docker run --rm -v "$CERTBOT_VOLUME:/etc/letsencrypt" alpine test -f /etc/letsencrypt/live/rein.truyens.pro/fullchain.pem 2>/dev/null; then
+            echo "✅ SSL certificate obtained!"
+            
+            # Switch to SSL config
+            echo "   Switching to SSL configuration..."
+            cp nginx/nginx-staging.conf.ssl nginx/nginx-staging.conf
+        else
+            echo "⚠️  Certificate request completed but certificate file not found."
+            echo "   Nginx will continue running with HTTP-only config."
+            echo "   Check /tmp/certbot-output.log for details."
+        fi
     else
-        echo "⚠️  SSL certificate generation failed."
+        CERT_EXIT_CODE=$?
+        if [ $CERT_EXIT_CODE -eq 124 ]; then
+            echo "⚠️  SSL certificate request timed out after 2 minutes."
+        else
+            echo "⚠️  SSL certificate generation failed (exit code: $CERT_EXIT_CODE)."
+        fi
         echo "   Nginx will continue running with HTTP-only config."
         echo "   You can manually run: ./scripts/setup-ssl-staging.sh"
+        echo "   Check /tmp/certbot-output.log for details."
     fi
 else
     echo "✅ SSL certificates already exist."
@@ -195,21 +222,21 @@ fi
 
 # Restart nginx with appropriate configuration
 echo "🔄 Starting nginx..."
-docker compose -f docker-compose.staging.yml up -d nginx
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d nginx
 
 # Wait a moment for nginx to start
 sleep 5
 
 # Verify nginx is running
-if docker compose -f docker-compose.staging.yml ps nginx | grep -q "Up"; then
+if docker compose --env-file .env.staging -f docker-compose.staging.yml ps nginx | grep -q "Up"; then
     echo "✅ Nginx is running"
 else
-    echo "⚠️  Nginx may have issues. Check logs: docker compose -f docker-compose.staging.yml logs nginx"
+    echo "⚠️  Nginx may have issues. Check logs: docker compose --env-file .env.staging -f docker-compose.staging.yml logs nginx"
 fi
 
 # Start certbot renewal service
 echo "🔄 Starting certbot renewal service..."
-docker compose -f docker-compose.staging.yml up -d certbot
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d certbot
 
 echo ""
 echo "✅ Staging deployment complete!"
@@ -221,10 +248,10 @@ else
 fi
 echo ""
 echo "📊 Useful commands:"
-echo "   View logs:     docker compose -f docker-compose.staging.yml logs -f"
-echo "   Check status:  docker compose -f docker-compose.staging.yml ps"
-echo "   Restart app:   docker compose -f docker-compose.staging.yml restart app"
-echo "   Stop all:      docker compose -f docker-compose.staging.yml down"
+echo "   View logs:     ./scripts/docker-compose-staging.sh logs -f"
+echo "   Check status:  ./scripts/docker-compose-staging.sh ps"
+echo "   Restart app:   ./scripts/docker-compose-staging.sh restart app"
+echo "   Stop all:      ./scripts/docker-compose-staging.sh down"
 echo ""
 echo "🔍 Verify deployment:"
 if [ "$CERT_EXISTS" = "yes" ] || [ -f "nginx/nginx-staging.conf.ssl" ]; then
@@ -232,4 +259,4 @@ if [ "$CERT_EXISTS" = "yes" ] || [ -f "nginx/nginx-staging.conf.ssl" ]; then
 else
     echo "   curl -I http://rein.truyens.pro"
 fi
-echo "   docker compose -f docker-compose.staging.yml logs -f app"
+echo "   ./scripts/docker-compose-staging.sh logs -f app"

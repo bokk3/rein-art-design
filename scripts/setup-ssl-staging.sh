@@ -12,7 +12,7 @@ DOMAIN=${LETSENCRYPT_DOMAIN:-rein.truyens.pro}
 echo "🔐 Setting up SSL certificates for $DOMAIN (staging)..."
 
 # Ensure nginx is running (HTTP only, for ACME challenge)
-docker compose -f docker-compose.staging.yml up -d nginx
+docker compose --env-file .env.staging -f docker-compose.staging.yml up -d nginx
 
 # Wait for nginx
 sleep 10
@@ -27,14 +27,16 @@ fi
 
 echo "✅ DNS resolves correctly"
 
-# Obtain certificate
+# Obtain certificate (override entrypoint to avoid conflict with renewal loop)
 echo "📜 Obtaining SSL certificate..."
-docker compose -f docker-compose.staging.yml run --rm certbot certonly \
+echo "   This may take 30-60 seconds..."
+docker compose --env-file .env.staging -f docker-compose.staging.yml run --rm --entrypoint="" certbot certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email $EMAIL \
     --agree-tos \
     --no-eff-email \
+    --non-interactive \
     --force-renewal \
     -d $DOMAIN
 
@@ -45,7 +47,7 @@ if [ -f "nginx/nginx-staging.conf.ssl" ]; then
     echo "🔄 Switching to SSL configuration..."
     cp nginx/nginx-staging.conf.ssl nginx/nginx-staging.conf
     echo "🔄 Restarting nginx with SSL configuration..."
-    docker compose -f docker-compose.staging.yml restart nginx
+    docker compose --env-file .env.staging -f docker-compose.staging.yml restart nginx
 else
     echo "⚠️  nginx/nginx-staging.conf.ssl not found!"
     echo "   Nginx will continue with HTTP-only config."

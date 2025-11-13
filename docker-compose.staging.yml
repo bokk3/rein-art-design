@@ -4,6 +4,8 @@ services:
     image: postgres:15-alpine
     container_name: rein-postgres-staging
     restart: unless-stopped
+    env_file:
+      - .env.staging
     environment:
       POSTGRES_DB: rein_staging
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -14,7 +16,6 @@ services:
       - "5434:5432"
     volumes:
       - postgres_data_staging:/var/lib/postgresql/data
-      - ./backup_db.bak:/backup/backup_db.bak:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -41,10 +42,12 @@ services:
       target: runner
       args:
         - NODE_ENV=production
-    # Platform for runtime (Docker will build for ARM64 automatically on Pi)
-    platform: linux/arm64
+    # Platform: remove this line if using DockerHub multi-arch images, or set to your platform (linux/arm64 for Pi, linux/amd64 for x86)
+    # platform: linux/arm64
     container_name: rein-app-staging
     restart: unless-stopped
+    env_file:
+      - .env.staging
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/rein_staging
@@ -60,8 +63,6 @@ services:
         condition: service_healthy
     volumes:
       - uploads_data_staging:/app/public/uploads
-      # Mount backup for easy restore during testing
-      - ./backup_db.bak:/backup/backup_db.bak:ro
     networks:
       - rein-staging-network
     # Resource limits for Raspberry Pi
