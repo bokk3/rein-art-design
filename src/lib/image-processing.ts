@@ -101,11 +101,14 @@ export class ImageProcessor {
     }
 
     // Process thumbnail (always JPEG for thumbnails for consistency and smaller size)
+    // Increased size to 800x800 and quality to 90 to prevent pixelation when displayed larger
     // For PNGs with transparency, flatten onto white background before converting to JPEG
     let thumbnailBuffer: Buffer
+    const thumbnailSize = 800 // Increased from 300 to 800 for better quality
+    const thumbnailQuality = 90 // Increased from 80 to 90 for better quality
     try {
       const thumbnailProcessor = sharp(buffer)
-        .resize(300, 300, {
+        .resize(thumbnailSize, thumbnailSize, {
           fit: 'cover',
           position: 'center'
         })
@@ -114,24 +117,24 @@ export class ImageProcessor {
       if (finalFormat === 'png' && hasAlpha) {
         thumbnailBuffer = await thumbnailProcessor
           .flatten({ background: { r: 255, g: 255, b: 255 } })
-          .jpeg({ quality: 80 })
+          .jpeg({ quality: thumbnailQuality, mozjpeg: true })
           .toBuffer()
       } else {
         // Regular thumbnail processing
         thumbnailBuffer = await thumbnailProcessor
-          .jpeg({ quality: 80 })
+          .jpeg({ quality: thumbnailQuality, mozjpeg: true })
           .toBuffer()
       }
     } catch (error) {
       console.error('Error generating thumbnail:', error)
       // Fallback: try simple JPEG conversion with flatten for safety
       thumbnailBuffer = await sharp(buffer)
-        .resize(300, 300, {
+        .resize(thumbnailSize, thumbnailSize, {
           fit: 'cover',
           position: 'center'
         })
         .flatten({ background: { r: 255, g: 255, b: 255 } })
-        .jpeg({ quality: 80 })
+        .jpeg({ quality: thumbnailQuality, mozjpeg: true })
         .toBuffer()
     }
 

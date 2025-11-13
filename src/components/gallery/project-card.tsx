@@ -2,7 +2,7 @@
 
 import { ProjectWithRelations } from '@/types/project'
 import Image from 'next/image'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useImageSettings } from '@/contexts/image-settings-context'
 
 interface ProjectCardProps {
@@ -12,8 +12,9 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCardProps) {
-  const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
   const { grayscaleImages } = useImageSettings()
   
   // Get translation for the specified language or fallback to first available
@@ -26,6 +27,13 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
   // Get the first image as the card thumbnail
   const thumbnailImage = project.images[0]
   
+  // Set initial image source
+  useEffect(() => {
+    if (thumbnailImage) {
+      setImageSrc(thumbnailImage.thumbnailUrl || thumbnailImage.originalUrl)
+    }
+  }, [thumbnailImage])
+  
   if (!translation) {
     return null
   }
@@ -36,10 +44,10 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
       onClick={onClick}
     >
       <div className="relative aspect-[3/2] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#1a1a1a] dark:to-[#181818]">
-        {thumbnailImage && !imageError ? (
+        {thumbnailImage && imageSrc && !imageError ? (
           <>
             <Image
-              src={thumbnailImage.thumbnailUrl}
+              src={imageSrc}
               alt={thumbnailImage.alt}
               fill
               className={`object-cover transition-all duration-700 ease-out group-hover:scale-110 ${
@@ -48,11 +56,19 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
               style={grayscaleImages ? { filter: 'grayscale(100%)' } : undefined}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
-                console.error('Image failed to load:', thumbnailImage.thumbnailUrl, e)
-                setImageError(true)
+                // Fallback to originalUrl if thumbnail fails
+                if (imageSrc === thumbnailImage.thumbnailUrl && thumbnailImage.originalUrl && thumbnailImage.originalUrl !== thumbnailImage.thumbnailUrl) {
+                  console.warn('Thumbnail failed to load, falling back to original:', thumbnailImage.thumbnailUrl)
+                  setImageSrc(thumbnailImage.originalUrl)
+                  setImageError(false)
+                } else {
+                  console.error('Image failed to load:', imageSrc, e)
+                  setImageError(true)
+                }
               }}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={false}
+              quality={90}
               unoptimized={false}
             />
             {!imageLoaded && (

@@ -19,6 +19,7 @@
     "scrape-images": "tsx scripts/scrape-images.ts",
     "migrate-images": "tsx scripts/migrate-images-to-local.ts",
     "instagram-sync": "tsx scripts/instagram-sync.ts",
+    "regenerate-thumbnails": "tsx scripts/regenerate-thumbnails.ts",
     "fix:prisma": "bash scripts/fix-prisma-client.sh"
   },
   "prisma": {

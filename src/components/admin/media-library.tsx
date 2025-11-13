@@ -563,6 +563,7 @@ export function MediaLibrary({
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+                quality={90}
                 onLoad={() => setImageLoaded(true)}
                 onError={handleImageError}
                 unoptimized={imageSrc.startsWith('http://') || imageSrc.startsWith('https://')}
