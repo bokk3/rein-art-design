@@ -33,6 +33,8 @@ services:
 
   # Next.js Application (Staging)
   app:
+    # Use DockerHub image if APP_IMAGE is set, otherwise build locally
+    image: ${APP_IMAGE:-rein-art-design:staging-latest}
     build:
       context: .
       dockerfile: Dockerfile

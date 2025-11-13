@@ -39,8 +39,18 @@ docker compose -f docker-compose.staging.yml run --rm certbot certonly \
     -d $DOMAIN
 
 echo "✅ SSL certificate obtained!"
-echo "🔄 Restarting nginx..."
-docker compose -f docker-compose.staging.yml restart nginx
+
+# Switch to SSL config
+if [ -f "nginx/nginx-staging.conf.ssl" ]; then
+    echo "🔄 Switching to SSL configuration..."
+    cp nginx/nginx-staging.conf.ssl nginx/nginx-staging.conf
+    echo "🔄 Restarting nginx with SSL configuration..."
+    docker compose -f docker-compose.staging.yml restart nginx
+else
+    echo "⚠️  nginx/nginx-staging.conf.ssl not found!"
+    echo "   Nginx will continue with HTTP-only config."
+    echo "   Please manually update nginx config to use SSL."
+fi
 
 echo "✅ SSL setup complete!"
 echo "🌐 Test with: curl -I https://$DOMAIN"
