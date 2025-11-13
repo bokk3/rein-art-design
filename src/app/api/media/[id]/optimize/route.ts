@@ -47,7 +47,7 @@ export async function POST(
         buffer,
         mediaItem.originalUrl.split('/').pop() || 'image',
         {
-          quality: quality || 85,
+          quality: quality || 92,
           maxWidth: maxWidth || 1920,
           maxHeight: maxHeight || 1080,
           format: format || 'jpeg'

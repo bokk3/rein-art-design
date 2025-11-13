@@ -153,16 +153,41 @@ The deployment script automatically finds and restores:
 
 ## Update Deployment
 
-### After Code Changes
+### Quick Update from DockerHub (Recommended)
+
+When a new image is pushed to DockerHub:
 
 ```bash
-# On dev server: build and push to DockerHub
-docker buildx build --platform linux/amd64,linux/arm64 -t your-username/rein-art-design:staging-latest --push .
+# On staging server: update container with new image
+./scripts/update-staging.sh
+```
 
-# On staging server: pull and restart
-git pull
-./scripts/docker-compose-staging.sh pull app
-./scripts/docker-compose-staging.sh up -d app
+This script will:
+- Pull the latest image from DockerHub
+- Stop the current container
+- Start the new container
+- Verify it's running
+
+### Manual Update
+
+```bash
+# Pull latest image
+docker pull your-username/rein-art-design:staging-latest
+
+# Restart with new image
+./scripts/docker-compose-staging.sh up -d app --force-recreate
+```
+
+### After Code Changes (Build & Push)
+
+```bash
+# On dev/build server: build and push to DockerHub
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t your-username/rein-art-design:staging-latest \
+  --push .
+
+# On staging server: update
+./scripts/update-staging.sh
 ```
 
 ### Full Redeploy

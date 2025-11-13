@@ -132,6 +132,8 @@ export function ProjectDetailClient({ project }: ProjectDetailClientProps) {
                     className={`object-cover ${grayscaleImages ? 'grayscale' : ''}`}
                     style={grayscaleImages ? { filter: 'grayscale(100%)' } : undefined}
                     sizes="(max-width: 1024px) 100vw, 50vw"
+                    quality={100}
+                    unoptimized={true}
                     priority
                   />
                   
@@ -184,6 +186,8 @@ export function ProjectDetailClient({ project }: ProjectDetailClientProps) {
                         className={`object-cover ${grayscaleImages ? 'grayscale' : ''}`}
                         style={grayscaleImages ? { filter: 'grayscale(100%)' } : undefined}
                         sizes="(max-width: 640px) 25vw, 16vw"
+                        quality={95}
+                        unoptimized={true}
                       />
                     </button>
                   ))}

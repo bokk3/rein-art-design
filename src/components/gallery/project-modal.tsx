@@ -202,6 +202,8 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 66vw"
+                  quality={100}
+                  unoptimized={true}
                   priority
                 />
                 
@@ -253,6 +255,8 @@ export function ProjectModal({ project, isOpen, onClose, languageId = 'nl', allP
                       fill
                       className="object-cover"
                       sizes="64px"
+                      quality={95}
+                      unoptimized={true}
                     />
                   </button>
                 ))}

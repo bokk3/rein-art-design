@@ -1,5 +1,5 @@
 # Use Node.js 20 Alpine for smaller image size
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -17,6 +17,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma client
+
 RUN npx prisma generate
 
 EXPOSE 3000
@@ -30,6 +31,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+RUN npm install -g tsx
 
 # Set dummy DATABASE_URL for build (Prisma needs it for generate, but won't connect during build)
 # This prevents database connection attempts during static page generation
@@ -70,6 +73,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy Prisma files
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Copy src directory for scripts (regenerate-thumbnails, etc.)
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+# Copy scripts directory
+# Copy tsconfig.json for TypeScript path resolution
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
 
 # Create uploads directory with proper permissions
 RUN mkdir -p /app/public/uploads/thumbnails && \

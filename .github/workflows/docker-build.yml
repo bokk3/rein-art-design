@@ -97,8 +97,6 @@ jobs:
           MINOR="${{ steps.tag_info.outputs.minor }}"
           
           TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${PREFIX}${VERSION}"
-          TAGS="$TAGS,${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${PREFIX}${MAJOR}.${MINOR}"
-          TAGS="$TAGS,${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${PREFIX}${MAJOR}"
           TAGS="$TAGS,${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${PREFIX}latest"
           
           echo "tags=$TAGS" >> $GITHUB_OUTPUT

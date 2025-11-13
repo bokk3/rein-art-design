@@ -193,7 +193,7 @@ export class InstagramService {
         {
           maxWidth: 1920,
           maxHeight: 1080,
-          quality: 85,
+          quality: 92,
           format: 'jpeg',
         }
       )

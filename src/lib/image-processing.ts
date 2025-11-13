@@ -49,7 +49,7 @@ export class ImageProcessor {
     const {
       maxWidth = 1920,
       maxHeight = 1080,
-      quality = 85,
+      quality = 92, // Increased from 85 to 92 for better quality
       format: requestedFormat
     } = options
 
@@ -246,7 +246,7 @@ export class ImageProcessor {
           fit: 'inside',
           withoutEnlargement: true
         })
-        .jpeg({ quality: 85 })
+        .jpeg({ quality: 92 })
         .toBuffer()
 
       await writeFile(sizedPath, processedBuffer)

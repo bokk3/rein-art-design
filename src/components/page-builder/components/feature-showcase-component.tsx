@@ -67,8 +67,9 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
                 fill
                 className="object-cover"
                 style={{ objectPosition: 'center bottom' }}
+                quality={100}
+                unoptimized={true}
                 priority
-                unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
               />
             </div>
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-8 lg:p-12 z-10">
@@ -145,8 +146,9 @@ export function FeatureShowcaseComponent({ data, getText, currentLanguage }: Fea
                 fill
                 className="object-cover"
                 style={{ objectPosition: 'center bottom' }}
+                quality={100}
+                unoptimized={true}
                 priority
-                unoptimized={showcaseImage.startsWith('http://') || showcaseImage.startsWith('https://')}
               />
             </div>
           </div>

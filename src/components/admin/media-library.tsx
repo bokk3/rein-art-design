@@ -104,7 +104,7 @@ export function MediaLibrary({
   const [projects, setProjects] = useState<Array<{id: string, title: string}>>([])
   
   const [optimizationSettings, setOptimizationSettings] = useState<ImageOptimizationSettings>({
-    quality: 85,
+    quality: 92,
     maxWidth: 1920,
     maxHeight: 1080,
     format: 'jpeg',
@@ -965,6 +965,8 @@ export function MediaLibrary({
                         fill
                         className="object-cover"
                         sizes="48px"
+                        quality={95}
+                        unoptimized={true}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           if (target.src !== item.originalUrl) {
@@ -1076,6 +1078,7 @@ export function MediaLibrary({
                   width={800}
                   height={600}
                   className="w-full h-auto max-h-96 object-contain mx-auto rounded-lg"
+                  quality={95}
                 />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-900 dark:text-gray-100">
@@ -1131,6 +1134,8 @@ export function MediaLibrary({
                       fill
                       className="object-cover"
                       sizes="96px"
+                      quality={95}
+                      unoptimized={true}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         if (target.src !== editingItem.originalUrl) {

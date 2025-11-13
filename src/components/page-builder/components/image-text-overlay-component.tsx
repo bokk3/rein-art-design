@@ -72,8 +72,9 @@ export function ImageTextOverlayComponent({ data, getText }: ImageTextOverlayCom
               fill
               className="object-cover"
               style={{ objectPosition: 'center bottom' }}
+              quality={100}
+              unoptimized={true}
               priority
-              unoptimized={data.overlayImageUrl.startsWith('http://') || data.overlayImageUrl.startsWith('https://')}
             />
           </div>
           <div className={`absolute inset-0 flex ${positionClasses[overlayPosition]} p-8 lg:p-12 xl:p-16 z-10`}>

@@ -1,3 +1,4 @@
+// Use relative paths that work in production container
 import { prisma } from '../src/lib/db'
 import { ImageProcessor } from '../src/lib/image-processing'
 import { readFile } from 'fs/promises'
@@ -128,13 +129,17 @@ async function regenerateThumbnails() {
 }
 
 // Run the script
-regenerateThumbnails()
-  .then(() => {
-    console.log('\n✅ Script completed successfully')
-    process.exit(0)
-  })
-  .catch((error) => {
-    console.error('\n❌ Script failed:', error)
-    process.exit(1)
-  })
+if (require.main === module) {
+  regenerateThumbnails()
+    .then(() => {
+      console.log('\n✅ Script completed successfully')
+      process.exit(0)
+    })
+    .catch((error) => {
+      console.error('\n❌ Script failed:', error)
+      process.exit(1)
+    })
+}
+
+export { regenerateThumbnails }
 

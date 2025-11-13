@@ -492,6 +492,8 @@ export function HeroComponent({ data, currentLanguage, isEditing = false, getTex
             alt=""
             fill
             className="object-cover"
+            quality={100}
+            unoptimized={true}
             priority
           />
           <div 

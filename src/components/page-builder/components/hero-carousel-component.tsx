@@ -57,7 +57,8 @@ function HeroCarouselImage({ image, isActive, parallaxEnabled, kenBurnsEnabled, 
           fill
           className="object-cover"
           priority={priority}
-          unoptimized={image.src.startsWith('http://') || image.src.startsWith('https://')}
+          quality={100}
+          unoptimized={true}
           style={{ objectPosition: 'center center' }}
         />
       </div>

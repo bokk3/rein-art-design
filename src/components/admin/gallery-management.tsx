@@ -36,7 +36,7 @@ export function GalleryManagement() {
     projectId: '',
     category: 'portfolio',
     tags: '',
-    quality: 85,
+    quality: 92,
     maxWidth: 1920,
     maxHeight: 1080
   })

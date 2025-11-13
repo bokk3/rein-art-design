@@ -27,12 +27,12 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
   // Get the first image as the card thumbnail
   const thumbnailImage = project.images[0]
   
-  // Set initial image source
-  useEffect(() => {
-    if (thumbnailImage) {
-      setImageSrc(thumbnailImage.thumbnailUrl || thumbnailImage.originalUrl)
-    }
-  }, [thumbnailImage])
+          // Set initial image source - use original for best quality
+          useEffect(() => {
+            if (thumbnailImage) {
+              setImageSrc(thumbnailImage.originalUrl || thumbnailImage.thumbnailUrl)
+            }
+          }, [thumbnailImage])
   
   if (!translation) {
     return null
@@ -68,8 +68,8 @@ export function ProjectCard({ project, onClick, languageId = 'nl' }: ProjectCard
               }}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={false}
-              quality={90}
-              unoptimized={false}
+              quality={100}
+              unoptimized={true}
             />
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 animate-pulse" />

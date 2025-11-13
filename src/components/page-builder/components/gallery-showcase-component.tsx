@@ -72,6 +72,8 @@ export function GalleryShowcaseComponent({ data, isEditing = false }: GallerySho
             alt={image.alt || ''}
             fill
             className="object-cover"
+            quality={100}
+            unoptimized={true}
             priority={index === 0}
           />
           {image.caption && (

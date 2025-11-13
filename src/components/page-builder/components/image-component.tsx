@@ -49,6 +49,8 @@ export function ImageComponent({ data, getText, isEditing = false, onUpdate }: I
               height={600}
               className="rounded-lg shadow-lg object-cover"
               style={{ objectPosition: 'center bottom' }}
+              quality={100}
+              unoptimized={true}
             />
             {data.caption && (
               <p className="mt-4 text-sm text-gray-600 italic">

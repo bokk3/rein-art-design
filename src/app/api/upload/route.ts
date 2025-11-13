@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       {
         maxWidth: 1920,
         maxHeight: 1080,
-        quality: 85,
+        quality: 92,
         format: 'jpeg'
       }
     )

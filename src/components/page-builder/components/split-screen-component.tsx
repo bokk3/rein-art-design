@@ -113,8 +113,9 @@ export function SplitScreenComponent({ data, getText }: SplitScreenComponentProp
                   fill
                   className="object-cover"
                   style={{ objectPosition: 'center bottom' }}
+                  quality={100}
+                  unoptimized={true}
                   priority
-                  unoptimized={data.splitImageUrl.startsWith('http://') || data.splitImageUrl.startsWith('https://')}
                 />
               </div>
               {data.splitImageOverlay && (
